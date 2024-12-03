@@ -20,6 +20,10 @@ const Index = () => {
     });
   };
 
+  const deleteTransaction = (id: string) => {
+    setTransactions(transactions.filter((t) => t.id !== id));
+  };
+
   const totalExpenses = transactions.reduce(
     (sum, t) => (t.type === "expense" ? sum + t.amount : sum),
     0
@@ -121,7 +125,10 @@ const Index = () => {
           </button>
         </div>
 
-        <TransactionList transactions={transactions} />
+        <TransactionList 
+          transactions={transactions} 
+          onDelete={deleteTransaction}
+        />
 
         <AddTransaction
           isOpen={isAddingTransaction}
