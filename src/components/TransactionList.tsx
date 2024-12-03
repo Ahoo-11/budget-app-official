@@ -1,12 +1,24 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { Transaction } from "@/types/transaction";
-import { ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, Trash2, Edit } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 
 interface TransactionListProps {
   transactions: Transaction[];
+  onDelete: (id: string) => void;
 }
 
-const TransactionList = ({ transactions }: TransactionListProps) => {
+const TransactionList = ({ transactions, onDelete }: TransactionListProps) => {
+  const { toast } = useToast();
+
+  const handleDelete = (id: string) => {
+    onDelete(id);
+    toast({
+      title: "Transaction deleted",
+      description: "The transaction has been successfully deleted.",
+    });
+  };
+
   if (transactions.length === 0) {
     return (
       <motion.div
@@ -53,13 +65,35 @@ const TransactionList = ({ transactions }: TransactionListProps) => {
                   </p>
                 </div>
               </div>
-              <p
-                className={`text-lg font-semibold ${
-                  transaction.type === "income" ? "text-success" : "text-danger"
-                }`}
-              >
-                {transaction.type === "income" ? "+" : "-"}${transaction.amount}
-              </p>
+              <div className="flex items-center gap-4">
+                <p
+                  className={`text-lg font-semibold ${
+                    transaction.type === "income" ? "text-success" : "text-danger"
+                  }`}
+                >
+                  {transaction.type === "income" ? "+" : "-"}${transaction.amount}
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      // TODO: Implement edit functionality
+                      toast({
+                        title: "Edit feature",
+                        description: "Edit functionality coming soon!",
+                      });
+                    }}
+                    className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                  >
+                    <Edit className="w-4 h-4 text-gray-500" />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(transaction.id)}
+                    className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4 text-danger" />
+                  </button>
+                </div>
+              </div>
             </div>
           </motion.div>
         ))}
