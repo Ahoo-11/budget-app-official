@@ -1,12 +1,134 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useState } from "react";
+import { motion } from "framer-motion";
+import { PlusCircle, TrendingUp, DollarSign, CreditCard } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
+import AddTransaction from "@/components/AddTransaction";
+import TransactionList from "@/components/TransactionList";
+import { Transaction } from "@/types/transaction";
 
 const Index = () => {
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [isAddingTransaction, setIsAddingTransaction] = useState(false);
+  const { toast } = useToast();
+
+  const addTransaction = (transaction: Transaction) => {
+    setTransactions([transaction, ...transactions]);
+    setIsAddingTransaction(false);
+    toast({
+      title: "Transaction added",
+      description: "Your transaction has been successfully recorded.",
+    });
+  };
+
+  const totalExpenses = transactions.reduce(
+    (sum, t) => (t.type === "expense" ? sum + t.amount : sum),
+    0
+  );
+
+  const totalIncome = transactions.reduce(
+    (sum, t) => (t.type === "income" ? sum + t.amount : sum),
+    0
+  );
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-gray-600">Start building your amazing project here!</p>
-      </div>
+    <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="max-w-7xl mx-auto space-y-8"
+      >
+        <header className="text-center space-y-2">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
+          >
+            <span className="px-3 py-1 text-sm bg-success/10 text-success rounded-full">
+              Track Your Expenses
+            </span>
+          </motion.div>
+          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
+            Financial Overview
+          </h1>
+          <p className="text-muted-foreground max-w-2xl mx-auto">
+            Keep track of your expenses and income with our beautiful and intuitive
+            interface.
+          </p>
+        </header>
+
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <motion.div
+            className="p-6 rounded-2xl bg-white shadow-sm border card-hover"
+            whileHover={{ y: -4 }}
+            transition={{ duration: 0.2 }}
+          >
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-xl bg-success/10">
+                <DollarSign className="w-6 h-6 text-success" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Total Balance</p>
+                <p className="text-2xl font-semibold">
+                  ${(totalIncome - totalExpenses).toFixed(2)}
+                </p>
+              </div>
+            </div>
+          </motion.div>
+
+          <motion.div
+            className="p-6 rounded-2xl bg-white shadow-sm border card-hover"
+            whileHover={{ y: -4 }}
+            transition={{ duration: 0.2 }}
+          >
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-xl bg-danger/10">
+                <CreditCard className="w-6 h-6 text-danger" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Total Expenses</p>
+                <p className="text-2xl font-semibold">
+                  ${totalExpenses.toFixed(2)}
+                </p>
+              </div>
+            </div>
+          </motion.div>
+
+          <motion.div
+            className="p-6 rounded-2xl bg-white shadow-sm border card-hover"
+            whileHover={{ y: -4 }}
+            transition={{ duration: 0.2 }}
+          >
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-xl bg-success/10">
+                <TrendingUp className="w-6 h-6 text-success" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Total Income</p>
+                <p className="text-2xl font-semibold">${totalIncome.toFixed(2)}</p>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+
+        <div className="flex justify-between items-center">
+          <h2 className="text-2xl font-semibold">Recent Transactions</h2>
+          <button
+            onClick={() => setIsAddingTransaction(true)}
+            className="button-hover inline-flex items-center gap-2 bg-success text-white px-4 py-2 rounded-full"
+          >
+            <PlusCircle className="w-5 h-5" />
+            Add Transaction
+          </button>
+        </div>
+
+        <TransactionList transactions={transactions} />
+
+        <AddTransaction
+          isOpen={isAddingTransaction}
+          onClose={() => setIsAddingTransaction(false)}
+          onAdd={addTransaction}
+        />
+      </motion.div>
     </div>
   );
 };
