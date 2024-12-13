@@ -5,34 +5,94 @@ import { useToast } from "@/components/ui/use-toast";
 import AddTransaction from "@/components/AddTransaction";
 import TransactionList from "@/components/TransactionList";
 import { Transaction } from "@/types/transaction";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const Index = () => {
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isAddingTransaction, setIsAddingTransaction] = useState(false);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  const addTransaction = (transaction: Transaction) => {
-    setTransactions([transaction, ...transactions]);
-    setIsAddingTransaction(false);
-    toast({
-      title: "Transaction added",
-      description: "Your transaction has been successfully recorded.",
-    });
+  const { data: transactions = [], isLoading } = useQuery({
+    queryKey: ['transactions'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('transactions')
+        .select('*')
+        .order('date', { ascending: false });
+      
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  const addTransactionMutation = useMutation({
+    mutationFn: async (transaction: Omit<Transaction, 'id'>) => {
+      const { data, error } = await supabase
+        .from('transactions')
+        .insert([transaction])
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      setIsAddingTransaction(false);
+      toast({
+        title: "Transaction added",
+        description: "Your transaction has been successfully recorded.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to add transaction. Please try again.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const deleteTransactionMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('transactions')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      toast({
+        title: "Transaction deleted",
+        description: "The transaction has been successfully deleted.",
+      });
+    }
+  });
+
+  const addTransaction = (transaction: Omit<Transaction, 'id'>) => {
+    addTransactionMutation.mutate(transaction);
   };
 
   const deleteTransaction = (id: string) => {
-    setTransactions(transactions.filter((t) => t.id !== id));
+    deleteTransactionMutation.mutate(id);
   };
 
   const totalExpenses = transactions.reduce(
-    (sum, t) => (t.type === "expense" ? sum + t.amount : sum),
+    (sum, t) => (t.type === "expense" ? sum + Number(t.amount) : sum),
     0
   );
 
   const totalIncome = transactions.reduce(
-    (sum, t) => (t.type === "income" ? sum + t.amount : sum),
+    (sum, t) => (t.type === "income" ? sum + Number(t.amount) : sum),
     0
   );
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">
