@@ -45,7 +45,7 @@ export function AppSidebar() {
     }
   };
 
-  const SidebarContent = () => (
+  const SidebarContentComponent = () => (
     <SidebarContent>
       <SidebarGroup>
         <SidebarGroupLabel>Dashboard</SidebarGroupLabel>
@@ -114,7 +114,7 @@ export function AppSidebar() {
                 <X className="h-6 w-6" />
               </Button>
             </div>
-            <SidebarContent />
+            <SidebarContentComponent />
           </SheetContent>
         </Sheet>
       </div>
@@ -122,7 +122,7 @@ export function AppSidebar() {
       {/* Desktop Sidebar - Hidden on mobile */}
       <div className="hidden md:block">
         <Sidebar>
-          <SidebarContent />
+          <SidebarContentComponent />
         </Sidebar>
       </div>
     </>
