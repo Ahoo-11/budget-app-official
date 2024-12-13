@@ -2,20 +2,22 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 import { Transaction } from "@/types/transaction";
+import { useUser } from "@supabase/auth-helpers-react";
 
 interface AddTransactionProps {
   isOpen: boolean;
   onClose: () => void;
-  onAdd: (transaction: Transaction) => void;
-  sourceId?: string;
+  onAdd: (transaction: Omit<Transaction, 'id' | 'created_at'>) => void;
+  source_id?: string;
 }
 
-const AddTransaction = ({ isOpen, onClose, onAdd, sourceId }: AddTransactionProps) => {
+const AddTransaction = ({ isOpen, onClose, onAdd, source_id }: AddTransactionProps) => {
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
   const [type, setType] = useState<"income" | "expense">("expense");
   const [category, setCategory] = useState("");
-  const [selectedSource, setSelectedSource] = useState(sourceId || "");
+  const [selectedSource, setSelectedSource] = useState(source_id || "");
+  const user = useUser();
 
   // Mock sources data - in a real app, this would come from a central state management
   const sources = [
@@ -25,14 +27,16 @@ const AddTransaction = ({ isOpen, onClose, onAdd, sourceId }: AddTransactionProp
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const transaction: Transaction = {
-      id: Date.now().toString(),
+    if (!user) return;
+    
+    const transaction: Omit<Transaction, 'id' | 'created_at'> = {
       description,
       amount: parseFloat(amount),
       type,
       category,
       date: new Date().toISOString(),
-      sourceId: sourceId || selectedSource,
+      source_id: source_id || selectedSource,
+      user_id: user.id,
     };
     onAdd(transaction);
     setDescription("");
@@ -48,8 +52,8 @@ const AddTransaction = ({ isOpen, onClose, onAdd, sourceId }: AddTransactionProp
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className={`${!sourceId ? "fixed inset-0 bg-black/20 backdrop-blur-sm z-50" : ""} flex items-center justify-center p-4`}
-          onClick={sourceId ? undefined : onClose}
+          className={`${!source_id ? "fixed inset-0 bg-black/20 backdrop-blur-sm z-50" : ""} flex items-center justify-center p-4`}
+          onClick={source_id ? undefined : onClose}
         >
           <motion.div
             initial={{ scale: 0.95, opacity: 0 }}
@@ -58,7 +62,7 @@ const AddTransaction = ({ isOpen, onClose, onAdd, sourceId }: AddTransactionProp
             onClick={(e) => e.stopPropagation()}
             className="bg-white rounded-2xl shadow-lg w-full max-w-md p-6"
           >
-            {!sourceId && (
+            {!source_id && (
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-semibold">Add Transaction</h2>
                 <button
@@ -99,7 +103,7 @@ const AddTransaction = ({ isOpen, onClose, onAdd, sourceId }: AddTransactionProp
                 </div>
               </div>
 
-              {!sourceId && (
+              {!source_id && (
                 <div>
                   <label className="block text-sm font-medium mb-2">Source</label>
                   <select

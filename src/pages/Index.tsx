@@ -7,11 +7,21 @@ import TransactionList from "@/components/TransactionList";
 import { Transaction } from "@/types/transaction";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useUser } from "@supabase/auth-helpers-react";
+import { useNavigate } from "react-router-dom";
 
 const Index = () => {
   const [isAddingTransaction, setIsAddingTransaction] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const user = useUser();
+  const navigate = useNavigate();
+
+  // Redirect to login if not authenticated
+  if (!user) {
+    navigate("/auth");
+    return null;
+  }
 
   const { data: transactions = [], isLoading } = useQuery({
     queryKey: ['transactions'],
@@ -19,15 +29,16 @@ const Index = () => {
       const { data, error } = await supabase
         .from('transactions')
         .select('*')
+        .eq('user_id', user.id)
         .order('date', { ascending: false });
       
       if (error) throw error;
-      return data;
+      return data as Transaction[];
     }
   });
 
   const addTransactionMutation = useMutation({
-    mutationFn: async (transaction: Omit<Transaction, 'id'>) => {
+    mutationFn: async (transaction: Omit<Transaction, 'id' | 'created_at'>) => {
       const { data, error } = await supabase
         .from('transactions')
         .insert([transaction])
@@ -72,7 +83,7 @@ const Index = () => {
     }
   });
 
-  const addTransaction = (transaction: Omit<Transaction, 'id'>) => {
+  const addTransaction = (transaction: Omit<Transaction, 'id' | 'created_at'>) => {
     addTransactionMutation.mutate(transaction);
   };
 
