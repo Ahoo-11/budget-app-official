@@ -96,36 +96,35 @@ export function SourceActions({ sourceId, sourceName }: SourceActionsProps) {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DialogTrigger asChild>
-            <DropdownMenuItem onSelect={() => setIsRenameOpen(true)}>
-              <Edit className="mr-2 h-4 w-4" />
-              Rename
-            </DropdownMenuItem>
-          </DialogTrigger>
+          <Dialog open={isRenameOpen} onOpenChange={setIsRenameOpen}>
+            <DialogTrigger asChild>
+              <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                <Edit className="mr-2 h-4 w-4" />
+                Rename
+              </DropdownMenuItem>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Rename Source</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <Input
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  placeholder="Enter new name"
+                />
+                <Button onClick={handleRename} className="w-full">
+                  Save
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
           <DropdownMenuItem onSelect={handleDelete} className="text-red-600">
             <Trash2 className="mr-2 h-4 w-4" />
             Delete
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-
-      <Dialog open={isRenameOpen} onOpenChange={setIsRenameOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Rename Source</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <Input
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-              placeholder="Enter new name"
-            />
-            <Button onClick={handleRename} className="w-full">
-              Save
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
     </>
   );
 }
