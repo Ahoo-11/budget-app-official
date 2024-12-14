@@ -1,48 +1,94 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Source } from "@/types/source";
-import { Link } from "react-router-dom";
-import { Card, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowUpRight } from "lucide-react";
+import { Transaction } from "@/types/transaction";
+import AddTransaction from "@/components/AddTransaction";
+import TransactionList from "@/components/TransactionList";
+import { useToast } from "@/components/ui/use-toast";
 
 export default function Personal() {
-  const [sources, setSources] = useState<Source[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const { toast } = useToast();
 
   useEffect(() => {
-    const fetchSources = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { data } = await supabase
-        .from("sources")
-        .select("*")
-        .eq("user_id", user.id);
-
-      if (data) {
-        setSources(data);
-      }
-    };
-
-    fetchSources();
+    fetchTransactions();
   }, []);
 
+  const fetchTransactions = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from("transactions")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Error fetching transactions:", error);
+      return;
+    }
+
+    if (data) {
+      setTransactions(data);
+    }
+  };
+
+  const handleAddTransaction = async (transaction: Omit<Transaction, "id" | "created_at">) => {
+    const { data, error } = await supabase
+      .from("transactions")
+      .insert([transaction])
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Error adding transaction:", error);
+      toast({
+        title: "Error",
+        description: "Failed to add transaction",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (data) {
+      setTransactions([data, ...transactions]);
+      toast({
+        title: "Success",
+        description: "Transaction added successfully",
+      });
+    }
+  };
+
+  const handleDeleteTransaction = async (id: string) => {
+    const { error } = await supabase
+      .from("transactions")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      console.error("Error deleting transaction:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete transaction",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setTransactions(transactions.filter((t) => t.id !== id));
+  };
+
   return (
-    <div className="container py-8">
-      <h1 className="text-3xl font-bold mb-8">Your Sources</h1>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {sources.map((source) => (
-          <Link key={source.id} to={`/source/${source.id}`}>
-            <Card className="hover:bg-accent transition-colors">
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  {source.name}
-                  <ArrowUpRight className="h-5 w-5" />
-                </CardTitle>
-              </CardHeader>
-            </Card>
-          </Link>
-        ))}
-      </div>
+    <div className="container py-8 space-y-8">
+      <AddTransaction
+        isOpen={true}
+        onClose={() => {}}
+        onAdd={handleAddTransaction}
+      />
+      <TransactionList
+        transactions={transactions}
+        onDelete={handleDeleteTransaction}
+      />
     </div>
   );
 }
