@@ -121,7 +121,7 @@ const Index = () => {
         />
 
         <Dialog open={isAddingTransaction} onOpenChange={setIsAddingTransaction}>
-          <DialogContent>
+          <DialogContent className="sm:max-w-[500px]">
             <DialogHeader>
               <DialogTitle>Add Transaction</DialogTitle>
             </DialogHeader>
