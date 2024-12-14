@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { PlusCircle, TrendingUp, DollarSign, CreditCard } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
@@ -8,24 +8,17 @@ import { Transaction } from "@/types/transaction";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@supabase/auth-helpers-react";
-import { useNavigate } from "react-router-dom";
 
 const Index = () => {
   const [isAddingTransaction, setIsAddingTransaction] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const user = useUser();
-  const navigate = useNavigate();
-
-  // Redirect to login if not authenticated
-  if (!user) {
-    navigate("/auth");
-    return null;
-  }
 
   const { data: transactions = [], isLoading } = useQuery({
     queryKey: ['transactions'],
     queryFn: async () => {
+      if (!user?.id) return [];
       const { data, error } = await supabase
         .from('transactions')
         .select('*')
@@ -34,7 +27,8 @@ const Index = () => {
       
       if (error) throw error;
       return data as Transaction[];
-    }
+    },
+    enabled: !!user?.id
   });
 
   const addTransactionMutation = useMutation({
@@ -84,7 +78,11 @@ const Index = () => {
   });
 
   const addTransaction = (transaction: Omit<Transaction, 'id' | 'created_at'>) => {
-    addTransactionMutation.mutate(transaction);
+    if (!user?.id) return;
+    addTransactionMutation.mutate({
+      ...transaction,
+      user_id: user.id
+    });
   };
 
   const deleteTransaction = (id: string) => {
