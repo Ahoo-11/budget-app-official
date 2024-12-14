@@ -2,6 +2,9 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Transaction } from "@/types/transaction";
 import { useUser } from "@supabase/auth-helpers-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Source } from "@/types/source";
 
 interface AddTransactionProps {
   isOpen: boolean;
@@ -18,9 +21,18 @@ const AddTransaction = ({ isOpen, onClose, onAdd, source_id }: AddTransactionPro
   const [selectedSource, setSelectedSource] = useState(source_id || "");
   const user = useUser();
 
-  const sources = [
-    { id: "personal", name: "Personal" },
-  ];
+  const { data: sources = [] } = useQuery({
+    queryKey: ['sources'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('sources')
+        .select('*')
+        .order('name');
+      
+      if (error) throw error;
+      return data as Source[];
+    }
+  });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -98,6 +110,7 @@ const AddTransaction = ({ isOpen, onClose, onAdd, source_id }: AddTransactionPro
                   required
                 >
                   <option value="">Select a source</option>
+                  <option value="personal">Personal</option>
                   {sources.map((source) => (
                     <option key={source.id} value={source.id}>
                       {source.name}

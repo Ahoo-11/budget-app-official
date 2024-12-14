@@ -3,10 +3,12 @@ import { Home, LogOut, Menu, Plus, User } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Source } from "@/types/source";
+import { useQuery } from "@tanstack/react-query";
 
 export function AppSidebar() {
   const navigate = useNavigate();
@@ -14,6 +16,19 @@ export function AppSidebar() {
   const [isAddSourceOpen, setIsAddSourceOpen] = useState(false);
   const [newSourceName, setNewSourceName] = useState("");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const { data: sources = [] } = useQuery({
+    queryKey: ['sources'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('sources')
+        .select('*')
+        .order('name');
+      
+      if (error) throw error;
+      return data as Source[];
+    }
+  });
 
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
@@ -93,6 +108,18 @@ export function AppSidebar() {
               Personal
             </Button>
           </Link>
+          {sources.map((source) => (
+            <Link 
+              key={source.id} 
+              to={`/source/${source.id}`}
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              <Button variant="ghost" className="w-full justify-start">
+                <User className="mr-2 h-4 w-4" />
+                {source.name}
+              </Button>
+            </Link>
+          ))}
           <Button 
             variant="ghost" 
             className="w-full justify-start"
@@ -139,7 +166,7 @@ export function AppSidebar() {
       </div>
 
       <Dialog open={isAddSourceOpen} onOpenChange={setIsAddSourceOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Add New Source</DialogTitle>
           </DialogHeader>
