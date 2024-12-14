@@ -2,20 +2,15 @@ import { useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import AddTransaction from "@/components/AddTransaction";
 import TransactionList from "@/components/TransactionList";
-import { useState } from "react";
-import { Transaction } from "@/types/transaction";
+import { useTransactions } from "@/hooks/useTransactions";
 
 const Source = () => {
   const { sourceId } = useParams();
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const { transactions, isLoading, addTransaction, deleteTransaction } = useTransactions(sourceId);
 
-  const handleAddTransaction = (transaction: Transaction) => {
-    setTransactions([transaction, ...transactions]);
-  };
-
-  const handleDeleteTransaction = (id: string) => {
-    setTransactions(transactions.filter((t) => t.id !== id));
-  };
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <motion.div
@@ -26,12 +21,12 @@ const Source = () => {
       <AddTransaction
         isOpen={true}
         onClose={() => {}}
-        onAdd={handleAddTransaction}
+        onAdd={addTransaction}
         source_id={sourceId}
       />
       <TransactionList
         transactions={transactions}
-        onDelete={handleDeleteTransaction}
+        onDelete={deleteTransaction}
       />
     </motion.div>
   );

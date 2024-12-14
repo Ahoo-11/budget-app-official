@@ -1,94 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { PlusCircle, TrendingUp, DollarSign, CreditCard } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
 import AddTransaction from "@/components/AddTransaction";
 import TransactionList from "@/components/TransactionList";
-import { Transaction } from "@/types/transaction";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useUser } from "@supabase/auth-helpers-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useTransactions } from "@/hooks/useTransactions";
 
 const Index = () => {
   const [isAddingTransaction, setIsAddingTransaction] = useState(false);
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const user = useUser();
-
-  const { data: transactions = [], isLoading } = useQuery({
-    queryKey: ['transactions'],
-    queryFn: async () => {
-      if (!user?.id) return [];
-      const { data, error } = await supabase
-        .from('transactions')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('date', { ascending: false });
-      
-      if (error) throw error;
-      return data as Transaction[];
-    },
-    enabled: !!user?.id
-  });
-
-  const addTransactionMutation = useMutation({
-    mutationFn: async (transaction: Omit<Transaction, 'id' | 'created_at'>) => {
-      const { data, error } = await supabase
-        .from('transactions')
-        .insert([transaction])
-        .select()
-        .single();
-      
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['transactions'] });
-      setIsAddingTransaction(false);
-      toast({
-        title: "Transaction added",
-        description: "Your transaction has been successfully recorded.",
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: "Failed to add transaction. Please try again.",
-        variant: "destructive",
-      });
-    }
-  });
-
-  const deleteTransactionMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from('transactions')
-        .delete()
-        .eq('id', id);
-      
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['transactions'] });
-      toast({
-        title: "Transaction deleted",
-        description: "The transaction has been successfully deleted.",
-      });
-    }
-  });
-
-  const addTransaction = (transaction: Omit<Transaction, 'id' | 'created_at'>) => {
-    if (!user?.id) return;
-    addTransactionMutation.mutate({
-      ...transaction,
-      user_id: user.id
-    });
-  };
-
-  const deleteTransaction = (id: string) => {
-    deleteTransactionMutation.mutate(id);
-  };
+  const { transactions, isLoading, addTransaction, deleteTransaction } = useTransactions();
 
   const totalExpenses = transactions.reduce(
     (sum, t) => (t.type === "expense" ? sum + Number(t.amount) : sum),
