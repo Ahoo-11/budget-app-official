@@ -30,6 +30,7 @@ interface SourceActionsProps {
 export function SourceActions({ sourceId, sourceName }: SourceActionsProps) {
   const [isRenameOpen, setIsRenameOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [newName, setNewName] = useState(sourceName);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -63,8 +64,11 @@ export function SourceActions({ sourceId, sourceName }: SourceActionsProps) {
       title: "Success",
       description: "Source renamed successfully",
     });
+    
+    // Close all dialogs and reset state
     setIsRenameOpen(false);
-    queryClient.invalidateQueries({ queryKey: ['sources'] });
+    setIsDropdownOpen(false);
+    await queryClient.invalidateQueries({ queryKey: ['sources'] });
   };
 
   const handleDelete = async () => {
@@ -86,14 +90,17 @@ export function SourceActions({ sourceId, sourceName }: SourceActionsProps) {
       title: "Success",
       description: "Source deleted successfully",
     });
+    
+    // Close all dialogs and reset state
     setIsDeleteOpen(false);
-    queryClient.invalidateQueries({ queryKey: ['sources'] });
+    setIsDropdownOpen(false);
+    await queryClient.invalidateQueries({ queryKey: ['sources'] });
     navigate('/');
   };
 
   return (
     <>
-      <DropdownMenu>
+      <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="icon">
             <MoreVertical className="h-4 w-4" />
