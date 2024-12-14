@@ -29,7 +29,12 @@ export default function Personal() {
     }
 
     if (data) {
-      setTransactions(data);
+      // Type assertion to ensure data matches our Transaction type
+      const typedData = data.map(item => ({
+        ...item,
+        type: item.type as "income" | "expense"
+      }));
+      setTransactions(typedData);
     }
   };
 
@@ -51,7 +56,12 @@ export default function Personal() {
     }
 
     if (data) {
-      setTransactions([data, ...transactions]);
+      // Type assertion for the new transaction
+      const typedData = {
+        ...data,
+        type: data.type as "income" | "expense"
+      };
+      setTransactions([typedData, ...transactions]);
       toast({
         title: "Success",
         description: "Transaction added successfully",
