@@ -89,7 +89,7 @@ export default function Personal() {
   };
 
   return (
-    <div className="container py-8 space-y-8">
+    <div className="container max-w-4xl mx-auto py-8 px-4 space-y-8">
       <AddTransaction
         isOpen={true}
         onClose={() => {}}
