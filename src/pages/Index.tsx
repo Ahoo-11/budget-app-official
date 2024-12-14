@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { PlusCircle, TrendingUp, DollarSign, CreditCard } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
@@ -17,15 +17,17 @@ const Index = () => {
   const user = useUser();
   const navigate = useNavigate();
 
-  // Redirect to login if not authenticated
-  if (!user) {
-    navigate("/auth");
-    return null;
-  }
+  useEffect(() => {
+    if (!user) {
+      navigate("/auth");
+    }
+  }, [user, navigate]);
 
   const { data: transactions = [], isLoading } = useQuery({
     queryKey: ['transactions'],
     queryFn: async () => {
+      if (!user) return [];
+      
       const { data, error } = await supabase
         .from('transactions')
         .select('*')
@@ -34,7 +36,8 @@ const Index = () => {
       
       if (error) throw error;
       return data as Transaction[];
-    }
+    },
+    enabled: !!user // Only run query when user is authenticated
   });
 
   const addTransactionMutation = useMutation({
@@ -101,8 +104,16 @@ const Index = () => {
     0
   );
 
+  if (!user) {
+    return null; // Don't render anything while checking auth state
+  }
+
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+      </div>
+    );
   }
 
   return (
