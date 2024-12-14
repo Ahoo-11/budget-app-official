@@ -27,7 +27,7 @@ const Source = () => {
         isOpen={true}
         onClose={() => {}}
         onAdd={handleAddTransaction}
-        sourceId={sourceId}
+        source_id={sourceId}
       />
       <TransactionList
         transactions={transactions}
