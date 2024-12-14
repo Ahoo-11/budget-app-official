@@ -57,7 +57,7 @@ export default function App() {
                   <SidebarProvider>
                     <div className="flex min-h-screen w-full">
                       <AppSidebar />
-                      <main className="flex-1 p-4 md:p-6 w-full">
+                      <main className="flex-1 p-4 md:p-6 w-full md:ml-[200px]">
                         <Routes>
                           <Route path="/" element={<Index />} />
                           <Route path="/source/:sourceId" element={<Source />} />
