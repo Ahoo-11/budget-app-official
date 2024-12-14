@@ -88,11 +88,14 @@ export default function Personal() {
 
   return (
     <div className="container max-w-4xl mx-auto py-8 px-4 space-y-8">
-      <AddTransaction
-        isOpen={true}
-        onClose={() => {}}
-        onAdd={handleAddTransaction}
-      />
+      <div className="bg-white rounded-2xl shadow-sm border p-6">
+        <h2 className="text-2xl font-semibold mb-6">Add Transaction</h2>
+        <AddTransaction
+          isOpen={true}
+          onClose={() => {}}
+          onAdd={handleAddTransaction}
+        />
+      </div>
       <TransactionList
         transactions={transactions}
         onDelete={handleDeleteTransaction}

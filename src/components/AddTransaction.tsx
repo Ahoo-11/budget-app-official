@@ -19,10 +19,8 @@ const AddTransaction = ({ isOpen, onClose, onAdd, source_id }: AddTransactionPro
   const [selectedSource, setSelectedSource] = useState(source_id || "");
   const user = useUser();
 
-  // Mock sources data - in a real app, this would come from a central state management
   const sources = [
     { id: "personal", name: "Personal" },
-    // Add more sources as needed
   ];
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -49,127 +47,106 @@ const AddTransaction = ({ isOpen, onClose, onAdd, source_id }: AddTransactionPro
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className={`${!source_id ? "fixed inset-0 bg-black/20 backdrop-blur-sm z-50" : ""} flex items-center justify-center p-4`}
-          onClick={source_id ? undefined : onClose}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 20 }}
+          className="w-full"
         >
-          <motion.div
-            initial={{ scale: 0.95, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.95, opacity: 0 }}
-            onClick={(e) => e.stopPropagation()}
-            className="bg-white rounded-2xl shadow-lg w-full max-w-md p-6"
-          >
-            {!source_id && (
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-semibold">Add Transaction</h2>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium mb-2">Type</label>
+              <div className="grid grid-cols-2 gap-4">
                 <button
-                  onClick={onClose}
-                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                  type="button"
+                  onClick={() => setType("expense")}
+                  className={`p-3 rounded-xl border transition-all ${
+                    type === "expense"
+                      ? "border-danger bg-danger/10 text-danger"
+                      : "hover:border-danger/50"
+                  }`}
                 >
-                  <X className="w-5 h-5" />
+                  Expense
                 </button>
+                <button
+                  type="button"
+                  onClick={() => setType("income")}
+                  className={`p-3 rounded-xl border transition-all ${
+                    type === "income"
+                      ? "border-success bg-success/10 text-success"
+                      : "hover:border-success/50"
+                  }`}
+                >
+                  Income
+                </button>
+              </div>
+            </div>
+
+            {!source_id && (
+              <div>
+                <label className="block text-sm font-medium mb-2">Source</label>
+                <select
+                  value={selectedSource}
+                  onChange={(e) => setSelectedSource(e.target.value)}
+                  className="w-full p-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-success/20"
+                  required
+                >
+                  <option value="">Select a source</option>
+                  {sources.map((source) => (
+                    <option key={source.id} value={source.id}>
+                      {source.name}
+                    </option>
+                  ))}
+                </select>
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium mb-2">Type</label>
-                <div className="grid grid-cols-2 gap-4">
-                  <button
-                    type="button"
-                    onClick={() => setType("expense")}
-                    className={`p-3 rounded-xl border transition-all ${
-                      type === "expense"
-                        ? "border-danger bg-danger/10 text-danger"
-                        : "hover:border-danger/50"
-                    }`}
-                  >
-                    Expense
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setType("income")}
-                    className={`p-3 rounded-xl border transition-all ${
-                      type === "income"
-                        ? "border-success bg-success/10 text-success"
-                        : "hover:border-success/50"
-                    }`}
-                  >
-                    Income
-                  </button>
-                </div>
-              </div>
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Description
+              </label>
+              <input
+                type="text"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="w-full p-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-success/20"
+                placeholder="Enter description"
+                required
+              />
+            </div>
 
-              {!source_id && (
-                <div>
-                  <label className="block text-sm font-medium mb-2">Source</label>
-                  <select
-                    value={selectedSource}
-                    onChange={(e) => setSelectedSource(e.target.value)}
-                    className="w-full p-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-success/20"
-                    required
-                  >
-                    <option value="">Select a source</option>
-                    {sources.map((source) => (
-                      <option key={source.id} value={source.id}>
-                        {source.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
+            <div>
+              <label className="block text-sm font-medium mb-2">Amount</label>
+              <input
+                type="number"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                className="w-full p-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-success/20"
+                placeholder="Enter amount"
+                required
+                min="0"
+                step="0.01"
+              />
+            </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Description
-                </label>
-                <input
-                  type="text"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  className="w-full p-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-success/20"
-                  placeholder="Enter description"
-                  required
-                />
-              </div>
+            <div>
+              <label className="block text-sm font-medium mb-2">Category</label>
+              <input
+                type="text"
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className="w-full p-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-success/20"
+                placeholder="Enter category"
+                required
+              />
+            </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-2">Amount</label>
-                <input
-                  type="number"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  className="w-full p-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-success/20"
-                  placeholder="Enter amount"
-                  required
-                  min="0"
-                  step="0.01"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">Category</label>
-                <input
-                  type="text"
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  className="w-full p-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-success/20"
-                  placeholder="Enter category"
-                  required
-                />
-              </div>
-
-              <button
-                type="submit"
-                className="w-full bg-success text-white p-3 rounded-xl button-hover"
-              >
-                Add Transaction
-              </button>
-            </form>
-          </motion.div>
+            <button
+              type="submit"
+              className="w-full bg-success text-white p-3 rounded-xl hover:bg-success/90 transition-colors"
+            >
+              Add Transaction
+            </button>
+          </form>
         </motion.div>
       )}
     </AnimatePresence>
