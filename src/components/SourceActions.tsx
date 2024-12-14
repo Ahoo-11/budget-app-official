@@ -5,6 +5,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import {
@@ -27,6 +29,7 @@ interface SourceActionsProps {
 
 export function SourceActions({ sourceId, sourceName }: SourceActionsProps) {
   const [isRenameOpen, setIsRenameOpen] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [newName, setNewName] = useState(sourceName);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -83,6 +86,7 @@ export function SourceActions({ sourceId, sourceName }: SourceActionsProps) {
       title: "Success",
       description: "Source deleted successfully",
     });
+    setIsDeleteOpen(false);
     queryClient.invalidateQueries({ queryKey: ['sources'] });
     navigate('/');
   };
@@ -119,10 +123,41 @@ export function SourceActions({ sourceId, sourceName }: SourceActionsProps) {
               </div>
             </DialogContent>
           </Dialog>
-          <DropdownMenuItem onSelect={handleDelete} className="text-red-600">
-            <Trash2 className="mr-2 h-4 w-4" />
-            Delete
-          </DropdownMenuItem>
+          <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+            <DialogTrigger asChild>
+              <DropdownMenuItem 
+                onSelect={(e) => e.preventDefault()}
+                className="text-red-600"
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete
+              </DropdownMenuItem>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Delete Source</DialogTitle>
+                <DialogDescription>
+                  Are you sure you want to delete this source? This action cannot be undone and all associated transactions will be deleted.
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter className="sm:justify-start">
+                <Button
+                  type="button"
+                  variant="destructive"
+                  onClick={handleDelete}
+                >
+                  Delete
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsDeleteOpen(false)}
+                >
+                  Cancel
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </DropdownMenuContent>
       </DropdownMenu>
     </>
