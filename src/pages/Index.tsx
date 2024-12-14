@@ -8,6 +8,7 @@ import { Transaction } from "@/types/transaction";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@supabase/auth-helpers-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const Index = () => {
   const [isAddingTransaction, setIsAddingTransaction] = useState(false);
@@ -199,11 +200,18 @@ const Index = () => {
           onDelete={deleteTransaction}
         />
 
-        <AddTransaction
-          isOpen={isAddingTransaction}
-          onClose={() => setIsAddingTransaction(false)}
-          onAdd={addTransaction}
-        />
+        <Dialog open={isAddingTransaction} onOpenChange={setIsAddingTransaction}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Add Transaction</DialogTitle>
+            </DialogHeader>
+            <AddTransaction
+              isOpen={isAddingTransaction}
+              onClose={() => setIsAddingTransaction(false)}
+              onAdd={addTransaction}
+            />
+          </DialogContent>
+        </Dialog>
       </motion.div>
     </div>
   );
