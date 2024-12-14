@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, TrendingUp, DollarSign, CreditCard } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import AddTransaction from "@/components/AddTransaction";
 import TransactionList from "@/components/TransactionList";
@@ -9,8 +9,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@supabase/auth-helpers-react";
 import { useNavigate } from "react-router-dom";
-import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
-import { DashboardStats } from "@/components/dashboard/DashboardStats";
 
 const Index = () => {
   const [isAddingTransaction, setIsAddingTransaction] = useState(false);
@@ -19,17 +17,15 @@ const Index = () => {
   const user = useUser();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (!user) {
-      navigate("/auth");
-    }
-  }, [user, navigate]);
+  // Redirect to login if not authenticated
+  if (!user) {
+    navigate("/auth");
+    return null;
+  }
 
   const { data: transactions = [], isLoading } = useQuery({
     queryKey: ['transactions'],
     queryFn: async () => {
-      if (!user) return [];
-      
       const { data, error } = await supabase
         .from('transactions')
         .select('*')
@@ -38,8 +34,7 @@ const Index = () => {
       
       if (error) throw error;
       return data as Transaction[];
-    },
-    enabled: !!user
+    }
   });
 
   const addTransactionMutation = useMutation({
@@ -106,16 +101,8 @@ const Index = () => {
     0
   );
 
-  if (!user) {
-    return null;
-  }
-
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-      </div>
-    );
+    return <div>Loading...</div>;
   }
 
   return (
@@ -125,13 +112,78 @@ const Index = () => {
         animate={{ opacity: 1, y: 0 }}
         className="max-w-7xl mx-auto space-y-8"
       >
-        <DashboardHeader />
+        <header className="text-center space-y-2">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
+          >
+            <span className="px-3 py-1 text-sm bg-success/10 text-success rounded-full">
+              Track Your Expenses
+            </span>
+          </motion.div>
+          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
+            Financial Overview
+          </h1>
+          <p className="text-muted-foreground max-w-2xl mx-auto">
+            Keep track of your expenses and income with our beautiful and intuitive
+            interface.
+          </p>
+        </header>
 
-        <DashboardStats
-          totalBalance={totalIncome - totalExpenses}
-          totalExpenses={totalExpenses}
-          totalIncome={totalIncome}
-        />
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <motion.div
+            className="p-6 rounded-2xl bg-white shadow-sm border card-hover"
+            whileHover={{ y: -4 }}
+            transition={{ duration: 0.2 }}
+          >
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-xl bg-success/10">
+                <DollarSign className="w-6 h-6 text-success" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Total Balance</p>
+                <p className="text-2xl font-semibold">
+                  ${(totalIncome - totalExpenses).toFixed(2)}
+                </p>
+              </div>
+            </div>
+          </motion.div>
+
+          <motion.div
+            className="p-6 rounded-2xl bg-white shadow-sm border card-hover"
+            whileHover={{ y: -4 }}
+            transition={{ duration: 0.2 }}
+          >
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-xl bg-danger/10">
+                <CreditCard className="w-6 h-6 text-danger" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Total Expenses</p>
+                <p className="text-2xl font-semibold">
+                  ${totalExpenses.toFixed(2)}
+                </p>
+              </div>
+            </div>
+          </motion.div>
+
+          <motion.div
+            className="p-6 rounded-2xl bg-white shadow-sm border card-hover"
+            whileHover={{ y: -4 }}
+            transition={{ duration: 0.2 }}
+          >
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-xl bg-success/10">
+                <TrendingUp className="w-6 h-6 text-success" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Total Income</p>
+                <p className="text-2xl font-semibold">${totalIncome.toFixed(2)}</p>
+              </div>
+            </div>
+          </motion.div>
+        </div>
 
         <div className="flex justify-between items-center">
           <h2 className="text-2xl font-semibold">Recent Transactions</h2>

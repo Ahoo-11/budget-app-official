@@ -1,14 +1,6 @@
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { X } from "lucide-react";
 import { Transaction } from "@/types/transaction";
 import { useUser } from "@supabase/auth-helpers-react";
 
@@ -16,134 +8,171 @@ interface AddTransactionProps {
   isOpen: boolean;
   onClose: () => void;
   onAdd: (transaction: Omit<Transaction, 'id' | 'created_at'>) => void;
-  sourceId?: string;
+  source_id?: string;
 }
 
-const AddTransaction = ({ isOpen, onClose, onAdd, sourceId }: AddTransactionProps) => {
+const AddTransaction = ({ isOpen, onClose, onAdd, source_id }: AddTransactionProps) => {
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
   const [type, setType] = useState<"income" | "expense">("expense");
   const [category, setCategory] = useState("");
+  const [selectedSource, setSelectedSource] = useState(source_id || "");
   const user = useUser();
+
+  // Mock sources data - in a real app, this would come from a central state management
+  const sources = [
+    { id: "personal", name: "Personal" },
+    // Add more sources as needed
+  ];
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
-
-    const transaction = {
+    
+    const transaction: Omit<Transaction, 'id' | 'created_at'> = {
       description,
       amount: parseFloat(amount),
       type,
       category,
-      user_id: user.id,
-      source_id: sourceId || 'personal',
       date: new Date().toISOString(),
+      source_id: source_id || selectedSource,
+      user_id: user.id,
     };
-
     onAdd(transaction);
     setDescription("");
     setAmount("");
     setType("expense");
     setCategory("");
-    onClose();
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]" aria-describedby="transaction-form-description">
-        <DialogTitle>Add Transaction</DialogTitle>
-        <p id="transaction-form-description" className="text-sm text-muted-foreground">
-          Enter the details of your new transaction below.
-        </p>
-        <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-          <div className="space-y-2">
-            <label htmlFor="description" className="text-sm font-medium">
-              Description
-            </label>
-            <Input
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Enter description"
-              required
-            />
-          </div>
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className={`${!source_id ? "fixed inset-0 bg-black/20 backdrop-blur-sm z-50" : ""} flex items-center justify-center p-4`}
+          onClick={source_id ? undefined : onClose}
+        >
+          <motion.div
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.95, opacity: 0 }}
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white rounded-2xl shadow-lg w-full max-w-md p-6"
+          >
+            {!source_id && (
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-semibold">Add Transaction</h2>
+                <button
+                  onClick={onClose}
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            )}
 
-          <div className="space-y-2">
-            <label htmlFor="amount" className="text-sm font-medium">
-              Amount
-            </label>
-            <Input
-              id="amount"
-              type="number"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              placeholder="Enter amount"
-              required
-              min="0"
-              step="0.01"
-            />
-          </div>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium mb-2">Type</label>
+                <div className="grid grid-cols-2 gap-4">
+                  <button
+                    type="button"
+                    onClick={() => setType("expense")}
+                    className={`p-3 rounded-xl border transition-all ${
+                      type === "expense"
+                        ? "border-danger bg-danger/10 text-danger"
+                        : "hover:border-danger/50"
+                    }`}
+                  >
+                    Expense
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setType("income")}
+                    className={`p-3 rounded-xl border transition-all ${
+                      type === "income"
+                        ? "border-success bg-success/10 text-success"
+                        : "hover:border-success/50"
+                    }`}
+                  >
+                    Income
+                  </button>
+                </div>
+              </div>
 
-          <div className="space-y-2">
-            <label htmlFor="type" className="text-sm font-medium">
-              Type
-            </label>
-            <Select
-              value={type}
-              onValueChange={(value: "income" | "expense") => setType(value)}
-            >
-              <SelectTrigger id="type" aria-label="Select transaction type">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="income" textValue="Income">
-                  Income
-                </SelectItem>
-                <SelectItem value="expense" textValue="Expense">
-                  Expense
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+              {!source_id && (
+                <div>
+                  <label className="block text-sm font-medium mb-2">Source</label>
+                  <select
+                    value={selectedSource}
+                    onChange={(e) => setSelectedSource(e.target.value)}
+                    className="w-full p-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-success/20"
+                    required
+                  >
+                    <option value="">Select a source</option>
+                    {sources.map((source) => (
+                      <option key={source.id} value={source.id}>
+                        {source.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
-          <div className="space-y-2">
-            <label htmlFor="category" className="text-sm font-medium">
-              Category
-            </label>
-            <Select value={category} onValueChange={setCategory}>
-              <SelectTrigger id="category" aria-label="Select transaction category">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="food" textValue="Food">
-                  Food
-                </SelectItem>
-                <SelectItem value="transport" textValue="Transport">
-                  Transport
-                </SelectItem>
-                <SelectItem value="entertainment" textValue="Entertainment">
-                  Entertainment
-                </SelectItem>
-                <SelectItem value="utilities" textValue="Utilities">
-                  Utilities
-                </SelectItem>
-                <SelectItem value="other" textValue="Other">
-                  Other
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Description
+                </label>
+                <input
+                  type="text"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  className="w-full p-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-success/20"
+                  placeholder="Enter description"
+                  required
+                />
+              </div>
 
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button type="submit">Add Transaction</Button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
+              <div>
+                <label className="block text-sm font-medium mb-2">Amount</label>
+                <input
+                  type="number"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  className="w-full p-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-success/20"
+                  placeholder="Enter amount"
+                  required
+                  min="0"
+                  step="0.01"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2">Category</label>
+                <input
+                  type="text"
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  className="w-full p-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-success/20"
+                  placeholder="Enter category"
+                  required
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="w-full bg-success text-white p-3 rounded-xl button-hover"
+              >
+                Add Transaction
+              </button>
+            </form>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 };
 
