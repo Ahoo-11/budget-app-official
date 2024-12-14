@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X } from "lucide-react";
 import { Transaction } from "@/types/transaction";
 import { useUser } from "@supabase/auth-helpers-react";
 
@@ -36,7 +35,11 @@ const AddTransaction = ({ isOpen, onClose, onAdd, source_id }: AddTransactionPro
       source_id: source_id || selectedSource,
       user_id: user.id,
     };
+
     onAdd(transaction);
+    onClose();
+    
+    // Reset form
     setDescription("");
     setAmount("");
     setType("expense");
