@@ -1,130 +1,42 @@
-import { useState } from "react";
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-} from "@/components/ui/sidebar";
-import { Home, Folder, PlusCircle, Menu, X } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-
-interface Source {
-  id: string;
-  name: string;
-}
+import { LogOut } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 
 export function AppSidebar() {
-  const [sources, setSources] = useState<Source[]>([
-    { id: "personal", name: "Personal" },
-  ]);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const navigate = useNavigate();
   const { toast } = useToast();
 
-  const addNewSource = () => {
-    const name = prompt("Enter source name:");
-    if (name) {
-      if (sources.some((source) => source.name.toLowerCase() === name.toLowerCase())) {
-        toast({
-          title: "Error",
-          description: "A source with this name already exists.",
-          variant: "destructive",
-        });
-        return;
-      }
-      setSources([...sources, { id: Date.now().toString(), name }]);
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
       toast({
-        title: "Success",
-        description: "New source added successfully.",
+        title: "Error",
+        description: "Failed to sign out. Please try again.",
+        variant: "destructive",
       });
+    } else {
+      navigate("/auth");
     }
   };
 
-  const SidebarContentComponent = () => (
-    <SidebarContent>
-      <SidebarGroup>
-        <SidebarGroupLabel>Dashboard</SidebarGroupLabel>
-        <SidebarGroupContent>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild>
-                <a href="/" onClick={() => setIsMobileMenuOpen(false)}>
-                  <Home className="w-4 h-4" />
-                  <span>Home</span>
-                </a>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarGroupContent>
-      </SidebarGroup>
-
-      <SidebarGroup>
-        <div className="flex items-center justify-between px-2">
-          <SidebarGroupLabel>Sources</SidebarGroupLabel>
-          <button
-            onClick={addNewSource}
-            className="p-1 hover:bg-accent rounded-md transition-colors"
-          >
-            <PlusCircle className="w-4 h-4" />
-          </button>
-        </div>
-        <SidebarGroupContent>
-          <SidebarMenu>
-            {sources.map((source) => (
-              <SidebarMenuItem key={source.id}>
-                <SidebarMenuButton asChild>
-                  <a 
-                    href={`/source/${source.id}`}
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    <Folder className="w-4 h-4" />
-                    <span>{source.name}</span>
-                  </a>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            ))}
-          </SidebarMenu>
-        </SidebarGroupContent>
-      </SidebarGroup>
-    </SidebarContent>
-  );
-
   return (
-    <>
-      {/* Mobile Menu Button - Only visible on mobile */}
-      <div className="md:hidden fixed top-4 left-4 z-50">
-        <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-          <SheetTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <Menu className="h-6 w-6" />
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left" className="p-0 w-64">
-            <div className="flex justify-end p-4">
-              <Button 
-                variant="ghost" 
-                size="icon"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                <X className="h-6 w-6" />
-              </Button>
-            </div>
-            <SidebarContentComponent />
-          </SheetContent>
-        </Sheet>
+    <div className="border-r bg-background h-screen w-[200px] p-4">
+      <div className="flex flex-col h-full">
+        <div className="flex-1">
+          <h2 className="font-semibold mb-4">Expense Tracker</h2>
+          {/* Add your sidebar navigation items here */}
+        </div>
+        <Button 
+          variant="outline" 
+          className="w-full justify-start" 
+          onClick={handleLogout}
+        >
+          <LogOut className="mr-2 h-4 w-4" />
+          Logout
+        </Button>
       </div>
-
-      {/* Desktop Sidebar - Hidden on mobile */}
-      <div className="hidden md:block">
-        <Sidebar>
-          <SidebarContentComponent />
-        </Sidebar>
-      </div>
-    </>
+    </div>
   );
 }
