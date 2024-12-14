@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Source } from "@/types/source";
 import { useQuery } from "@tanstack/react-query";
+import { DarkModeToggle } from "./DarkModeToggle";
 
 export function AppSidebar() {
   const navigate = useNavigate();
@@ -93,8 +94,11 @@ export function AppSidebar() {
 
   const NavContent = () => (
     <div className="flex flex-col h-full">
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="font-semibold">Expense Tracker</h2>
+        <DarkModeToggle />
+      </div>
       <div className="flex-1">
-        <h2 className="font-semibold mb-4">Expense Tracker</h2>
         <nav className="space-y-2">
           <Link to="/" onClick={() => setIsMobileMenuOpen(false)}>
             <Button variant="ghost" className="w-full justify-start">

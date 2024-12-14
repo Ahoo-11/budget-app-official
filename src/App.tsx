@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
+import { ThemeProvider } from "next-themes";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import Index from "./pages/Index";
@@ -44,34 +45,36 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
 export default function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/auth" element={<Auth />} />
-            <Route
-              path="/*"
-              element={
-                <ProtectedRoute>
-                  <SidebarProvider>
-                    <div className="flex min-h-screen w-full">
-                      <AppSidebar />
-                      <main className="flex-1 p-4 md:p-6 w-full md:ml-[200px]">
-                        <Routes>
-                          <Route path="/" element={<Index />} />
-                          <Route path="/source/:sourceId" element={<Source />} />
-                          <Route path="/personal" element={<Personal />} />
-                        </Routes>
-                      </main>
-                    </div>
-                  </SidebarProvider>
-                </ProtectedRoute>
-              }
-            />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/auth" element={<Auth />} />
+              <Route
+                path="/*"
+                element={
+                  <ProtectedRoute>
+                    <SidebarProvider>
+                      <div className="flex min-h-screen w-full">
+                        <AppSidebar />
+                        <main className="flex-1 p-4 md:p-6 w-full md:ml-[200px]">
+                          <Routes>
+                            <Route path="/" element={<Index />} />
+                            <Route path="/source/:sourceId" element={<Source />} />
+                            <Route path="/personal" element={<Personal />} />
+                          </Routes>
+                        </main>
+                      </div>
+                    </SidebarProvider>
+                  </ProtectedRoute>
+                }
+              />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 }
