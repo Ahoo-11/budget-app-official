@@ -3,13 +3,14 @@ import { Home, LogOut, Menu, Plus, User } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Source } from "@/types/source";
 import { useQuery } from "@tanstack/react-query";
-import { DarkModeToggle } from "./DarkModeToggle";
+import { AccountSettings } from "./AccountSettings";
+import { SourceActions } from "./SourceActions";
 
 export function AppSidebar() {
   const navigate = useNavigate();
@@ -96,7 +97,6 @@ export function AppSidebar() {
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between mb-6">
         <h2 className="font-semibold">Expense Tracker</h2>
-        <DarkModeToggle />
       </div>
       <div className="flex-1">
         <nav className="space-y-2">
@@ -113,16 +113,19 @@ export function AppSidebar() {
             </Button>
           </Link>
           {sources.map((source) => (
-            <Link 
-              key={source.id} 
-              to={`/source/${source.id}`}
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              <Button variant="ghost" className="w-full justify-start">
-                <User className="mr-2 h-4 w-4" />
-                {source.name}
-              </Button>
-            </Link>
+            <div key={source.id} className="flex items-center">
+              <Link 
+                to={`/source/${source.id}`}
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="flex-1"
+              >
+                <Button variant="ghost" className="w-full justify-start">
+                  <User className="mr-2 h-4 w-4" />
+                  {source.name}
+                </Button>
+              </Link>
+              <SourceActions sourceId={source.id} sourceName={source.name} />
+            </div>
           ))}
           <Button 
             variant="ghost" 
@@ -137,14 +140,17 @@ export function AppSidebar() {
           </Button>
         </nav>
       </div>
-      <Button 
-        variant="outline" 
-        className="w-full justify-start" 
-        onClick={handleLogout}
-      >
-        <LogOut className="mr-2 h-4 w-4" />
-        Logout
-      </Button>
+      <div className="flex items-center space-x-2">
+        <AccountSettings />
+        <Button 
+          variant="outline" 
+          className="w-full justify-start" 
+          onClick={handleLogout}
+        >
+          <LogOut className="mr-2 h-4 w-4" />
+          Logout
+        </Button>
+      </div>
     </div>
   );
 
@@ -170,7 +176,7 @@ export function AppSidebar() {
       </div>
 
       <Dialog open={isAddSourceOpen} onOpenChange={setIsAddSourceOpen}>
-        <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>Add New Source</DialogTitle>
           </DialogHeader>
