@@ -29,7 +29,6 @@ export default function Personal() {
     }
 
     if (data) {
-      // Type assertion to ensure data matches our Transaction type
       const typedData = data.map(item => ({
         ...item,
         type: item.type as "income" | "expense"
@@ -56,7 +55,6 @@ export default function Personal() {
     }
 
     if (data) {
-      // Type assertion for the new transaction
       const typedData = {
         ...data,
         type: data.type as "income" | "expense"
