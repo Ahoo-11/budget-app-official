@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import Index from "./pages/Index";
 import Source from "./pages/Source";
 import Auth from "./pages/Auth";
+import Personal from "./pages/Personal";
 
 const queryClient = new QueryClient();
 
@@ -60,6 +61,7 @@ export default function App() {
                         <Routes>
                           <Route path="/" element={<Index />} />
                           <Route path="/source/:sourceId" element={<Source />} />
+                          <Route path="/personal" element={<Personal />} />
                         </Routes>
                       </main>
                     </div>
