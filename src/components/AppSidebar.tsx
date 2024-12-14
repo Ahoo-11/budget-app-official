@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Home, LogOut, Menu, Plus, User, X } from "lucide-react";
+import { Home, LogOut, Menu, Plus, User } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -134,7 +134,7 @@ export function AppSidebar() {
       </div>
 
       {/* Desktop Sidebar */}
-      <div className="border-r bg-background h-screen w-[200px] p-4 hidden md:block">
+      <div className="border-r bg-background fixed top-0 left-0 h-screen w-[200px] p-4 hidden md:block overflow-hidden">
         <NavContent />
       </div>
 
