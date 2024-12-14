@@ -25,7 +25,7 @@ const AddTransaction = ({ isOpen, onClose, onAdd, source_id }: AddTransactionPro
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
-    
+
     const transaction: Omit<Transaction, 'id' | 'created_at'> = {
       description,
       amount: parseFloat(amount),
@@ -37,13 +37,17 @@ const AddTransaction = ({ isOpen, onClose, onAdd, source_id }: AddTransactionPro
     };
 
     onAdd(transaction);
-    onClose();
     
     // Reset form
     setDescription("");
     setAmount("");
     setType("expense");
     setCategory("");
+    setSelectedSource(source_id || "");
+    
+    if (onClose) {
+      onClose();
+    }
   };
 
   return (
