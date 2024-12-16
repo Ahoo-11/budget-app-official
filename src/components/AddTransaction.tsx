@@ -5,6 +5,7 @@ import { useUser } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Source } from "@/types/source";
+import { Loader2 } from "lucide-react";
 
 interface AddTransactionProps {
   isOpen: boolean;
@@ -19,6 +20,7 @@ const AddTransaction = ({ isOpen, onClose, onAdd, source_id }: AddTransactionPro
   const [type, setType] = useState<"income" | "expense">("expense");
   const [category, setCategory] = useState("");
   const [selectedSource, setSelectedSource] = useState(source_id || "");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const user = useUser();
 
   const { data: sources = [] } = useQuery({
@@ -34,31 +36,38 @@ const AddTransaction = ({ isOpen, onClose, onAdd, source_id }: AddTransactionPro
     }
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
-
-    const transaction: Omit<Transaction, 'id' | 'created_at'> = {
-      description,
-      amount: parseFloat(amount),
-      type,
-      category,
-      date: new Date().toISOString(),
-      source_id: source_id || selectedSource,
-      user_id: user.id,
-    };
-
-    onAdd(transaction);
     
-    // Reset form
-    setDescription("");
-    setAmount("");
-    setType("expense");
-    setCategory("");
-    setSelectedSource(source_id || "");
-    
-    if (onClose) {
-      onClose();
+    setIsSubmitting(true);
+    try {
+      const transaction: Omit<Transaction, 'id' | 'created_at'> = {
+        description,
+        amount: parseFloat(amount),
+        type,
+        category,
+        date: new Date().toISOString(),
+        source_id: source_id || selectedSource,
+        user_id: user.id,
+      };
+
+      await onAdd(transaction);
+      
+      // Reset form
+      setDescription("");
+      setAmount("");
+      setType("expense");
+      setCategory("");
+      setSelectedSource(source_id || "");
+      
+      if (onClose) {
+        onClose();
+      }
+    } catch (error) {
+      console.error("Failed to add transaction:", error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -131,6 +140,7 @@ const AddTransaction = ({ isOpen, onClose, onAdd, source_id }: AddTransactionPro
                 className="w-full p-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-success/20"
                 placeholder="Enter description"
                 required
+                disabled={isSubmitting}
               />
             </div>
 
@@ -145,6 +155,7 @@ const AddTransaction = ({ isOpen, onClose, onAdd, source_id }: AddTransactionPro
                 required
                 min="0"
                 step="0.01"
+                disabled={isSubmitting}
               />
             </div>
 
@@ -157,14 +168,23 @@ const AddTransaction = ({ isOpen, onClose, onAdd, source_id }: AddTransactionPro
                 className="w-full p-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-success/20"
                 placeholder="Enter category"
                 required
+                disabled={isSubmitting}
               />
             </div>
 
             <button
               type="submit"
-              className="w-full bg-success text-white p-3 rounded-xl hover:bg-success/90 transition-colors"
+              disabled={isSubmitting}
+              className="w-full bg-success text-white p-3 rounded-xl hover:bg-success/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              Add Transaction
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Adding...
+                </>
+              ) : (
+                "Add Transaction"
+              )}
             </button>
           </form>
         </motion.div>

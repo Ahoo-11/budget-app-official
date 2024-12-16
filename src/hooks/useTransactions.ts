@@ -25,7 +25,14 @@ export const useTransactions = (source_id?: string) => {
       
       const { data, error } = await query;
       
-      if (error) throw error;
+      if (error) {
+        toast({
+          title: "Error fetching transactions",
+          description: error.message,
+          variant: "destructive",
+        });
+        throw error;
+      }
       return data as Transaction[];
     },
     enabled: !!user?.id
@@ -33,27 +40,33 @@ export const useTransactions = (source_id?: string) => {
 
   const addTransactionMutation = useMutation({
     mutationFn: async (transaction: Omit<Transaction, 'id' | 'created_at'>) => {
+      if (!user) {
+        throw new Error("You must be logged in to add transactions");
+      }
+
       const { data, error } = await supabase
         .from('transactions')
         .insert([transaction])
         .select()
         .single();
       
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       toast({
-        title: "Transaction added",
-        description: "Your transaction has been successfully recorded.",
+        title: "Success",
+        description: "Transaction added successfully",
       });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('Error adding transaction:', error);
       toast({
         title: "Error",
-        description: "Failed to add transaction. Please try again.",
+        description: error?.message || "Failed to add transaction. Please try again.",
         variant: "destructive",
       });
     }
@@ -61,6 +74,10 @@ export const useTransactions = (source_id?: string) => {
 
   const deleteTransactionMutation = useMutation({
     mutationFn: async (id: string) => {
+      if (!user) {
+        throw new Error("You must be logged in to delete transactions");
+      }
+
       const { error } = await supabase
         .from('transactions')
         .delete()
@@ -71,8 +88,15 @@ export const useTransactions = (source_id?: string) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       toast({
-        title: "Transaction deleted",
-        description: "The transaction has been successfully deleted.",
+        title: "Success",
+        description: "Transaction deleted successfully",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error?.message || "Failed to delete transaction",
+        variant: "destructive",
       });
     }
   });
