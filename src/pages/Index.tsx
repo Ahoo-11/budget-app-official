@@ -2,7 +2,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { PlusCircle, TrendingUp, DollarSign, CreditCard } from "lucide-react";
 import AddTransaction from "@/components/AddTransaction";
-import TransactionList from "@/components/TransactionList";
+import { TransactionList } from "@/components/TransactionList";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useTransactions } from "@/hooks/useTransactions";
 

@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import AddTransaction from "@/components/AddTransaction";
-import TransactionList from "@/components/TransactionList";
+import { TransactionList } from "@/components/TransactionList";
 import { useTransactions } from "@/hooks/useTransactions";
 import { Source } from "@/types/source";
 

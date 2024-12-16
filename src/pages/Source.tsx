@@ -1,7 +1,7 @@
 import { useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import AddTransaction from "@/components/AddTransaction";
-import TransactionList from "@/components/TransactionList";
+import { TransactionList } from "@/components/TransactionList";
 import { useTransactions } from "@/hooks/useTransactions";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
