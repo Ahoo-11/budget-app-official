@@ -1,23 +1,23 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Transaction } from "@/types/transaction";
-import { useUser } from "@supabase/auth-helpers-react";
+import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/components/ui/use-toast";
 
 export const useTransactions = (source_id?: string) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const user = useUser();
+  const session = useSession();
 
   const { data: transactions = [], isLoading } = useQuery({
     queryKey: ['transactions', source_id],
     queryFn: async () => {
-      if (!user?.id) return [];
+      if (!session?.user?.id) return [];
       
       let query = supabase
         .from('transactions')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', session.user.id)
         .order('date', { ascending: false });
 
       if (source_id) {
@@ -36,18 +36,18 @@ export const useTransactions = (source_id?: string) => {
       }
       return data as Transaction[];
     },
-    enabled: !!user?.id
+    enabled: !!session?.user?.id
   });
 
   const addTransactionMutation = useMutation({
     mutationFn: async (transaction: Omit<Transaction, 'id' | 'created_at'>) => {
-      if (!user) {
+      if (!session?.user?.id) {
         throw new Error("You must be logged in to add transactions");
       }
 
       const { data, error } = await supabase
         .from('transactions')
-        .insert([{ ...transaction, user_id: user.id }])
+        .insert([{ ...transaction, user_id: session.user.id }])
         .select()
         .single();
 
@@ -75,7 +75,7 @@ export const useTransactions = (source_id?: string) => {
 
   const deleteTransactionMutation = useMutation({
     mutationFn: async (id: string) => {
-      if (!user) {
+      if (!session?.user?.id) {
         throw new Error("You must be logged in to delete transactions");
       }
 
@@ -83,7 +83,7 @@ export const useTransactions = (source_id?: string) => {
         .from('transactions')
         .delete()
         .eq('id', id)
-        .eq('user_id', user.id);
+        .eq('user_id', session.user.id);
       
       if (error) {
         throw new Error(error.message);

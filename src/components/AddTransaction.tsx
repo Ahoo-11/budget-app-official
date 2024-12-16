@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Transaction } from "@/types/transaction";
-import { useUser } from "@supabase/auth-helpers-react";
+import { useSession } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Source } from "@/types/source";
@@ -22,7 +22,7 @@ const AddTransaction = ({ isOpen, onClose, onAdd, source_id }: AddTransactionPro
   const [category, setCategory] = useState("");
   const [selectedSource, setSelectedSource] = useState(source_id || "");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const user = useUser();
+  const session = useSession();
   const { toast } = useToast();
 
   const { data: sources = [] } = useQuery({
@@ -36,13 +36,13 @@ const AddTransaction = ({ isOpen, onClose, onAdd, source_id }: AddTransactionPro
       if (error) throw error;
       return data as Source[];
     },
-    enabled: !!user
+    enabled: !!session?.user?.id
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!user) {
+    if (!session?.user?.id) {
       toast({
         title: "Authentication Error",
         description: "Please make sure you are logged in before adding transactions.",
@@ -60,7 +60,7 @@ const AddTransaction = ({ isOpen, onClose, onAdd, source_id }: AddTransactionPro
         category,
         date: new Date().toISOString(),
         source_id: source_id || selectedSource,
-        user_id: user.id,
+        user_id: session.user.id,
       };
 
       await onAdd(transaction);
