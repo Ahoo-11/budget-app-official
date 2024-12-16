@@ -1,6 +1,13 @@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Loader2, CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 interface TransactionFormProps {
   description: string;
@@ -9,6 +16,8 @@ interface TransactionFormProps {
   setAmount: (amount: string) => void;
   category: string;
   setCategory: (category: string) => void;
+  date: Date;
+  setDate: (date: Date) => void;
   isSubmitting: boolean;
 }
 
@@ -19,6 +28,8 @@ export const TransactionForm = ({
   setAmount,
   category,
   setCategory,
+  date,
+  setDate,
   isSubmitting,
 }: TransactionFormProps) => {
   return (
@@ -62,6 +73,30 @@ export const TransactionForm = ({
           required
           disabled={isSubmitting}
         />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium mb-2">Date</label>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              className="w-full justify-start text-left font-normal"
+              disabled={isSubmitting}
+            >
+              <CalendarIcon className="mr-2 h-4 w-4" />
+              {format(date, "PPP")}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0">
+            <Calendar
+              mode="single"
+              selected={date}
+              onSelect={(date) => date && setDate(date)}
+              initialFocus
+            />
+          </PopoverContent>
+        </Popover>
       </div>
 
       <Button

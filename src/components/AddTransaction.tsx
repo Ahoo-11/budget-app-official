@@ -20,6 +20,7 @@ const AddTransaction = ({ isOpen, onClose, onAdd, source_id }: AddTransactionPro
   const [type, setType] = useState<"income" | "expense">("expense");
   const [category, setCategory] = useState("");
   const [selectedSource, setSelectedSource] = useState(source_id || "");
+  const [date, setDate] = useState(new Date());
   const [isSubmitting, setIsSubmitting] = useState(false);
   const session = useSession();
   const { toast } = useToast();
@@ -43,7 +44,7 @@ const AddTransaction = ({ isOpen, onClose, onAdd, source_id }: AddTransactionPro
         amount: parseFloat(amount),
         type,
         category,
-        date: new Date().toISOString(),
+        date: date.toISOString(),
         source_id: source_id || selectedSource,
         user_id: session.user.id,
       };
@@ -56,6 +57,7 @@ const AddTransaction = ({ isOpen, onClose, onAdd, source_id }: AddTransactionPro
       setType("expense");
       setCategory("");
       setSelectedSource(source_id || "");
+      setDate(new Date());
       
       toast({
         title: "Success",
@@ -100,6 +102,8 @@ const AddTransaction = ({ isOpen, onClose, onAdd, source_id }: AddTransactionPro
               setAmount={setAmount}
               category={category}
               setCategory={setCategory}
+              date={date}
+              setDate={setDate}
               isSubmitting={isSubmitting}
             />
           </form>

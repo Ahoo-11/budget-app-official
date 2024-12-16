@@ -2,6 +2,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Transaction } from "@/types/transaction";
 import { ArrowUpRight, ArrowDownRight, Trash2, Edit } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { format } from "date-fns";
 
 interface TransactionListProps {
   transactions: Transaction[];
@@ -62,6 +63,9 @@ const TransactionList = ({ transactions, onDelete }: TransactionListProps) => {
                   <p className="font-medium">{transaction.description}</p>
                   <p className="text-sm text-muted-foreground">
                     {transaction.category}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {format(new Date(transaction.date), "PPP")}
                   </p>
                 </div>
               </div>
