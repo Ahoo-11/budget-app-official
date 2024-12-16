@@ -1,12 +1,42 @@
+import { useQuery } from "@tanstack/react-query";
+import { useSession } from "@supabase/auth-helpers-react";
+import { supabase } from "@/integrations/supabase/client";
 import AddTransaction from "@/components/AddTransaction";
 import TransactionList from "@/components/TransactionList";
 import { useTransactions } from "@/hooks/useTransactions";
+import { Source } from "@/types/source";
 
 export default function Personal() {
-  const { transactions, isLoading, addTransaction, deleteTransaction } = useTransactions('personal');
+  const session = useSession();
 
-  if (isLoading) {
+  // First fetch the personal source
+  const { data: personalSource, isLoading: isLoadingSource } = useQuery({
+    queryKey: ['personal-source'],
+    queryFn: async () => {
+      if (!session?.user?.id) return null;
+      
+      const { data, error } = await supabase
+        .from('sources')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .eq('name', 'Personal')
+        .single();
+      
+      if (error) throw error;
+      return data as Source;
+    },
+    enabled: !!session?.user?.id
+  });
+
+  // Then use the personal source ID to fetch transactions
+  const { transactions, isLoading: isLoadingTransactions, addTransaction, deleteTransaction } = useTransactions(personalSource?.id);
+
+  if (isLoadingSource || isLoadingTransactions) {
     return <div>Loading...</div>;
+  }
+
+  if (!personalSource) {
+    return <div>Personal source not found</div>;
   }
 
   return (
@@ -17,7 +47,7 @@ export default function Personal() {
           isOpen={true}
           onClose={() => {}}
           onAdd={addTransaction}
-          source_id="personal"
+          source_id={personalSource.id}
         />
       </div>
       <TransactionList
