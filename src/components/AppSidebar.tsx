@@ -112,20 +112,22 @@ export function AppSidebar() {
               Personal
             </Button>
           </Link>
-          {sources.map((source) => (
-            <div key={source.id} className="flex items-center">
-              <Link 
-                to={`/source/${source.id}`}
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="flex-1"
-              >
-                <Button variant="ghost" className="w-full justify-start">
-                  <User className="mr-2 h-4 w-4" />
-                  {source.name}
-                </Button>
-              </Link>
-              <SourceActions sourceId={source.id} sourceName={source.name} />
-            </div>
+          {sources
+            .filter(source => source.name.toLowerCase() !== 'personal')
+            .map((source) => (
+              <div key={source.id} className="flex items-center">
+                <Link 
+                  to={`/source/${source.id}`}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex-1"
+                >
+                  <Button variant="ghost" className="w-full justify-start">
+                    <User className="mr-2 h-4 w-4" />
+                    {source.name}
+                  </Button>
+                </Link>
+                <SourceActions sourceId={source.id} sourceName={source.name} />
+              </div>
           ))}
           <Button 
             variant="ghost" 
