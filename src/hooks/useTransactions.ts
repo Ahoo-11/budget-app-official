@@ -47,23 +47,17 @@ export const useTransactions = (source_id?: string) => {
 
       const { data, error } = await supabase
         .from('transactions')
-        .insert([transaction])
+        .insert([{ ...transaction, user_id: user.id }])
         .select()
         .single();
 
       if (error) {
-        // Handle Supabase error
         throw new Error(error.message);
-      }
-
-      if (!data) {
-        throw new Error("Failed to create transaction");
       }
 
       return data;
     },
     onSuccess: () => {
-      // Invalidate queries after successful mutation
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       toast({
         title: "Success",
@@ -71,10 +65,9 @@ export const useTransactions = (source_id?: string) => {
       });
     },
     onError: (error: Error) => {
-      console.error('Error adding transaction:', error);
       toast({
         title: "Error adding transaction",
-        description: error.message || "Failed to add transaction. Please try again.",
+        description: error.message,
         variant: "destructive",
       });
     }
@@ -89,7 +82,8 @@ export const useTransactions = (source_id?: string) => {
       const { error } = await supabase
         .from('transactions')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .eq('user_id', user.id);
       
       if (error) {
         throw new Error(error.message);
@@ -105,7 +99,7 @@ export const useTransactions = (source_id?: string) => {
     onError: (error: Error) => {
       toast({
         title: "Error deleting transaction",
-        description: error.message || "Failed to delete transaction",
+        description: error.message,
         variant: "destructive",
       });
     }

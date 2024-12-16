@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Source } from "@/types/source";
 import { Loader2 } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
 
 interface AddTransactionProps {
   isOpen: boolean;
@@ -22,6 +23,7 @@ const AddTransaction = ({ isOpen, onClose, onAdd, source_id }: AddTransactionPro
   const [selectedSource, setSelectedSource] = useState(source_id || "");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const user = useUser();
+  const { toast } = useToast();
 
   const { data: sources = [] } = useQuery({
     queryKey: ['sources'],
@@ -33,12 +35,21 @@ const AddTransaction = ({ isOpen, onClose, onAdd, source_id }: AddTransactionPro
       
       if (error) throw error;
       return data as Source[];
-    }
+    },
+    enabled: !!user
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
+    
+    if (!user) {
+      toast({
+        title: "Authentication Error",
+        description: "Please make sure you are logged in before adding transactions.",
+        variant: "destructive"
+      });
+      return;
+    }
     
     setIsSubmitting(true);
     try {
@@ -61,11 +72,21 @@ const AddTransaction = ({ isOpen, onClose, onAdd, source_id }: AddTransactionPro
       setCategory("");
       setSelectedSource(source_id || "");
       
+      toast({
+        title: "Success",
+        description: "Transaction added successfully",
+      });
+      
       if (onClose) {
         onClose();
       }
     } catch (error) {
       console.error("Failed to add transaction:", error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to add transaction",
+        variant: "destructive"
+      });
     } finally {
       setIsSubmitting(false);
     }
