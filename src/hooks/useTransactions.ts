@@ -13,6 +13,7 @@ export const useTransactions = (source_id?: string) => {
     queryKey: ['transactions', source_id],
     queryFn: async () => {
       if (!user?.id) return [];
+      
       let query = supabase
         .from('transactions')
         .select('*')
@@ -49,24 +50,31 @@ export const useTransactions = (source_id?: string) => {
         .insert([transaction])
         .select()
         .single();
-      
+
       if (error) {
-        throw error;
+        // Handle Supabase error
+        throw new Error(error.message);
       }
+
+      if (!data) {
+        throw new Error("Failed to create transaction");
+      }
+
       return data;
     },
     onSuccess: () => {
+      // Invalidate queries after successful mutation
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       toast({
         title: "Success",
         description: "Transaction added successfully",
       });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       console.error('Error adding transaction:', error);
       toast({
-        title: "Error",
-        description: error?.message || "Failed to add transaction. Please try again.",
+        title: "Error adding transaction",
+        description: error.message || "Failed to add transaction. Please try again.",
         variant: "destructive",
       });
     }
@@ -83,7 +91,9 @@ export const useTransactions = (source_id?: string) => {
         .delete()
         .eq('id', id);
       
-      if (error) throw error;
+      if (error) {
+        throw new Error(error.message);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
@@ -92,10 +102,10 @@ export const useTransactions = (source_id?: string) => {
         description: "Transaction deleted successfully",
       });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
-        title: "Error",
-        description: error?.message || "Failed to delete transaction",
+        title: "Error deleting transaction",
+        description: error.message || "Failed to delete transaction",
         variant: "destructive",
       });
     }
