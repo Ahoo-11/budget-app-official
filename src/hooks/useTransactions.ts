@@ -45,16 +45,24 @@ export const useTransactions = (source_id?: string) => {
         throw new Error("You must be logged in to add transactions");
       }
 
-      // Clean up the transaction object by removing empty string values for UUID fields
+      // Validate amount
+      const parsedAmount = parseFloat(transaction.amount.toString());
+      if (isNaN(parsedAmount)) {
+        throw new Error("Invalid amount value");
+      }
+
+      // Clean up the transaction object
       const cleanTransaction = {
         ...transaction,
+        amount: parsedAmount,
         category_id: transaction.category_id || null,
         payer_id: transaction.payer_id || null,
+        user_id: session.user.id,
       };
 
       const { data, error } = await supabase
         .from('transactions')
-        .insert([{ ...cleanTransaction, user_id: session.user.id }])
+        .insert([cleanTransaction])
         .select()
         .single();
 
