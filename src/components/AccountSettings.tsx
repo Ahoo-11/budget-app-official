@@ -2,6 +2,7 @@ import { Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeSelector } from "./settings/ThemeSelector";
 import { CategoryManager } from "./settings/CategoryManager";
+import { PayerManager } from "./settings/PayerManager";
 import { useNavigate } from "react-router-dom";
 
 export function AccountSettings() {
@@ -18,6 +19,7 @@ export function AccountSettings() {
       <div className="space-y-6">
         <ThemeSelector />
         <CategoryManager />
+        <PayerManager />
       </div>
     </div>
   );
