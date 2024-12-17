@@ -5,9 +5,11 @@ import AddTransaction from "@/components/AddTransaction";
 import { TransactionList } from "@/components/TransactionList";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useTransactions } from "@/hooks/useTransactions";
+import { Transaction } from "@/types/transaction";
 
 const Index = () => {
   const [isAddingTransaction, setIsAddingTransaction] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const { transactions, isLoading, addTransaction, deleteTransaction } = useTransactions();
 
   const totalExpenses = transactions.reduce(
@@ -19,6 +21,11 @@ const Index = () => {
     (sum, t) => (t.type === "income" ? sum + Number(t.amount) : sum),
     0
   );
+
+  const handleEdit = (transaction: Transaction) => {
+    setEditingTransaction(transaction);
+    setIsAddingTransaction(true);
+  };
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -118,17 +125,24 @@ const Index = () => {
         <TransactionList 
           transactions={transactions} 
           onDelete={deleteTransaction}
+          onEdit={handleEdit}
         />
 
         <Dialog open={isAddingTransaction} onOpenChange={setIsAddingTransaction}>
           <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Add Transaction</DialogTitle>
+              <DialogTitle>
+                {editingTransaction ? 'Edit Transaction' : 'Add Transaction'}
+              </DialogTitle>
             </DialogHeader>
             <AddTransaction
               isOpen={isAddingTransaction}
-              onClose={() => setIsAddingTransaction(false)}
+              onClose={() => {
+                setIsAddingTransaction(false);
+                setEditingTransaction(null);
+              }}
               onAdd={addTransaction}
+              editingTransaction={editingTransaction}
             />
           </DialogContent>
         </Dialog>
