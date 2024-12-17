@@ -45,9 +45,16 @@ export const useTransactions = (source_id?: string) => {
         throw new Error("You must be logged in to add transactions");
       }
 
+      // Clean up the transaction object by removing empty string values for UUID fields
+      const cleanTransaction = {
+        ...transaction,
+        category_id: transaction.category_id || null,
+        payer_id: transaction.payer_id || null,
+      };
+
       const { data, error } = await supabase
         .from('transactions')
-        .insert([{ ...transaction, user_id: session.user.id }])
+        .insert([{ ...cleanTransaction, user_id: session.user.id }])
         .select()
         .single();
 
