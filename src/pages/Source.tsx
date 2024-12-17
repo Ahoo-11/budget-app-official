@@ -6,9 +6,14 @@ import { useTransactions } from "@/hooks/useTransactions";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Source as SourceType } from "@/types/source";
+import { Transaction } from "@/types/transaction";
+import { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const Source = () => {
   const { sourceId } = useParams();
+  const [isAddingTransaction, setIsAddingTransaction] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const { transactions, isLoading, addTransaction, deleteTransaction } = useTransactions(sourceId);
 
   const { data: source } = useQuery({
@@ -25,6 +30,11 @@ const Source = () => {
     }
   });
 
+  const handleEdit = (transaction: Transaction) => {
+    setEditingTransaction(transaction);
+    setIsAddingTransaction(true);
+  };
+
   if (isLoading) {
     return <div>Loading...</div>;
   }
@@ -38,12 +48,34 @@ const Source = () => {
           onClose={() => {}}
           onAdd={addTransaction}
           source_id={sourceId}
+          editingTransaction={editingTransaction}
         />
       </div>
       <TransactionList
         transactions={transactions}
         onDelete={deleteTransaction}
+        onEdit={handleEdit}
       />
+
+      <Dialog open={isAddingTransaction} onOpenChange={setIsAddingTransaction}>
+        <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {editingTransaction ? 'Edit Transaction' : 'Add Transaction'}
+            </DialogTitle>
+          </DialogHeader>
+          <AddTransaction
+            isOpen={isAddingTransaction}
+            onClose={() => {
+              setIsAddingTransaction(false);
+              setEditingTransaction(null);
+            }}
+            onAdd={addTransaction}
+            source_id={sourceId}
+            editingTransaction={editingTransaction}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

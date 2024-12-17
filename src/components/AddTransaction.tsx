@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Transaction } from "@/types/transaction";
 import { useSession } from "@supabase/auth-helpers-react";
@@ -14,9 +14,10 @@ interface AddTransactionProps {
   onClose: () => void;
   onAdd: (transaction: Omit<Transaction, 'id' | 'created_at'>) => void;
   source_id?: string;
+  editingTransaction?: Transaction | null;
 }
 
-const AddTransaction = ({ isOpen, onClose, onAdd, source_id }: AddTransactionProps) => {
+const AddTransaction = ({ isOpen, onClose, onAdd, source_id, editingTransaction }: AddTransactionProps) => {
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
   const [type, setType] = useState<"income" | "expense">("expense");
@@ -28,6 +29,20 @@ const AddTransaction = ({ isOpen, onClose, onAdd, source_id }: AddTransactionPro
   const [isSubmitting, setIsSubmitting] = useState(false);
   const session = useSession();
   const { toast } = useToast();
+
+  // Pre-fill form when editing
+  useEffect(() => {
+    if (editingTransaction) {
+      setDescription(editingTransaction.description);
+      setAmount(editingTransaction.amount.toString());
+      setType(editingTransaction.type as "income" | "expense");
+      setCategory(editingTransaction.category || "");
+      setSelectedSource(editingTransaction.source_id);
+      setSelectedPayer(editingTransaction.payer_id || "");
+      setSelectedCategory(editingTransaction.category_id || "");
+      setDate(new Date(editingTransaction.date));
+    }
+  }, [editingTransaction]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,7 +84,7 @@ const AddTransaction = ({ isOpen, onClose, onAdd, source_id }: AddTransactionPro
       
       toast({
         title: "Success",
-        description: "Transaction added successfully",
+        description: editingTransaction ? "Transaction updated successfully" : "Transaction added successfully",
       });
       
       if (onClose) {

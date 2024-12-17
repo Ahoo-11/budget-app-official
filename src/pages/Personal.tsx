@@ -5,9 +5,14 @@ import AddTransaction from "@/components/AddTransaction";
 import { TransactionList } from "@/components/TransactionList";
 import { useTransactions } from "@/hooks/useTransactions";
 import { Source } from "@/types/source";
+import { Transaction } from "@/types/transaction";
+import { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export default function Personal() {
   const session = useSession();
+  const [isAddingTransaction, setIsAddingTransaction] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
 
   // First fetch the personal source
   const { data: personalSource, isLoading: isLoadingSource } = useQuery({
@@ -31,6 +36,11 @@ export default function Personal() {
   // Then use the personal source ID to fetch transactions
   const { transactions, isLoading: isLoadingTransactions, addTransaction, deleteTransaction } = useTransactions(personalSource?.id);
 
+  const handleEdit = (transaction: Transaction) => {
+    setEditingTransaction(transaction);
+    setIsAddingTransaction(true);
+  };
+
   if (isLoadingSource || isLoadingTransactions) {
     return <div>Loading...</div>;
   }
@@ -42,18 +52,40 @@ export default function Personal() {
   return (
     <div className="container max-w-4xl mx-auto py-8 px-4 space-y-8">
       <div className="bg-white rounded-2xl shadow-sm border p-6">
-        <h2 className="text-2xl font-semibold mb-6">Add Transaction</h2>
+        <h2 className="text-2xl font-semibold mb-6">Personal Transactions</h2>
         <AddTransaction
           isOpen={true}
           onClose={() => {}}
           onAdd={addTransaction}
           source_id={personalSource.id}
+          editingTransaction={editingTransaction}
         />
       </div>
       <TransactionList
         transactions={transactions}
         onDelete={deleteTransaction}
+        onEdit={handleEdit}
       />
+
+      <Dialog open={isAddingTransaction} onOpenChange={setIsAddingTransaction}>
+        <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {editingTransaction ? 'Edit Transaction' : 'Add Transaction'}
+            </DialogTitle>
+          </DialogHeader>
+          <AddTransaction
+            isOpen={isAddingTransaction}
+            onClose={() => {
+              setIsAddingTransaction(false);
+              setEditingTransaction(null);
+            }}
+            onAdd={addTransaction}
+            source_id={personalSource.id}
+            editingTransaction={editingTransaction}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
