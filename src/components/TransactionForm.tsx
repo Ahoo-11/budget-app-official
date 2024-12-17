@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
+import { CategorySelector } from "@/components/CategorySelector";
 import {
   Popover,
   PopoverContent,
@@ -62,18 +63,10 @@ export const TransactionForm = ({
         />
       </div>
 
-      <div>
-        <label className="block text-sm font-medium mb-2">Category</label>
-        <Input
-          type="text"
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-          className="w-full p-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-success/20"
-          placeholder="Enter category"
-          required
-          disabled={isSubmitting}
-        />
-      </div>
+      <CategorySelector
+        selectedCategory={category}
+        setSelectedCategory={setCategory}
+      />
 
       <div>
         <label className="block text-sm font-medium mb-2">Date</label>
