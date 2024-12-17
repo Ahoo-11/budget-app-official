@@ -9,6 +9,42 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      categories: {
+        Row: {
+          id: string
+          name: string
+        }
+        Insert: {
+          id?: string
+          name: string
+        }
+        Update: {
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      payers: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       sources: {
         Row: {
           created_at: string
@@ -33,38 +69,58 @@ export type Database = {
       transactions: {
         Row: {
           amount: number
-          category: string
+          category: string | null
+          category_id: string | null
           created_at: string
           date: string
           description: string
           id: string
+          payer_id: string | null
           source_id: string
           type: string
           user_id: string
         }
         Insert: {
           amount: number
-          category: string
+          category?: string | null
+          category_id?: string | null
           created_at?: string
           date?: string
           description: string
           id?: string
+          payer_id?: string | null
           source_id: string
           type: string
           user_id: string
         }
         Update: {
           amount?: number
-          category?: string
+          category?: string | null
+          category_id?: string | null
           created_at?: string
           date?: string
           description?: string
           id?: string
+          payer_id?: string | null
           source_id?: string
           type?: string
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "transactions_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_payer_id_fkey"
+            columns: ["payer_id"]
+            isOneToOne: false
+            referencedRelation: "payers"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "transactions_source_id_fkey"
             columns: ["source_id"]

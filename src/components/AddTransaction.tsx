@@ -5,6 +5,8 @@ import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/components/ui/use-toast";
 import { TransactionTypeSelector } from "./TransactionTypeSelector";
 import { SourceSelector } from "./SourceSelector";
+import { PayerSelector } from "./PayerSelector";
+import { CategorySelector } from "./CategorySelector";
 import { TransactionForm } from "./TransactionForm";
 
 interface AddTransactionProps {
@@ -20,6 +22,8 @@ const AddTransaction = ({ isOpen, onClose, onAdd, source_id }: AddTransactionPro
   const [type, setType] = useState<"income" | "expense">("expense");
   const [category, setCategory] = useState("");
   const [selectedSource, setSelectedSource] = useState(source_id || "");
+  const [selectedPayer, setSelectedPayer] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("");
   const [date, setDate] = useState(new Date());
   const [isSubmitting, setIsSubmitting] = useState(false);
   const session = useSession();
@@ -44,6 +48,8 @@ const AddTransaction = ({ isOpen, onClose, onAdd, source_id }: AddTransactionPro
         amount: parseFloat(amount),
         type,
         category,
+        category_id: selectedCategory,
+        payer_id: selectedPayer,
         date: date.toISOString(),
         source_id: source_id || selectedSource,
         user_id: session.user.id,
@@ -57,6 +63,8 @@ const AddTransaction = ({ isOpen, onClose, onAdd, source_id }: AddTransactionPro
       setType("expense");
       setCategory("");
       setSelectedSource(source_id || "");
+      setSelectedPayer("");
+      setSelectedCategory("");
       setDate(new Date());
       
       toast({
@@ -94,6 +102,14 @@ const AddTransaction = ({ isOpen, onClose, onAdd, source_id }: AddTransactionPro
               selectedSource={selectedSource}
               setSelectedSource={setSelectedSource}
               source_id={source_id}
+            />
+            <PayerSelector
+              selectedPayer={selectedPayer}
+              setSelectedPayer={setSelectedPayer}
+            />
+            <CategorySelector
+              selectedCategory={selectedCategory}
+              setSelectedCategory={setSelectedCategory}
             />
             <TransactionForm
               description={description}
