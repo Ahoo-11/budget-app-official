@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Home, LogOut, Menu, Plus, User } from "lucide-react";
+import { Home, LogOut, Menu, Plus, User, Settings2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -143,7 +143,11 @@ export function AppSidebar() {
         </nav>
       </div>
       <div className="flex items-center space-x-2">
-        <AccountSettings />
+        <Link to="/settings">
+          <Button variant="outline" size="icon">
+            <Settings2 className="h-4 w-4" />
+          </Button>
+        </Link>
         <Button 
           variant="outline" 
           className="w-full justify-start" 

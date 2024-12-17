@@ -12,6 +12,7 @@ import Index from "./pages/Index";
 import Source from "./pages/Source";
 import Auth from "./pages/Auth";
 import Personal from "./pages/Personal";
+import { AccountSettings } from "./components/AccountSettings";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -73,6 +74,7 @@ export default function App() {
                               <Route path="/" element={<Index />} />
                               <Route path="/source/:sourceId" element={<Source />} />
                               <Route path="/personal" element={<Personal />} />
+                              <Route path="/settings" element={<AccountSettings />} />
                             </Routes>
                           </main>
                         </div>

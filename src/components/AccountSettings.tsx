@@ -1,32 +1,24 @@
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { Settings2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { ThemeSelector } from "./settings/ThemeSelector";
 import { CategoryManager } from "./settings/CategoryManager";
+import { useNavigate } from "react-router-dom";
 
 export function AccountSettings() {
+  const navigate = useNavigate();
+
   return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="icon">
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold">Account Settings</h2>
+        <Button variant="outline" size="icon" onClick={() => navigate(-1)}>
           <Settings2 className="h-4 w-4" />
         </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Account Settings</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-6 py-4">
-          <ThemeSelector />
-          <CategoryManager />
-        </div>
-      </DialogContent>
-    </Dialog>
+      </div>
+      <div className="space-y-6">
+        <ThemeSelector />
+        <CategoryManager />
+      </div>
+    </div>
   );
 }
