@@ -5,11 +5,10 @@ import { Link, useLocation } from "react-router-dom";
 import { Home, Settings, CreditCard } from "lucide-react";
 
 export function AppSidebar() {
-  const { state } = useSidebar();
+  const { isCollapsed } = useSidebar();
   const location = useLocation();
 
   const isActive = (path: string) => location.pathname === path;
-  const isCollapsed = state === "collapsed";
 
   return (
     <nav
