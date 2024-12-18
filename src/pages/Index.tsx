@@ -9,12 +9,13 @@ import { Transaction } from "@/types/transaction";
 import { DatePickerWithRange } from "@/components/ui/date-range-picker";
 import { addDays } from "date-fns";
 import { SourceSelector } from "@/components/SourceSelector";
+import { DateRange } from "react-day-picker";
 
 const Index = () => {
   const [isAddingTransaction, setIsAddingTransaction] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [selectedSource, setSelectedSource] = useState("");
-  const [date, setDate] = useState({
+  const [date, setDate] = useState<DateRange>({
     from: addDays(new Date(), -30),
     to: new Date(),
   });
