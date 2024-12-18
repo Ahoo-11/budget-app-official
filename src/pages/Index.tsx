@@ -6,26 +6,44 @@ import { TransactionList } from "@/components/TransactionList";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useTransactions } from "@/hooks/useTransactions";
 import { Transaction } from "@/types/transaction";
+import { DatePickerWithRange } from "@/components/ui/date-range-picker";
+import { addDays } from "date-fns";
+import { SourceSelector } from "@/components/SourceSelector";
 
 const Index = () => {
   const [isAddingTransaction, setIsAddingTransaction] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+  const [selectedSource, setSelectedSource] = useState("");
+  const [date, setDate] = useState({
+    from: addDays(new Date(), -30),
+    to: new Date(),
+  });
+
   const { transactions, isLoading, addTransaction, updateTransaction, deleteTransaction } = useTransactions();
-
-  const totalExpenses = transactions.reduce(
-    (sum, t) => (t.type === "expense" ? sum + Number(t.amount) : sum),
-    0
-  );
-
-  const totalIncome = transactions.reduce(
-    (sum, t) => (t.type === "income" ? sum + Number(t.amount) : sum),
-    0
-  );
 
   const handleEdit = (transaction: Transaction) => {
     setEditingTransaction(transaction);
     setIsAddingTransaction(true);
   };
+
+  const filteredTransactions = transactions.filter((transaction) => {
+    const transactionDate = new Date(transaction.date);
+    const matchesDateRange = (!date.from || transactionDate >= date.from) && 
+                            (!date.to || transactionDate <= date.to);
+    const matchesSource = !selectedSource || transaction.source_id === selectedSource;
+    
+    return matchesDateRange && matchesSource;
+  });
+
+  const totalExpenses = filteredTransactions.reduce(
+    (sum, t) => (t.type === "expense" ? sum + Number(t.amount) : sum),
+    0
+  );
+
+  const totalIncome = filteredTransactions.reduce(
+    (sum, t) => (t.type === "income" ? sum + Number(t.amount) : sum),
+    0
+  );
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -56,6 +74,19 @@ const Index = () => {
             interface.
           </p>
         </header>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <div>
+            <label className="block text-sm font-medium mb-2">Date Range</label>
+            <DatePickerWithRange date={date} setDate={setDate} />
+          </div>
+          <div>
+            <SourceSelector
+              selectedSource={selectedSource}
+              setSelectedSource={setSelectedSource}
+            />
+          </div>
+        </div>
 
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           <motion.div
@@ -126,7 +157,7 @@ const Index = () => {
         </div>
 
         <TransactionList 
-          transactions={transactions} 
+          transactions={filteredTransactions} 
           onDelete={deleteTransaction}
           onEdit={handleEdit}
         />
