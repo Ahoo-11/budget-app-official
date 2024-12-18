@@ -10,7 +10,7 @@ import { Transaction } from "@/types/transaction";
 const Index = () => {
   const [isAddingTransaction, setIsAddingTransaction] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
-  const { transactions, isLoading, addTransaction, deleteTransaction } = useTransactions();
+  const { transactions, isLoading, addTransaction, updateTransaction, deleteTransaction } = useTransactions();
 
   const totalExpenses = transactions.reduce(
     (sum, t) => (t.type === "expense" ? sum + Number(t.amount) : sum),
@@ -114,7 +114,10 @@ const Index = () => {
         <div className="flex justify-between items-center">
           <h2 className="text-2xl font-semibold">Recent Transactions</h2>
           <button
-            onClick={() => setIsAddingTransaction(true)}
+            onClick={() => {
+              setEditingTransaction(null);
+              setIsAddingTransaction(true);
+            }}
             className="button-hover inline-flex items-center gap-2 bg-success text-white px-4 py-2 rounded-full"
           >
             <PlusCircle className="w-5 h-5" />
@@ -142,6 +145,7 @@ const Index = () => {
                 setEditingTransaction(null);
               }}
               onAdd={addTransaction}
+              onUpdate={updateTransaction}
               editingTransaction={editingTransaction}
             />
           </DialogContent>

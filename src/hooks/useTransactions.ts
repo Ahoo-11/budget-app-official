@@ -45,13 +45,11 @@ export const useTransactions = (source_id?: string) => {
         throw new Error("You must be logged in to add transactions");
       }
 
-      // Validate amount
       const parsedAmount = parseFloat(transaction.amount.toString());
       if (isNaN(parsedAmount)) {
         throw new Error("Invalid amount value");
       }
 
-      // Clean up the transaction object
       const cleanTransaction = {
         ...transaction,
         amount: parsedAmount,
@@ -82,6 +80,51 @@ export const useTransactions = (source_id?: string) => {
     onError: (error: Error) => {
       toast({
         title: "Error adding transaction",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  });
+
+  const updateTransactionMutation = useMutation({
+    mutationFn: async ({ id, ...transaction }: Transaction) => {
+      if (!session?.user?.id) {
+        throw new Error("You must be logged in to update transactions");
+      }
+
+      const parsedAmount = parseFloat(transaction.amount.toString());
+      if (isNaN(parsedAmount)) {
+        throw new Error("Invalid amount value");
+      }
+
+      const cleanTransaction = {
+        ...transaction,
+        amount: parsedAmount,
+        category_id: transaction.category_id || null,
+        payer_id: transaction.payer_id || null,
+        user_id: session.user.id,
+      };
+
+      const { error } = await supabase
+        .from('transactions')
+        .update(cleanTransaction)
+        .eq('id', id)
+        .eq('user_id', session.user.id);
+
+      if (error) {
+        throw new Error(error.message);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      toast({
+        title: "Success",
+        description: "Transaction updated successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error updating transaction",
         description: error.message,
         variant: "destructive",
       });
@@ -124,6 +167,7 @@ export const useTransactions = (source_id?: string) => {
     transactions,
     isLoading,
     addTransaction: addTransactionMutation.mutate,
+    updateTransaction: updateTransactionMutation.mutate,
     deleteTransaction: deleteTransactionMutation.mutate,
   };
 };

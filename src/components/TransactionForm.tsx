@@ -17,6 +17,7 @@ interface TransactionFormProps {
   date: Date;
   setDate: (date: Date) => void;
   isSubmitting: boolean;
+  isEditing?: boolean;
 }
 
 export const TransactionForm = ({
@@ -27,6 +28,7 @@ export const TransactionForm = ({
   date,
   setDate,
   isSubmitting,
+  isEditing = false,
 }: TransactionFormProps) => {
   return (
     <>
@@ -90,10 +92,10 @@ export const TransactionForm = ({
         {isSubmitting ? (
           <>
             <Loader2 className="w-4 h-4 animate-spin" />
-            Adding...
+            {isEditing ? "Updating..." : "Adding..."}
           </>
         ) : (
-          "Add Transaction"
+          isEditing ? "Update Transaction" : "Add Transaction"
         )}
       </Button>
     </>

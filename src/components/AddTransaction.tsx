@@ -13,11 +13,19 @@ interface AddTransactionProps {
   isOpen: boolean;
   onClose: () => void;
   onAdd: (transaction: Omit<Transaction, 'id' | 'created_at'>) => void;
+  onUpdate?: (transaction: Transaction) => void;
   source_id?: string;
   editingTransaction?: Transaction | null;
 }
 
-const AddTransaction = ({ isOpen, onClose, onAdd, source_id, editingTransaction }: AddTransactionProps) => {
+const AddTransaction = ({ 
+  isOpen, 
+  onClose, 
+  onAdd, 
+  onUpdate,
+  source_id, 
+  editingTransaction 
+}: AddTransactionProps) => {
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
   const [type, setType] = useState<"income" | "expense">("expense");
@@ -58,7 +66,7 @@ const AddTransaction = ({ isOpen, onClose, onAdd, source_id, editingTransaction 
     
     setIsSubmitting(true);
     try {
-      const transaction: Omit<Transaction, 'id' | 'created_at'> = {
+      const transactionData = {
         description,
         amount: parseFloat(amount),
         type,
@@ -70,7 +78,15 @@ const AddTransaction = ({ isOpen, onClose, onAdd, source_id, editingTransaction 
         user_id: session.user.id,
       };
 
-      await onAdd(transaction);
+      if (editingTransaction && onUpdate) {
+        await onUpdate({
+          ...transactionData,
+          id: editingTransaction.id,
+          created_at: editingTransaction.created_at,
+        });
+      } else {
+        await onAdd(transactionData);
+      }
       
       // Reset form
       setDescription("");
@@ -82,19 +98,14 @@ const AddTransaction = ({ isOpen, onClose, onAdd, source_id, editingTransaction 
       setSelectedCategory("");
       setDate(new Date());
       
-      toast({
-        title: "Success",
-        description: editingTransaction ? "Transaction updated successfully" : "Transaction added successfully",
-      });
-      
       if (onClose) {
         onClose();
       }
     } catch (error) {
-      console.error("Failed to add transaction:", error);
+      console.error("Failed to handle transaction:", error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to add transaction",
+        description: error instanceof Error ? error.message : "Failed to handle transaction",
         variant: "destructive"
       });
     } finally {
@@ -134,6 +145,7 @@ const AddTransaction = ({ isOpen, onClose, onAdd, source_id, editingTransaction 
               date={date}
               setDate={setDate}
               isSubmitting={isSubmitting}
+              isEditing={!!editingTransaction}
             />
           </form>
         </motion.div>
