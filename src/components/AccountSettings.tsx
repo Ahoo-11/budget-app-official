@@ -3,10 +3,32 @@ import { Button } from "@/components/ui/button";
 import { ThemeSelector } from "./settings/ThemeSelector";
 import { CategoryManager } from "./settings/CategoryManager";
 import { PayerManager } from "./settings/PayerManager";
+import { UserManagement } from "./settings/UserManagement";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 export function AccountSettings() {
   const navigate = useNavigate();
+
+  const { data: userRole } = useQuery({
+    queryKey: ['userRole'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .single();
+
+      if (error) throw error;
+      return data?.role;
+    }
+  });
+
+  const isAdmin = userRole === 'admin' || userRole === 'super_admin';
 
   return (
     <div className="space-y-6">
@@ -20,6 +42,7 @@ export function AccountSettings() {
         <ThemeSelector />
         <CategoryManager />
         <PayerManager />
+        {isAdmin && <UserManagement />}
       </div>
     </div>
   );
