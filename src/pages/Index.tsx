@@ -1,17 +1,17 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { PlusCircle, TrendingUp, DollarSign, CreditCard } from "lucide-react";
+import { addDays } from "date-fns";
+import { DateRange } from "react-day-picker";
 import AddTransaction from "@/components/AddTransaction";
 import { TransactionList } from "@/components/TransactionList";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useTransactions } from "@/hooks/useTransactions";
 import { Transaction } from "@/types/transaction";
-import { DateRange } from "react-day-picker";
-import { addDays } from "date-fns";
-import { SourceSelector } from "@/components/SourceSelector";
 import { Card } from "@/components/ui/card";
 import { DailyTransactionsChart } from "@/components/DailyTransactionsChart";
-import { DatePickerWithRange } from "@/components/ui/date-range-picker";
+import { StatsHeader } from "@/components/stats/StatsHeader";
+import { FiltersCard } from "@/components/stats/FiltersCard";
 
 const Index = () => {
   const [isAddingTransaction, setIsAddingTransaction] = useState(false);
@@ -78,26 +78,18 @@ const Index = () => {
           </p>
         </header>
 
-        <Card className="p-6">
-          <div className="grid gap-6 md:grid-cols-2 mb-6">
-            <div>
-              <label className="block text-sm font-medium mb-2">Date Range</label>
-              <DatePickerWithRange date={date} setDate={setDate} />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">Source</label>
-              <SourceSelector
-                selectedSource={selectedSource}
-                setSelectedSource={setSelectedSource}
-              />
-            </div>
-          </div>
-        </Card>
+        <StatsHeader />
+        
+        <FiltersCard
+          date={date}
+          setDate={setDate}
+          selectedSource={selectedSource}
+          setSelectedSource={setSelectedSource}
+        />
 
         <DailyTransactionsChart 
           transactions={filteredTransactions}
           dateRange={date}
-          onDateRangeChange={setDate}
         />
 
         <Card className="p-6">

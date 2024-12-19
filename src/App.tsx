@@ -9,6 +9,8 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { SessionContextProvider } from '@supabase/auth-helpers-react';
 import Index from "./pages/Index";
+import Types from "./pages/Types";
+import Reports from "./pages/Reports";
 import Source from "./pages/Source";
 import Auth from "./pages/Auth";
 import Personal from "./pages/Personal";
@@ -72,6 +74,8 @@ export default function App() {
                           <main className="flex-1 p-4 md:p-6 w-full md:ml-[200px]">
                             <Routes>
                               <Route path="/" element={<Index />} />
+                              <Route path="/types" element={<Types />} />
+                              <Route path="/reports" element={<Reports />} />
                               <Route path="/source/:sourceId" element={<Source />} />
                               <Route path="/personal" element={<Personal />} />
                               <Route path="/settings" element={<AccountSettings />} />
