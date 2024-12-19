@@ -145,7 +145,7 @@ const Index = () => {
                   <p className="text-2xl font-semibold">${totalIncome.toFixed(2)}</p>
                 </div>
               </div>
-            </div>
+            </motion.div>
           </div>
 
           <div className="flex justify-between items-center mb-6">
