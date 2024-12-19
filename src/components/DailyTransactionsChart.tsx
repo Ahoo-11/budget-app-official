@@ -1,12 +1,6 @@
 import { Transaction } from "@/types/transaction";
 import { Card } from "@/components/ui/card";
-import { DatePickerWithRange } from "@/components/ui/date-range-picker";
 import { DateRange } from "react-day-picker";
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
 import {
   Bar,
   BarChart,
@@ -27,7 +21,6 @@ interface DailyTransactionsChartProps {
 export const DailyTransactionsChart = ({
   transactions,
   dateRange,
-  onDateRangeChange,
 }: DailyTransactionsChartProps) => {
   const dailyData = transactions.reduce((acc: any[], transaction) => {
     const date = format(new Date(transaction.date), "yyyy-MM-dd");
@@ -80,10 +73,7 @@ export const DailyTransactionsChart = ({
 
   return (
     <Card className="p-6">
-      <div className="mb-6">
-        <h3 className="text-lg font-semibold mb-2">Daily Income vs Expenses</h3>
-        <DatePickerWithRange date={dateRange} setDate={onDateRangeChange} />
-      </div>
+      <h3 className="text-lg font-semibold mb-4">Daily Income vs Expenses</h3>
       <div className="h-[300px]">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={dailyData}>

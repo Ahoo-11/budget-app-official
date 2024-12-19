@@ -11,6 +11,7 @@ import { addDays } from "date-fns";
 import { SourceSelector } from "@/components/SourceSelector";
 import { Card } from "@/components/ui/card";
 import { DailyTransactionsChart } from "@/components/DailyTransactionsChart";
+import { DatePickerWithRange } from "@/components/ui/date-range-picker";
 
 const Index = () => {
   const [isAddingTransaction, setIsAddingTransaction] = useState(false);
@@ -77,14 +78,12 @@ const Index = () => {
           </p>
         </header>
 
-        <DailyTransactionsChart 
-          transactions={filteredTransactions}
-          dateRange={date}
-          onDateRangeChange={setDate}
-        />
-
         <Card className="p-6">
-          <div className="grid gap-4 md:grid-cols-2 mb-6">
+          <div className="grid gap-6 md:grid-cols-2 mb-6">
+            <div>
+              <label className="block text-sm font-medium mb-2">Date Range</label>
+              <DatePickerWithRange date={date} setDate={setDate} />
+            </div>
             <div>
               <label className="block text-sm font-medium mb-2">Source</label>
               <SourceSelector
@@ -93,7 +92,15 @@ const Index = () => {
               />
             </div>
           </div>
+        </Card>
 
+        <DailyTransactionsChart 
+          transactions={filteredTransactions}
+          dateRange={date}
+          onDateRangeChange={setDate}
+        />
+
+        <Card className="p-6">
           <div className="grid gap-6 sm:grid-cols-3 mb-8">
             <motion.div
               className="p-6 rounded-2xl bg-white shadow-sm border card-hover"
