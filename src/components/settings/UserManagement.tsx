@@ -33,21 +33,23 @@ export function UserManagement() {
   const { data: users = [], refetch } = useQuery({
     queryKey: ['users'],
     queryFn: async () => {
-      // First get all users
-      const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers();
-      if (authError) throw authError;
-
-      // Then get their roles
-      const { data: roles, error: rolesError } = await supabase
+      // Get all users from user_roles table
+      const { data: userRoles, error } = await supabase
         .from('user_roles')
-        .select('user_id, role');
-      if (rolesError) throw rolesError;
+        .select(`
+          user_id,
+          role,
+          users:user_id (
+            email
+          )
+        `);
 
-      // Combine the data
-      return authUsers.users.map(user => ({
-        id: user.id,
-        email: user.email,
-        role: roles?.find(r => r.user_id === user.id)?.role || 'viewer'
+      if (error) throw error;
+
+      return userRoles.map(record => ({
+        id: record.user_id,
+        email: record.users?.email,
+        role: record.role as UserRole
       }));
     }
   });
