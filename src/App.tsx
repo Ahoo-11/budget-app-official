@@ -54,8 +54,8 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
 export default function App() {
   return (
-    <SessionContextProvider supabaseClient={supabase}>
-      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+      <SessionContextProvider supabaseClient={supabase}>
         <QueryClientProvider client={queryClient}>
           <TooltipProvider>
             <Toaster />
@@ -86,7 +86,7 @@ export default function App() {
             </BrowserRouter>
           </TooltipProvider>
         </QueryClientProvider>
-      </ThemeProvider>
-    </SessionContextProvider>
+      </SessionContextProvider>
+    </ThemeProvider>
   );
 }
