@@ -14,6 +14,7 @@ import {
   XAxis,
   YAxis,
   Legend,
+  Tooltip,
 } from "recharts";
 import { format, parseISO } from "date-fns";
 
@@ -61,6 +62,22 @@ export const DailyTransactionsChart = ({
     },
   };
 
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-background border rounded-lg p-3 shadow-lg">
+          <p className="text-sm font-medium">{format(parseISO(label), "MMM dd, yyyy")}</p>
+          {payload.map((entry: any) => (
+            <p key={entry.name} className="text-sm" style={{ color: entry.color }}>
+              {entry.name}: ${entry.value.toFixed(2)}
+            </p>
+          ))}
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
     <Card className="p-6">
       <div className="mb-6">
@@ -68,16 +85,14 @@ export const DailyTransactionsChart = ({
         <DatePickerWithRange date={dateRange} setDate={onDateRangeChange} />
       </div>
       <div className="h-[300px]">
-        <ChartContainer config={chartConfig}>
+        <ResponsiveContainer width="100%" height="100%">
           <BarChart data={dailyData}>
             <XAxis
               dataKey="date"
               tickFormatter={(date) => format(parseISO(date), "MMM dd")}
             />
             <YAxis />
-            <ChartTooltip>
-              <ChartTooltipContent />
-            </ChartTooltip>
+            <Tooltip content={<CustomTooltip />} />
             <Legend />
             <Bar
               name="Income"
@@ -90,7 +105,7 @@ export const DailyTransactionsChart = ({
               fill={chartConfig.expense.color}
             />
           </BarChart>
-        </ChartContainer>
+        </ResponsiveContainer>
       </div>
     </Card>
   );
