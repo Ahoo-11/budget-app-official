@@ -22,7 +22,6 @@ type UserRole = 'super_admin' | 'admin' | 'viewer';
 
 interface User {
   id: string;
-  email: string;
   role?: UserRole;
 }
 
@@ -33,34 +32,17 @@ export function UserManagement() {
   const { data: users = [], refetch } = useQuery({
     queryKey: ['users'],
     queryFn: async () => {
-      // First get all user roles
       const { data: userRoles, error: rolesError } = await supabase
         .from('user_roles')
         .select('*');
 
       if (rolesError) throw rolesError;
 
-      // Then get user data for each role
-      const usersWithData = await Promise.all(
-        userRoles.map(async (userRole) => {
-          const { data: { user }, error: userError } = await supabase.auth.admin.getUserById(userRole.user_id);
-          if (userError) {
-            console.error('Error fetching user:', userError);
-            return {
-              id: userRole.user_id,
-              email: 'Unknown User',
-              role: userRole.role as UserRole
-            };
-          }
-          return {
-            id: userRole.user_id,
-            email: user?.email || 'Unknown User',
-            role: userRole.role as UserRole
-          };
-        })
-      );
-
-      return usersWithData;
+      // Map the user roles to our expected format
+      return userRoles.map(userRole => ({
+        id: userRole.user_id,
+        role: userRole.role as UserRole
+      }));
     }
   });
 
@@ -97,14 +79,14 @@ export function UserManagement() {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Email</TableHead>
+            <TableHead>User ID</TableHead>
             <TableHead>Role</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {users.map((user) => (
             <TableRow key={user.id}>
-              <TableCell>{user.email}</TableCell>
+              <TableCell>{user.id}</TableCell>
               <TableCell>
                 <Select
                   disabled={updating}
