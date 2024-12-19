@@ -6,10 +6,11 @@ import { TransactionList } from "@/components/TransactionList";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useTransactions } from "@/hooks/useTransactions";
 import { Transaction } from "@/types/transaction";
-import { DatePickerWithRange } from "@/components/ui/date-range-picker";
+import { DateRange } from "react-day-picker";
 import { addDays } from "date-fns";
 import { SourceSelector } from "@/components/SourceSelector";
-import { DateRange } from "react-day-picker";
+import { Card } from "@/components/ui/card";
+import { DailyTransactionsChart } from "@/components/DailyTransactionsChart";
 
 const Index = () => {
   const [isAddingTransaction, setIsAddingTransaction] = useState(false);
@@ -76,92 +77,97 @@ const Index = () => {
           </p>
         </header>
 
-        <div className="grid gap-4 md:grid-cols-2">
-          <div>
-            <label className="block text-sm font-medium mb-2">Date Range</label>
-            <DatePickerWithRange date={date} setDate={setDate} />
-          </div>
-          <div>
-            <SourceSelector
-              selectedSource={selectedSource}
-              setSelectedSource={setSelectedSource}
-            />
-          </div>
-        </div>
-
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          <motion.div
-            className="p-6 rounded-2xl bg-white shadow-sm border card-hover"
-            whileHover={{ y: -4 }}
-            transition={{ duration: 0.2 }}
-          >
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-xl bg-success/10">
-                <DollarSign className="w-6 h-6 text-success" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Total Balance</p>
-                <p className="text-2xl font-semibold">
-                  ${(totalIncome - totalExpenses).toFixed(2)}
-                </p>
-              </div>
-            </div>
-          </motion.div>
-
-          <motion.div
-            className="p-6 rounded-2xl bg-white shadow-sm border card-hover"
-            whileHover={{ y: -4 }}
-            transition={{ duration: 0.2 }}
-          >
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-xl bg-danger/10">
-                <CreditCard className="w-6 h-6 text-danger" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Total Expenses</p>
-                <p className="text-2xl font-semibold">
-                  ${totalExpenses.toFixed(2)}
-                </p>
-              </div>
-            </div>
-          </motion.div>
-
-          <motion.div
-            className="p-6 rounded-2xl bg-white shadow-sm border card-hover"
-            whileHover={{ y: -4 }}
-            transition={{ duration: 0.2 }}
-          >
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-xl bg-success/10">
-                <TrendingUp className="w-6 h-6 text-success" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Total Income</p>
-                <p className="text-2xl font-semibold">${totalIncome.toFixed(2)}</p>
-              </div>
-            </div>
-          </motion.div>
-        </div>
-
-        <div className="flex justify-between items-center">
-          <h2 className="text-2xl font-semibold">Recent Transactions</h2>
-          <button
-            onClick={() => {
-              setEditingTransaction(null);
-              setIsAddingTransaction(true);
-            }}
-            className="button-hover inline-flex items-center gap-2 bg-success text-white px-4 py-2 rounded-full"
-          >
-            <PlusCircle className="w-5 h-5" />
-            Add Transaction
-          </button>
-        </div>
-
-        <TransactionList 
-          transactions={filteredTransactions} 
-          onDelete={deleteTransaction}
-          onEdit={handleEdit}
+        <DailyTransactionsChart 
+          transactions={filteredTransactions}
+          dateRange={date}
+          onDateRangeChange={setDate}
         />
+
+        <Card className="p-6">
+          <div className="grid gap-4 md:grid-cols-2 mb-6">
+            <div>
+              <label className="block text-sm font-medium mb-2">Source</label>
+              <SourceSelector
+                selectedSource={selectedSource}
+                setSelectedSource={setSelectedSource}
+              />
+            </div>
+          </div>
+
+          <div className="grid gap-6 sm:grid-cols-3 mb-8">
+            <motion.div
+              className="p-6 rounded-2xl bg-white shadow-sm border card-hover"
+              whileHover={{ y: -4 }}
+              transition={{ duration: 0.2 }}
+            >
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-xl bg-success/10">
+                  <DollarSign className="w-6 h-6 text-success" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Total Balance</p>
+                  <p className="text-2xl font-semibold">
+                    ${(totalIncome - totalExpenses).toFixed(2)}
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+
+            <motion.div
+              className="p-6 rounded-2xl bg-white shadow-sm border card-hover"
+              whileHover={{ y: -4 }}
+              transition={{ duration: 0.2 }}
+            >
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-xl bg-danger/10">
+                  <CreditCard className="w-6 h-6 text-danger" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Total Expenses</p>
+                  <p className="text-2xl font-semibold">
+                    ${totalExpenses.toFixed(2)}
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+
+            <motion.div
+              className="p-6 rounded-2xl bg-white shadow-sm border card-hover"
+              whileHover={{ y: -4 }}
+              transition={{ duration: 0.2 }}
+            >
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-xl bg-success/10">
+                  <TrendingUp className="w-6 h-6 text-success" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Total Income</p>
+                  <p className="text-2xl font-semibold">${totalIncome.toFixed(2)}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-semibold">Recent Transactions</h2>
+            <button
+              onClick={() => {
+                setEditingTransaction(null);
+                setIsAddingTransaction(true);
+              }}
+              className="button-hover inline-flex items-center gap-2 bg-success text-white px-4 py-2 rounded-full"
+            >
+              <PlusCircle className="w-5 h-5" />
+              Add Transaction
+            </button>
+          </div>
+
+          <TransactionList 
+            transactions={filteredTransactions} 
+            onDelete={deleteTransaction}
+            onEdit={handleEdit}
+          />
+        </Card>
 
         <Dialog open={isAddingTransaction} onOpenChange={setIsAddingTransaction}>
           <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
