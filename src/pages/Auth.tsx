@@ -58,7 +58,8 @@ export default function AuthPage() {
         });
         navigate("/");
       }
-      if (event === 'RECOVERY_EMAIL_SENT') {
+      // Handle password reset email sent
+      if (event === 'PASSWORD_RECOVERY') {
         toast({
           title: "Email Sent",
           description: "If an account exists with this email, you will receive a recovery link",
