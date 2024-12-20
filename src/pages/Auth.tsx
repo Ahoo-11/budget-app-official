@@ -113,14 +113,6 @@ export default function AuthPage() {
                 },
               },
             }}
-            onError={(error) => {
-              console.error('Auth error:', error);
-              toast({
-                variant: "destructive",
-                title: "Authentication Error",
-                description: error.message || "An error occurred during authentication",
-              });
-            }}
           />
         </div>
       </div>
