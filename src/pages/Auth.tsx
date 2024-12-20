@@ -48,7 +48,7 @@ export default function AuthPage() {
       if (event === 'PASSWORD_RECOVERY') {
         toast({
           title: "Password Recovery",
-          description: "Check your email for the password reset link",
+          description: "If an account exists with this email, you will receive a password reset link",
         });
       }
       if (event === 'USER_UPDATED') {
@@ -87,7 +87,7 @@ export default function AuthPage() {
               }
             }}
             providers={["google"]}
-            redirectTo={`${window.location.origin}/auth/callback`}
+            redirectTo={window.location.origin}
             magicLink={false}
             localization={{
               variables: {
@@ -104,7 +104,7 @@ export default function AuthPage() {
                   button_label: "Send reset instructions",
                   loading_button_label: "Sending reset instructions...",
                   link_text: "Forgot your password?",
-                  confirmation_text: "Check your email for the password reset link",
+                  confirmation_text: "If an account exists with this email, you will receive a password reset link",
                 },
               },
             }}
