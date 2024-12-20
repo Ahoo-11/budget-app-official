@@ -66,7 +66,7 @@ export default function AuthPage() {
   // Get the current hostname
   const currentUrl = window.location.origin;
   // Remove 'preview--' from the URL if it exists
-  const redirectUrl = currentUrl.replace('preview--', '');
+  const redirectUrl = `${currentUrl.replace('preview--', '')}/auth/callback`;
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
