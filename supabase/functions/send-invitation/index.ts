@@ -14,7 +14,7 @@ serve(async (req) => {
   }
 
   try {
-    const { email } = await req.json();
+    const { email, role } = await req.json();
 
     // Send email using Resend
     const res = await fetch("https://api.resend.com/emails", {
@@ -29,7 +29,7 @@ serve(async (req) => {
         subject: "You've been invited to Expense Tracker",
         html: `
           <h1>Welcome to Expense Tracker!</h1>
-          <p>You've been invited to join Expense Tracker. Click the link below to accept the invitation:</p>
+          <p>You've been invited to join Expense Tracker as a ${role}. Click the link below to accept the invitation:</p>
           <p><a href="${req.headers.get("origin")}/auth">Accept Invitation</a></p>
         `,
       }),

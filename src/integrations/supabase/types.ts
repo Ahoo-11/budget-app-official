@@ -54,6 +54,36 @@ export type Database = {
         }
         Relationships: []
       }
+      invitations: {
+        Row: {
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          invited_by: string
+          role: Database["public"]["Enums"]["user_role_type"]
+          status: Database["public"]["Enums"]["invitation_status"]
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          expires_at?: string
+          id?: string
+          invited_by: string
+          role?: Database["public"]["Enums"]["user_role_type"]
+          status?: Database["public"]["Enums"]["invitation_status"]
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          invited_by?: string
+          role?: Database["public"]["Enums"]["user_role_type"]
+          status?: Database["public"]["Enums"]["invitation_status"]
+        }
+        Relationships: []
+      }
       payers: {
         Row: {
           created_at: string
@@ -236,6 +266,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
+      invitation_status: "pending" | "accepted" | "expired"
       user_role_type: "super_admin" | "admin" | "manager" | "viewer"
     }
     CompositeTypes: {
