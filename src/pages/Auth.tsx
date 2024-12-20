@@ -45,25 +45,18 @@ export default function AuthPage() {
       if (event === 'SIGNED_OUT') {
         navigate("/auth");
       }
-      if (event === 'TOKEN_REFRESHED') {
-        try {
-          const { data: { user }, error } = await supabase.auth.getUser();
-          if (error) {
-            console.error('Get user error:', error);
-            toast({
-              variant: "destructive",
-              title: "Authentication Error",
-              description: error.message,
-            });
-          }
-        } catch (error) {
-          console.error('Get user error:', error);
-          toast({
-            variant: "destructive",
-            title: "Authentication Error",
-            description: "Failed to refresh authentication",
-          });
-        }
+      if (event === 'PASSWORD_RECOVERY') {
+        toast({
+          title: "Password Recovery",
+          description: "Check your email for the password reset link",
+        });
+      }
+      if (event === 'USER_UPDATED') {
+        toast({
+          title: "Success",
+          description: "Your password has been updated",
+        });
+        navigate("/");
       }
     });
 
@@ -96,6 +89,25 @@ export default function AuthPage() {
             providers={["google"]}
             redirectTo={`${window.location.origin}/auth/callback`}
             magicLink={false}
+            localization={{
+              variables: {
+                sign_in: {
+                  email_label: "Email address",
+                  password_label: "Password",
+                  button_label: "Sign in",
+                  loading_button_label: "Signing in...",
+                  social_provider_text: "Sign in with {{provider}}",
+                  link_text: "Already have an account? Sign in",
+                },
+                forgotten_password: {
+                  email_label: "Email address",
+                  button_label: "Send reset instructions",
+                  loading_button_label: "Sending reset instructions...",
+                  link_text: "Forgot your password?",
+                  confirmation_text: "Check your email for the password reset link",
+                },
+              },
+            }}
           />
         </div>
       </div>
