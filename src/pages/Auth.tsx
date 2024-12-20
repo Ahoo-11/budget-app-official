@@ -63,10 +63,6 @@ export default function AuthPage() {
     return () => subscription.unsubscribe();
   }, [navigate, toast]);
 
-  // Get the current URL for redirect
-  const currentUrl = window.location.origin;
-  const redirectUrl = `${currentUrl}/auth/callback`;
-
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-8">
@@ -91,7 +87,7 @@ export default function AuthPage() {
               }
             }}
             providers={["google"]}
-            redirectTo={redirectUrl}
+            redirectTo={window.location.origin}
             magicLink={false}
             localization={{
               variables: {
