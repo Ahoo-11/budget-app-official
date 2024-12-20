@@ -47,22 +47,19 @@ export function InviteUserDialog({ onInviteSent }: { onInviteSent: () => void })
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No authenticated user");
 
-      // Send invitation using Supabase Auth
-      const { error: inviteError } = await supabase.auth.admin.inviteUserByEmail(inviteEmail);
-      if (inviteError) throw inviteError;
-
       // Create invitation record
       const { error: dbError } = await supabase
         .from('invitations')
         .insert({
           email: inviteEmail,
           role: inviteRole,
-          invited_by: user.id
+          invited_by: user.id,
+          status: 'pending'
         });
 
       if (dbError) throw dbError;
 
-      // If a source is selected, create source permission
+      // If a source is selected, store the source permission for later
       if (selectedSource && selectedSource !== 'none') {
         const { error: permissionError } = await supabase
           .from('source_permissions')
@@ -80,7 +77,7 @@ export function InviteUserDialog({ onInviteSent }: { onInviteSent: () => void })
 
       toast({
         title: "Success",
-        description: "Invitation sent successfully",
+        description: "Invitation created successfully",
       });
       setInviteEmail("");
       setInviteRole("viewer");
@@ -91,7 +88,7 @@ export function InviteUserDialog({ onInviteSent }: { onInviteSent: () => void })
       console.error('Invitation error:', error);
       toast({
         title: "Error",
-        description: "Failed to send invitation",
+        description: "Failed to create invitation",
         variant: "destructive",
       });
     }
