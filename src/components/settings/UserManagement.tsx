@@ -17,6 +17,7 @@ interface Invitation {
   role: UserRole;
   status: 'pending' | 'accepted' | 'expired';
   created_at: string;
+  password: string; // Added this field to match InvitationsTable interface
 }
 
 export function UserManagement() {
