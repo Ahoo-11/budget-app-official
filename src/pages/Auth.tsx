@@ -48,7 +48,7 @@ export default function AuthPage() {
       if (event === 'PASSWORD_RECOVERY') {
         toast({
           title: "Password Recovery",
-          description: "If an account exists with this email, you will receive a password reset link",
+          description: "Check your email for the password reset link",
         });
       }
       if (event === 'USER_UPDATED') {
@@ -109,9 +109,17 @@ export default function AuthPage() {
                   button_label: "Send reset instructions",
                   loading_button_label: "Sending reset instructions...",
                   link_text: "Forgot your password?",
-                  confirmation_text: "If an account exists with this email, you will receive a password reset link",
+                  confirmation_text: "Check your email for the password reset link",
                 },
               },
+            }}
+            onError={(error) => {
+              console.error('Auth error:', error);
+              toast({
+                variant: "destructive",
+                title: "Authentication Error",
+                description: error.message || "An error occurred during authentication",
+              });
             }}
           />
         </div>
