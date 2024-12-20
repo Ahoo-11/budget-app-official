@@ -34,6 +34,14 @@ export default function AuthPage() {
       if (event === 'SIGNED_OUT') {
         navigate("/auth");
       }
+      // Add specific error handling for auth state changes
+      if (event === 'USER_DELETED' || event === 'TOKEN_REFRESHED') {
+        toast({
+          variant: "destructive",
+          title: "Session Error",
+          description: "Please sign in again",
+        });
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -64,6 +72,7 @@ export default function AuthPage() {
             }}
             providers={["google"]}
             redirectTo={`${window.location.origin}/auth/callback`}
+            magicLink={false}
           />
         </div>
       </div>
