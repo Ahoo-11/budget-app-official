@@ -58,22 +58,14 @@ export default function AuthPage() {
         });
         navigate("/");
       }
-      // Handle password reset email sent
-      if (event === 'PASSWORD_RECOVERY') {
-        toast({
-          title: "Email Sent",
-          description: "If an account exists with this email, you will receive a recovery link",
-        });
-      }
     });
 
     return () => subscription.unsubscribe();
   }, [navigate, toast]);
 
-  // Get the current hostname
+  // Get the current URL for redirect
   const currentUrl = window.location.origin;
-  // Remove 'preview--' from the URL if it exists
-  const redirectUrl = `${currentUrl.replace('preview--', '')}/auth/callback`;
+  const redirectUrl = `${currentUrl}/auth/callback`;
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
