@@ -17,6 +17,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
+import { InviteUserForm } from "./InviteUserForm";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type UserRole = 'super_admin' | 'admin' | 'viewer';
 
@@ -38,7 +40,6 @@ export function UserManagement() {
 
       if (rolesError) throw rolesError;
 
-      // Map the user roles to our expected format
       return userRoles.map(userRole => ({
         id: userRole.user_id,
         role: userRole.role as UserRole
@@ -73,40 +74,48 @@ export function UserManagement() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-medium">User Management</h3>
-      </div>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>User ID</TableHead>
-            <TableHead>Role</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {users.map((user) => (
-            <TableRow key={user.id}>
-              <TableCell>{user.id}</TableCell>
-              <TableCell>
-                <Select
-                  disabled={updating}
-                  value={user.role}
-                  onValueChange={(value: UserRole) => handleRoleChange(user.id, value)}
-                >
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Select role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="viewer">Viewer</SelectItem>
-                    <SelectItem value="admin">Admin</SelectItem>
-                    <SelectItem value="super_admin">Super Admin</SelectItem>
-                  </SelectContent>
-                </Select>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+      <Tabs defaultValue="users" className="w-full">
+        <TabsList>
+          <TabsTrigger value="users">Current Users</TabsTrigger>
+          <TabsTrigger value="invite">Invite User</TabsTrigger>
+        </TabsList>
+        <TabsContent value="users">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>User ID</TableHead>
+                <TableHead>Role</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {users.map((user) => (
+                <TableRow key={user.id}>
+                  <TableCell>{user.id}</TableCell>
+                  <TableCell>
+                    <Select
+                      disabled={updating}
+                      value={user.role}
+                      onValueChange={(value: UserRole) => handleRoleChange(user.id, value)}
+                    >
+                      <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Select role" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="viewer">Viewer</SelectItem>
+                        <SelectItem value="admin">Admin</SelectItem>
+                        <SelectItem value="super_admin">Super Admin</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TabsContent>
+        <TabsContent value="invite">
+          <InviteUserForm />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
