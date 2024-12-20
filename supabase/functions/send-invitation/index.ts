@@ -24,7 +24,7 @@ serve(async (req) => {
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "Expense Tracker <onboarding@resend.dev>",
+        from: "Expense Tracker <noreply@budget-app-official.lovable.app>",
         to: [email],
         subject: "You've been invited to Expense Tracker",
         html: `
