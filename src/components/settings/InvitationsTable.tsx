@@ -24,8 +24,8 @@ export function InvitationsTable({ invitations }: { invitations: Invitation[] })
 
   const handleResendInvitation = async (email: string, role: string) => {
     try {
-      const { error } = await supabase.auth.admin.inviteUserByEmail(email, {
-        data: { role }
+      const { error } = await supabase.functions.invoke('resend-invitation', {
+        body: { email, role }
       });
 
       if (error) throw error;
