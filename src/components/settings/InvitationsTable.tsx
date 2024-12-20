@@ -40,7 +40,7 @@ export function InvitationsTable({ invitations }: { invitations: Invitation[] })
               {formatDistanceToNow(new Date(invitation.created_at), { addSuffix: true })}
             </TableCell>
           </TableRow>
-        )TableBody>
+        ))}
       </TableBody>
     </Table>
   );
