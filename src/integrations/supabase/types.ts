@@ -63,6 +63,7 @@ export type Database = {
           invited_by: string
           role: Database["public"]["Enums"]["user_role_type"]
           status: Database["public"]["Enums"]["invitation_status"]
+          updated_at: string | null
         }
         Insert: {
           created_at?: string
@@ -72,6 +73,7 @@ export type Database = {
           invited_by: string
           role?: Database["public"]["Enums"]["user_role_type"]
           status?: Database["public"]["Enums"]["invitation_status"]
+          updated_at?: string | null
         }
         Update: {
           created_at?: string
@@ -81,6 +83,7 @@ export type Database = {
           invited_by?: string
           role?: Database["public"]["Enums"]["user_role_type"]
           status?: Database["public"]["Enums"]["invitation_status"]
+          updated_at?: string | null
         }
         Relationships: []
       }
