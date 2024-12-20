@@ -36,6 +36,21 @@ serve(async (req) => {
       )
     }
 
+    // Get the sender's email from Resend account
+    const accountResponse = await fetch('https://api.resend.com/account', {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${RESEND_API_KEY}`,
+      },
+    });
+
+    if (!accountResponse.ok) {
+      throw new Error('Failed to get Resend account details');
+    }
+
+    const accountData = await accountResponse.json();
+    const senderEmail = accountData.email;
+
     // Send invitation email using Resend
     const emailResponse = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -44,7 +59,7 @@ serve(async (req) => {
         'Authorization': `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: 'Expense Tracker <onboarding@resend.dev>',
+        from: senderEmail,
         to: [email],
         subject: 'Invitation to Expense Tracker',
         html: `
