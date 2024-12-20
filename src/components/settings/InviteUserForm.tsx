@@ -52,7 +52,25 @@ export function InviteUserForm() {
     },
   });
 
+  const { data: user } = useQuery({
+    queryKey: ['current-user'],
+    queryFn: async () => {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error) throw error;
+      return user;
+    },
+  });
+
   const onSubmit = async (data: InviteFormData) => {
+    if (!user) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to invite users",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const { error } = await supabase
@@ -61,6 +79,7 @@ export function InviteUserForm() {
           email: data.email,
           role: data.role,
           source_id: data.source_id,
+          invited_by: user.id,
         });
 
       if (error) throw error;
