@@ -34,8 +34,8 @@ export default function AuthPage() {
       if (event === 'SIGNED_OUT') {
         navigate("/auth");
       }
-      // Add specific error handling for auth state changes
-      if (event === 'USER_DELETED' || event === 'TOKEN_REFRESHED') {
+      // Handle general authentication errors
+      if (event === 'TOKEN_REFRESHED') {
         toast({
           variant: "destructive",
           title: "Session Error",
