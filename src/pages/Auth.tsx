@@ -95,7 +95,7 @@ export default function AuthPage() {
             }}
             providers={["google"]}
             redirectTo={`${window.location.origin}/auth/callback`}
-            magicLink={true}
+            magicLink={false}
           />
         </div>
       </div>
