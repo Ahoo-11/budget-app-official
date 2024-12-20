@@ -29,6 +29,23 @@ export function InviteUserDialog({ onInviteSent }: { onInviteSent: () => void })
   const [selectedSource, setSelectedSource] = useState<string>("none");
   const [isOpen, setIsOpen] = useState(false);
 
+  const { data: userRole } = useQuery({
+    queryKey: ['userRole'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .single();
+
+      if (error) throw error;
+      return data?.role;
+    }
+  });
+
   const { data: sources = [] } = useQuery({
     queryKey: ['sources'],
     queryFn: async () => {
@@ -42,10 +59,34 @@ export function InviteUserDialog({ onInviteSent }: { onInviteSent: () => void })
     },
   });
 
+  const isAdmin = userRole === 'admin' || userRole === 'super_admin';
+
   const handleInviteUser = async () => {
     try {
+      if (!isAdmin) {
+        toast({
+          title: "Error",
+          description: "You don't have permission to invite users",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Create invitation record first
+      const { data: { user } } = await supabase.auth.getUser();
+      const { error: invitationError } = await supabase
+        .from('invitations')
+        .insert({
+          email: inviteEmail,
+          role: inviteRole,
+          invited_by: user?.id,
+          status: 'pending'
+        });
+
+      if (invitationError) throw invitationError;
+
       // Use Supabase's native invite feature
-      const { data, error } = await supabase.auth.admin.inviteUserByEmail(inviteEmail, {
+      const { error } = await supabase.auth.admin.inviteUserByEmail(inviteEmail, {
         data: {
           role: inviteRole,
           source_id: selectedSource !== 'none' ? selectedSource : null
@@ -59,7 +100,7 @@ export function InviteUserDialog({ onInviteSent }: { onInviteSent: () => void })
         const { error: permissionError } = await supabase
           .from('source_permissions')
           .insert({
-            user_id: data.user?.id,
+            user_id: user?.id,
             source_id: selectedSource,
             can_view: true,
             can_create: inviteRole !== 'viewer',
@@ -88,6 +129,10 @@ export function InviteUserDialog({ onInviteSent }: { onInviteSent: () => void })
       });
     }
   };
+
+  if (!isAdmin) {
+    return null;
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
