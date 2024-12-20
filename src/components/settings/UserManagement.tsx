@@ -17,7 +17,7 @@ interface Invitation {
   role: UserRole;
   status: 'pending' | 'accepted' | 'expired';
   created_at: string;
-  password: string; // Added this field to match InvitationsTable interface
+  password: string;
 }
 
 export function UserManagement() {
@@ -46,7 +46,12 @@ export function UserManagement() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as Invitation[];
+      
+      // Transform the data to include the default password
+      return (data || []).map(invitation => ({
+        ...invitation,
+        password: 'Welcome123!' // Add the default password to each invitation
+      })) as Invitation[];
     }
   });
 
