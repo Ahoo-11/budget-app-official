@@ -26,7 +26,7 @@ export function InviteUserDialog({ onInviteSent }: { onInviteSent: () => void })
   const { toast } = useToast();
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<UserRole>("viewer");
-  const [selectedSource, setSelectedSource] = useState<string>("");
+  const [selectedSource, setSelectedSource] = useState<string>("none");
   const [isOpen, setIsOpen] = useState(false);
 
   const { data: sources = [] } = useQuery({
@@ -63,7 +63,7 @@ export function InviteUserDialog({ onInviteSent }: { onInviteSent: () => void })
       if (dbError) throw dbError;
 
       // If a source is selected, create source permission
-      if (selectedSource) {
+      if (selectedSource && selectedSource !== 'none') {
         const { error: permissionError } = await supabase
           .from('source_permissions')
           .insert({
@@ -84,7 +84,7 @@ export function InviteUserDialog({ onInviteSent }: { onInviteSent: () => void })
       });
       setInviteEmail("");
       setInviteRole("viewer");
-      setSelectedSource("");
+      setSelectedSource("none");
       setIsOpen(false);
       onInviteSent();
     } catch (error) {
@@ -136,7 +136,7 @@ export function InviteUserDialog({ onInviteSent }: { onInviteSent: () => void })
                 <SelectValue placeholder="Select source (optional)" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">No source</SelectItem>
+                <SelectItem value="none">No source</SelectItem>
                 {sources.map((source) => (
                   <SelectItem key={source.id} value={source.id}>
                     {source.name}
