@@ -5,6 +5,7 @@ import { useToast } from "@/components/ui/use-toast";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -28,6 +29,7 @@ export function InviteUserDialog({ onInviteSent }: { onInviteSent: () => void })
   const [inviteRole, setInviteRole] = useState<UserRole>("viewer");
   const [selectedSource, setSelectedSource] = useState<string>("none");
   const [isOpen, setIsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const { data: userRole } = useQuery({
     queryKey: ['userRole'],
@@ -63,6 +65,7 @@ export function InviteUserDialog({ onInviteSent }: { onInviteSent: () => void })
 
   const handleInviteUser = async () => {
     try {
+      setIsLoading(true);
       if (!isAdmin) {
         toast({
           title: "Error",
@@ -74,42 +77,29 @@ export function InviteUserDialog({ onInviteSent }: { onInviteSent: () => void })
 
       // Create invitation record first
       const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No authenticated user");
+
       const { error: invitationError } = await supabase
         .from('invitations')
         .insert({
           email: inviteEmail,
           role: inviteRole,
-          invited_by: user?.id,
+          invited_by: user.id,
           status: 'pending'
         });
 
       if (invitationError) throw invitationError;
 
-      // Use Supabase's native invite feature
-      const { error } = await supabase.auth.admin.inviteUserByEmail(inviteEmail, {
-        data: {
+      // Call the edge function to send the invitation email
+      const { error: functionError } = await supabase.functions.invoke('send-invitation', {
+        body: { 
+          email: inviteEmail, 
           role: inviteRole,
-          source_id: selectedSource !== 'none' ? selectedSource : null
+          sourceId: selectedSource !== 'none' ? selectedSource : null
         }
       });
 
-      if (error) throw error;
-
-      // If a source is selected, store the source permission
-      if (selectedSource && selectedSource !== 'none') {
-        const { error: permissionError } = await supabase
-          .from('source_permissions')
-          .insert({
-            user_id: user?.id,
-            source_id: selectedSource,
-            can_view: true,
-            can_create: inviteRole !== 'viewer',
-            can_edit: inviteRole !== 'viewer',
-            can_delete: inviteRole === 'super_admin'
-          });
-
-        if (permissionError) throw permissionError;
-      }
+      if (functionError) throw functionError;
 
       toast({
         title: "Success",
@@ -127,6 +117,8 @@ export function InviteUserDialog({ onInviteSent }: { onInviteSent: () => void })
         description: "Failed to send invitation",
         variant: "destructive",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -145,6 +137,9 @@ export function InviteUserDialog({ onInviteSent }: { onInviteSent: () => void })
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Invite New User</DialogTitle>
+          <DialogDescription>
+            Send an invitation email to add a new user to the system.
+          </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="space-y-2">
@@ -182,8 +177,12 @@ export function InviteUserDialog({ onInviteSent }: { onInviteSent: () => void })
               </SelectContent>
             </Select>
           </div>
-          <Button onClick={handleInviteUser} className="w-full">
-            Send Invitation
+          <Button 
+            onClick={handleInviteUser} 
+            className="w-full"
+            disabled={isLoading}
+          >
+            {isLoading ? "Sending..." : "Send Invitation"}
           </Button>
         </div>
       </DialogContent>
