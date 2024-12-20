@@ -44,27 +44,22 @@ export function InviteUserDialog({ onInviteSent }: { onInviteSent: () => void })
 
   const handleInviteUser = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("No authenticated user");
-
-      // Create invitation record
-      const { error: dbError } = await supabase
-        .from('invitations')
-        .insert({
-          email: inviteEmail,
+      // Use Supabase's native invite feature
+      const { data, error } = await supabase.auth.admin.inviteUserByEmail(inviteEmail, {
+        data: {
           role: inviteRole,
-          invited_by: user.id,
-          status: 'pending'
-        });
+          source_id: selectedSource !== 'none' ? selectedSource : null
+        }
+      });
 
-      if (dbError) throw dbError;
+      if (error) throw error;
 
-      // If a source is selected, store the source permission for later
+      // If a source is selected, store the source permission
       if (selectedSource && selectedSource !== 'none') {
         const { error: permissionError } = await supabase
           .from('source_permissions')
           .insert({
-            user_id: user.id,
+            user_id: data.user?.id,
             source_id: selectedSource,
             can_view: true,
             can_create: inviteRole !== 'viewer',
@@ -74,13 +69,6 @@ export function InviteUserDialog({ onInviteSent }: { onInviteSent: () => void })
 
         if (permissionError) throw permissionError;
       }
-
-      // Send invitation email
-      const { error: emailError } = await supabase.functions.invoke('send-invitation', {
-        body: { email: inviteEmail, role: inviteRole }
-      });
-
-      if (emailError) throw emailError;
 
       toast({
         title: "Success",
