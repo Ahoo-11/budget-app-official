@@ -27,20 +27,22 @@ export default function AuthPage() {
     
     checkAuth();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session) {
         navigate("/");
       }
       if (event === 'SIGNED_OUT') {
         navigate("/auth");
       }
-      // Handle general authentication errors
       if (event === 'TOKEN_REFRESHED') {
-        toast({
-          variant: "destructive",
-          title: "Session Error",
-          description: "Please sign in again",
-        });
+        const { data: { user }, error } = await supabase.auth.getUser();
+        if (error) {
+          toast({
+            variant: "destructive",
+            title: "Authentication Error",
+            description: error.message,
+          });
+        }
       }
     });
 
@@ -73,6 +75,13 @@ export default function AuthPage() {
             providers={["google"]}
             redirectTo={`${window.location.origin}/auth/callback`}
             magicLink={false}
+            onError={(error) => {
+              toast({
+                variant: "destructive",
+                title: "Login Error",
+                description: error.message,
+              });
+            }}
           />
         </div>
       </div>
