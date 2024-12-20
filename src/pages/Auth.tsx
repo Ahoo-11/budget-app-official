@@ -63,6 +63,9 @@ export default function AuthPage() {
     return () => subscription.unsubscribe();
   }, [navigate, toast]);
 
+  // Construct the full redirect URL with the callback path
+  const redirectUrl = `${window.location.origin}/auth/callback`;
+
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-8">
@@ -87,7 +90,7 @@ export default function AuthPage() {
               }
             }}
             providers={["google"]}
-            redirectTo={window.location.origin}
+            redirectTo={redirectUrl}
             magicLink={false}
             localization={{
               variables: {
