@@ -34,7 +34,31 @@ serve(async (req) => {
       )
     }
 
-    // Send the invitation
+    // Check if user already exists
+    const { data: existingUser } = await supabaseClient.auth.admin.listUsers();
+    const userExists = existingUser.users.some(user => user.email === email);
+
+    if (userExists) {
+      // Update invitation status to accepted since user exists
+      const { error: updateError } = await supabaseClient
+        .from('invitations')
+        .update({ 
+          status: 'accepted',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', invitation.id)
+
+      if (updateError) {
+        throw updateError
+      }
+
+      return new Response(
+        JSON.stringify({ message: 'User already exists, invitation marked as accepted' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+      )
+    }
+
+    // If user doesn't exist, proceed with sending invitation
     const { error: inviteError } = await supabaseClient.auth.admin.inviteUserByEmail(email, {
       data: { role }
     })
@@ -61,6 +85,7 @@ serve(async (req) => {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     )
   } catch (error) {
+    console.error('Resend invitation error:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
