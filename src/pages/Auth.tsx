@@ -63,8 +63,19 @@ export default function AuthPage() {
     return () => subscription.unsubscribe();
   }, [navigate, toast]);
 
-  // Construct the full redirect URL with the callback path
-  const redirectUrl = `${window.location.origin}/auth/callback`;
+  // Get the current hostname
+  const hostname = window.location.hostname;
+  
+  // Determine if we're in preview mode
+  const isPreview = hostname.includes('preview--') || hostname.includes('lovableproject.com');
+  
+  // Construct the base URL without /auth
+  const baseUrl = window.location.origin;
+  
+  // Construct the callback URL
+  const redirectUrl = `${baseUrl}/auth/callback`;
+
+  console.log('Current redirect URL:', redirectUrl); // For debugging
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
