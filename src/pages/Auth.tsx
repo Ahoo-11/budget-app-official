@@ -11,23 +11,34 @@ export default function AuthPage() {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (error) {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error('Session check error:', error);
+          toast({
+            variant: "destructive",
+            title: "Authentication Error",
+            description: error.message,
+          });
+          return;
+        }
+        if (session) {
+          navigate("/");
+        }
+      } catch (error) {
+        console.error('Session check error:', error);
         toast({
           variant: "destructive",
           title: "Authentication Error",
-          description: error.message,
+          description: "Failed to check authentication status",
         });
-        return;
-      }
-      if (session) {
-        navigate("/");
       }
     };
     
     checkAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state changed:', event);
       if (event === 'SIGNED_IN' && session) {
         navigate("/");
       }
@@ -35,12 +46,22 @@ export default function AuthPage() {
         navigate("/auth");
       }
       if (event === 'TOKEN_REFRESHED') {
-        const { data: { user }, error } = await supabase.auth.getUser();
-        if (error) {
+        try {
+          const { data: { user }, error } = await supabase.auth.getUser();
+          if (error) {
+            console.error('Get user error:', error);
+            toast({
+              variant: "destructive",
+              title: "Authentication Error",
+              description: error.message,
+            });
+          }
+        } catch (error) {
+          console.error('Get user error:', error);
           toast({
             variant: "destructive",
             title: "Authentication Error",
-            description: error.message,
+            description: "Failed to refresh authentication",
           });
         }
       }
@@ -74,7 +95,7 @@ export default function AuthPage() {
             }}
             providers={["google"]}
             redirectTo={`${window.location.origin}/auth/callback`}
-            magicLink={false}
+            magicLink={true}
           />
         </div>
       </div>
