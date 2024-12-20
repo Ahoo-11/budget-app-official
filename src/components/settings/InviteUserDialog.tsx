@@ -30,6 +30,7 @@ export function InviteUserDialog({ onInviteSent }: { onInviteSent: () => void })
   const [selectedSource, setSelectedSource] = useState<string>("none");
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const defaultPassword = "Welcome123!"; // Default password for new users
 
   const { data: userRole } = useQuery({
     queryKey: ['userRole'],
@@ -61,21 +62,33 @@ export function InviteUserDialog({ onInviteSent }: { onInviteSent: () => void })
     },
   });
 
-  const isAdmin = userRole === 'admin' || userRole === 'super_admin';
+  const isSuperAdmin = userRole === 'super_admin';
 
-  const handleInviteUser = async () => {
+  const handleCreateUser = async () => {
     try {
       setIsLoading(true);
-      if (!isAdmin) {
+      if (!isSuperAdmin) {
         toast({
           title: "Error",
-          description: "You don't have permission to invite users",
+          description: "Only super admins can create users",
           variant: "destructive",
         });
         return;
       }
 
-      // Create invitation record first
+      // Create the user in Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: inviteEmail,
+        password: defaultPassword,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth`
+        }
+      });
+
+      if (authError) throw authError;
+      if (!authData.user) throw new Error("Failed to create user");
+
+      // Create invitation record
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No authenticated user");
 
@@ -85,25 +98,41 @@ export function InviteUserDialog({ onInviteSent }: { onInviteSent: () => void })
           email: inviteEmail,
           role: inviteRole,
           invited_by: user.id,
-          status: 'pending'
+          status: 'accepted',
+          password: defaultPassword
         });
 
       if (invitationError) throw invitationError;
 
-      // Call the edge function to send the invitation email
-      const { error: functionError } = await supabase.functions.invoke('send-invitation', {
-        body: { 
-          email: inviteEmail, 
-          role: inviteRole,
-          sourceId: selectedSource !== 'none' ? selectedSource : null
-        }
-      });
+      // Create user role
+      const { error: roleError } = await supabase
+        .from('user_roles')
+        .insert({
+          user_id: authData.user.id,
+          role: inviteRole
+        });
 
-      if (functionError) throw functionError;
+      if (roleError) throw roleError;
+
+      // If a source was selected, create source permission
+      if (selectedSource !== 'none') {
+        const { error: permissionError } = await supabase
+          .from('source_permissions')
+          .insert({
+            user_id: authData.user.id,
+            source_id: selectedSource,
+            can_view: true,
+            can_create: inviteRole !== 'viewer',
+            can_edit: inviteRole !== 'viewer',
+            can_delete: inviteRole === 'admin' || inviteRole === 'super_admin'
+          });
+
+        if (permissionError) throw permissionError;
+      }
 
       toast({
         title: "Success",
-        description: "Invitation sent successfully",
+        description: `User created successfully. Default password: ${defaultPassword}`,
       });
       setInviteEmail("");
       setInviteRole("viewer");
@@ -111,10 +140,10 @@ export function InviteUserDialog({ onInviteSent }: { onInviteSent: () => void })
       setIsOpen(false);
       onInviteSent();
     } catch (error) {
-      console.error('Invitation error:', error);
+      console.error('User creation error:', error);
       toast({
         title: "Error",
-        description: "Failed to send invitation",
+        description: "Failed to create user",
         variant: "destructive",
       });
     } finally {
@@ -122,7 +151,7 @@ export function InviteUserDialog({ onInviteSent }: { onInviteSent: () => void })
     }
   };
 
-  if (!isAdmin) {
+  if (!isSuperAdmin) {
     return null;
   }
 
@@ -131,14 +160,14 @@ export function InviteUserDialog({ onInviteSent }: { onInviteSent: () => void })
       <DialogTrigger asChild>
         <Button>
           <UserPlus className="mr-2 h-4 w-4" />
-          Invite User
+          Create User
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Invite New User</DialogTitle>
+          <DialogTitle>Create New User</DialogTitle>
           <DialogDescription>
-            Send an invitation email to add a new user to the system.
+            Create a new user with default password: {defaultPassword}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
@@ -178,11 +207,11 @@ export function InviteUserDialog({ onInviteSent }: { onInviteSent: () => void })
             </Select>
           </div>
           <Button 
-            onClick={handleInviteUser} 
+            onClick={handleCreateUser} 
             className="w-full"
             disabled={isLoading}
           >
-            {isLoading ? "Sending..." : "Send Invitation"}
+            {isLoading ? "Creating..." : "Create User"}
           </Button>
         </div>
       </DialogContent>
