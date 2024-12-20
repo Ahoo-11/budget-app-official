@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { UserPlus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 
 type UserRole = 'super_admin' | 'admin' | 'viewer';
 
@@ -25,19 +26,32 @@ export function InviteUserDialog({ onInviteSent }: { onInviteSent: () => void })
   const { toast } = useToast();
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<UserRole>("viewer");
+  const [selectedSource, setSelectedSource] = useState<string>("");
   const [isOpen, setIsOpen] = useState(false);
+
+  const { data: sources = [] } = useQuery({
+    queryKey: ['sources'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('sources')
+        .select('*')
+        .order('name');
+      
+      if (error) throw error;
+      return data;
+    },
+  });
 
   const handleInviteUser = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No authenticated user");
 
-      const { error } = await supabase.functions.invoke('send-invitation', {
-        body: { email: inviteEmail, role: inviteRole }
-      });
+      // Send invitation using Supabase Auth
+      const { error: inviteError } = await supabase.auth.admin.inviteUserByEmail(inviteEmail);
+      if (inviteError) throw inviteError;
 
-      if (error) throw error;
-
+      // Create invitation record
       const { error: dbError } = await supabase
         .from('invitations')
         .insert({
@@ -48,15 +62,33 @@ export function InviteUserDialog({ onInviteSent }: { onInviteSent: () => void })
 
       if (dbError) throw dbError;
 
+      // If a source is selected, create source permission
+      if (selectedSource) {
+        const { error: permissionError } = await supabase
+          .from('source_permissions')
+          .insert({
+            user_id: user.id,
+            source_id: selectedSource,
+            can_view: true,
+            can_create: inviteRole !== 'viewer',
+            can_edit: inviteRole !== 'viewer',
+            can_delete: inviteRole === 'super_admin'
+          });
+
+        if (permissionError) throw permissionError;
+      }
+
       toast({
         title: "Success",
         description: "Invitation sent successfully",
       });
       setInviteEmail("");
       setInviteRole("viewer");
+      setSelectedSource("");
       setIsOpen(false);
       onInviteSent();
     } catch (error) {
+      console.error('Invitation error:', error);
       toast({
         title: "Error",
         description: "Failed to send invitation",
@@ -95,6 +127,21 @@ export function InviteUserDialog({ onInviteSent }: { onInviteSent: () => void })
                 <SelectItem value="viewer">Viewer</SelectItem>
                 <SelectItem value="admin">Admin</SelectItem>
                 <SelectItem value="super_admin">Super Admin</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Select value={selectedSource} onValueChange={setSelectedSource}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select source (optional)" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">No source</SelectItem>
+                {sources.map((source) => (
+                  <SelectItem key={source.id} value={source.id}>
+                    {source.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
