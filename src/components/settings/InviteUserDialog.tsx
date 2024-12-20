@@ -75,9 +75,16 @@ export function InviteUserDialog({ onInviteSent }: { onInviteSent: () => void })
         if (permissionError) throw permissionError;
       }
 
+      // Send invitation email
+      const { error: emailError } = await supabase.functions.invoke('send-invitation', {
+        body: { email: inviteEmail, role: inviteRole }
+      });
+
+      if (emailError) throw emailError;
+
       toast({
         title: "Success",
-        description: "Invitation created successfully",
+        description: "Invitation sent successfully",
       });
       setInviteEmail("");
       setInviteRole("viewer");
@@ -88,7 +95,7 @@ export function InviteUserDialog({ onInviteSent }: { onInviteSent: () => void })
       console.error('Invitation error:', error);
       toast({
         title: "Error",
-        description: "Failed to create invitation",
+        description: "Failed to send invitation",
         variant: "destructive",
       });
     }
