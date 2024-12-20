@@ -36,40 +36,7 @@ serve(async (req) => {
       )
     }
 
-    // Check if user already exists
-    const { data: existingUser } = await supabaseClient.auth.admin.listUsers();
-    const userExists = existingUser.users.some(user => user.email === email);
-
-    if (userExists) {
-      // Update invitation status to accepted since user exists
-      const { error: updateError } = await supabaseClient
-        .from('invitations')
-        .update({ 
-          status: 'accepted',
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', invitation.id)
-
-      if (updateError) {
-        throw updateError
-      }
-
-      return new Response(
-        JSON.stringify({ message: 'User already exists, invitation marked as accepted' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
-      )
-    }
-
-    // If user doesn't exist, proceed with sending invitation
-    const { error: inviteError } = await supabaseClient.auth.admin.inviteUserByEmail(email, {
-      data: { role }
-    })
-
-    if (inviteError) {
-      throw inviteError
-    }
-
-    // Send email using Resend
+    // Send invitation email using Resend
     const emailResponse = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
