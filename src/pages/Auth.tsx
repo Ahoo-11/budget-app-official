@@ -64,13 +64,8 @@ export default function AuthPage() {
             }}
             providers={["google"]}
             redirectTo={`${window.location.origin}/auth/callback`}
-            onError={(error) => {
-              toast({
-                variant: "destructive",
-                title: "Authentication Error",
-                description: error.message,
-              });
-            }}
+            showLinks={false}
+            onlyThirdPartyProviders={true}
           />
         </div>
       </div>
