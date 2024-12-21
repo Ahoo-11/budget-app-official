@@ -1,8 +1,6 @@
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3'
 import { corsHeaders } from '../_shared/cors.ts'
 import { CreateUserPayload, ErrorResponse } from '../_shared/types.ts'
-import { getSupabaseAdmin } from '../_shared/supabase-admin.ts'
-
-console.log('Create user function initialized')
 
 Deno.serve(async (req) => {
   // Handle CORS
@@ -11,6 +9,17 @@ Deno.serve(async (req) => {
   }
 
   try {
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      }
+    )
+
     const payload = await req.json()
     console.log('Received payload:', JSON.stringify(payload, null, 2))
     
@@ -28,8 +37,7 @@ Deno.serve(async (req) => {
       )
     }
 
-    const { email, role, sourceId, password }: CreateUserPayload = payload
-    const supabaseAdmin = getSupabaseAdmin()
+    const { email, role, sourceId, password } = payload as CreateUserPayload
 
     try {
       // Step 1: Create auth user
