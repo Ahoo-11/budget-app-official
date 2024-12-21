@@ -1,5 +1,4 @@
-import { getSupabaseAdmin } from '../_shared/supabase-admin.ts'
-import { CreateUserPayload, ErrorResponse } from '../_shared/types.ts'
+import { getSupabaseAdmin } from '../_shared/supabase-client.ts'
 
 export async function createAuthUser(email: string, password: string) {
   const supabaseAdmin = getSupabaseAdmin()
