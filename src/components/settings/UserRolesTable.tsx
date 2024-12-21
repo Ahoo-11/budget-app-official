@@ -49,27 +49,26 @@ export function UserRolesTable({ users, onRoleUpdate }: {
 
       if (roleData?.role !== 'super_admin') return {};
 
-      // Fetch user profiles using RPC function
-      const { data: profiles, error } = await supabase
+      // Get all user IDs from user_roles
+      const { data: userRoles, error: rolesError } = await supabase
         .from('user_roles')
-        .select(`
-          user_id,
-          user:user_id (
-            email
-          )
-        `);
+        .select('user_id');
 
-      if (error) {
-        console.error('Error fetching user profiles:', error);
+      if (rolesError) {
+        console.error('Error fetching user roles:', rolesError);
         return {};
       }
 
-      return profiles.reduce((acc: Record<string, string>, profile: any) => {
-        if (profile.user?.email) {
-          acc[profile.user_id] = profile.user.email;
+      // Get user emails one by one (not ideal but works with current permissions)
+      const emailMap: Record<string, string> = {};
+      for (const { user_id } of userRoles) {
+        const { data: userData } = await supabase.auth.admin.getUserById(user_id);
+        if (userData?.user?.email) {
+          emailMap[user_id] = userData.user.email;
         }
-        return acc;
-      }, {});
+      }
+
+      return emailMap;
     }
   });
 
