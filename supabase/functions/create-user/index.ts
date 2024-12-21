@@ -8,8 +8,9 @@ interface CreateUserPayload {
   password: string;
 }
 
+console.log('Create user function initialized')
+
 Deno.serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -26,9 +27,8 @@ Deno.serve(async (req) => {
       }
     )
 
-    // Parse request body
     const { email, role, sourceId, password }: CreateUserPayload = await req.json()
-    console.log('Creating user with email:', email, 'and role:', role)
+    console.log('Creating user with email:', email)
 
     // Create user with Supabase Auth
     const { data: userData, error: userError } = await supabaseAdmin.auth.admin.createUser({
@@ -39,13 +39,12 @@ Deno.serve(async (req) => {
 
     if (userError) {
       console.error('Error creating auth user:', userError)
-      return new Response(
-        JSON.stringify({ error: 'Error creating auth user', details: userError.message }),
-        { 
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      )
+      throw new Error(`Error creating auth user: ${userError.message}`)
+    }
+
+    if (!userData.user) {
+      console.error('No user data returned')
+      throw new Error('No user data returned after creation')
     }
 
     console.log('User created successfully:', userData.user.id)
@@ -60,13 +59,7 @@ Deno.serve(async (req) => {
 
     if (roleError) {
       console.error('Error creating user role:', roleError)
-      return new Response(
-        JSON.stringify({ error: 'Error creating user role', details: roleError.message }),
-        { 
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      )
+      throw new Error(`Error creating user role: ${roleError.message}`)
     }
 
     console.log('User role created successfully')
@@ -81,13 +74,7 @@ Deno.serve(async (req) => {
 
     if (profileError) {
       console.error('Error creating profile:', profileError)
-      return new Response(
-        JSON.stringify({ error: 'Error creating profile', details: profileError.message }),
-        { 
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      )
+      throw new Error(`Error creating profile: ${profileError.message}`)
     }
 
     console.log('Profile created successfully')
@@ -107,13 +94,7 @@ Deno.serve(async (req) => {
 
       if (permissionError) {
         console.error('Error creating source permission:', permissionError)
-        return new Response(
-          JSON.stringify({ error: 'Error creating source permission', details: permissionError.message }),
-          { 
-            status: 400,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-          }
-        )
+        throw new Error(`Error creating source permission: ${permissionError.message}`)
       }
 
       console.log('Source permission created successfully')
@@ -130,10 +111,10 @@ Deno.serve(async (req) => {
       }
     )
   } catch (error) {
-    console.error('Unexpected error in create-user function:', error)
+    console.error('Error in create-user function:', error)
     return new Response(
       JSON.stringify({ 
-        error: `Unexpected error: ${error.message}` 
+        error: error.message || 'An unexpected error occurred',
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
