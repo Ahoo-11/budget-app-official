@@ -6,15 +6,13 @@ export const createUser = async (
   email: string, 
   role: UserRole, 
   sourceId: string | 'none',
-  defaultPassword: string
+  defaultPassword: string = 'Welcome123@'
 ) => {
   // Create the user in Supabase Auth
-  const { data: authData, error: authError } = await supabase.auth.signUp({
+  const { data: authData, error: authError } = await supabase.auth.admin.createUser({
     email,
     password: defaultPassword,
-    options: {
-      emailRedirectTo: `${window.location.origin}/auth`
-    }
+    email_confirm: true
   });
 
   if (authError) throw authError;

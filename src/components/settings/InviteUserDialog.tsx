@@ -31,7 +31,7 @@ export function InviteUserDialog({ onInviteSent }: { onInviteSent: () => void })
   const [selectedSource, setSelectedSource] = useState<string>("none");
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const defaultPassword = "Welcome123!"; // Default password for new users
+  const defaultPassword = "Welcome123@";
 
   const { data: userRole } = useQuery({
     queryKey: ['userRole'],
@@ -77,11 +77,20 @@ export function InviteUserDialog({ onInviteSent }: { onInviteSent: () => void })
         return;
       }
 
+      if (selectedSource === "none") {
+        toast({
+          title: "Error",
+          description: "Please select a source for the new user",
+          variant: "destructive",
+        });
+        return;
+      }
+
       await createUser(inviteEmail, inviteRole, selectedSource, defaultPassword);
 
       toast({
         title: "Success",
-        description: `User created successfully. Default password: ${defaultPassword}`,
+        description: `User created successfully. They can login with email: ${inviteEmail} and password: ${defaultPassword}`,
       });
       setInviteEmail("");
       setInviteRole("viewer");
@@ -141,12 +150,15 @@ export function InviteUserDialog({ onInviteSent }: { onInviteSent: () => void })
             </Select>
           </div>
           <div className="space-y-2">
-            <Select value={selectedSource} onValueChange={setSelectedSource}>
+            <Select 
+              value={selectedSource} 
+              onValueChange={setSelectedSource}
+              required
+            >
               <SelectTrigger>
-                <SelectValue placeholder="Select source (optional)" />
+                <SelectValue placeholder="Select source (required)" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="none">No source</SelectItem>
                 {sources.map((source) => (
                   <SelectItem key={source.id} value={source.id}>
                     {source.name}
@@ -158,7 +170,7 @@ export function InviteUserDialog({ onInviteSent }: { onInviteSent: () => void })
           <Button 
             onClick={handleCreateUser} 
             className="w-full"
-            disabled={isLoading}
+            disabled={isLoading || !selectedSource || selectedSource === "none"}
           >
             {isLoading ? "Creating..." : "Create User"}
           </Button>
