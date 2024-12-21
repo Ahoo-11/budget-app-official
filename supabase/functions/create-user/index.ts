@@ -11,11 +11,13 @@ interface CreateUserPayload {
 console.log('Create user function initialized')
 
 Deno.serve(async (req) => {
+  // Handle CORS
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
+    // Initialize Supabase client with admin privileges
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
@@ -28,9 +30,10 @@ Deno.serve(async (req) => {
     )
 
     const { email, role, sourceId, password }: CreateUserPayload = await req.json()
-    console.log('Creating user with email:', email)
+    console.log('Creating user with email:', email, 'and role:', role)
 
-    // Create user with Supabase Auth
+    // 1. Create user with Supabase Auth
+    console.log('Step 1: Creating auth user...')
     const { data: userData, error: userError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
@@ -39,17 +42,35 @@ Deno.serve(async (req) => {
 
     if (userError) {
       console.error('Error creating auth user:', userError)
-      throw new Error(`Error creating auth user: ${userError.message}`)
+      return new Response(
+        JSON.stringify({ 
+          error: 'Error creating auth user',
+          details: userError.message 
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400,
+        }
+      )
     }
 
     if (!userData.user) {
       console.error('No user data returned')
-      throw new Error('No user data returned after creation')
+      return new Response(
+        JSON.stringify({ 
+          error: 'No user data returned after creation'
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400,
+        }
+      )
     }
 
-    console.log('User created successfully:', userData.user.id)
+    console.log('Auth user created successfully:', userData.user.id)
 
-    // Create user role
+    // 2. Create user role
+    console.log('Step 2: Creating user role...')
     const { error: roleError } = await supabaseAdmin
       .from('user_roles')
       .insert({
@@ -59,12 +80,22 @@ Deno.serve(async (req) => {
 
     if (roleError) {
       console.error('Error creating user role:', roleError)
-      throw new Error(`Error creating user role: ${roleError.message}`)
+      return new Response(
+        JSON.stringify({ 
+          error: 'Error creating user role',
+          details: roleError.message 
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400,
+        }
+      )
     }
 
     console.log('User role created successfully')
 
-    // Create profile
+    // 3. Create profile
+    console.log('Step 3: Creating user profile...')
     const { error: profileError } = await supabaseAdmin
       .from('profiles')
       .insert({
@@ -74,13 +105,23 @@ Deno.serve(async (req) => {
 
     if (profileError) {
       console.error('Error creating profile:', profileError)
-      throw new Error(`Error creating profile: ${profileError.message}`)
+      return new Response(
+        JSON.stringify({ 
+          error: 'Error creating profile',
+          details: profileError.message 
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400,
+        }
+      )
     }
 
     console.log('Profile created successfully')
 
-    // Create source permission if sourceId is provided and not 'none'
+    // 4. Create source permission if sourceId is provided
     if (sourceId && sourceId !== 'none') {
+      console.log('Step 4: Creating source permission...')
       const { error: permissionError } = await supabaseAdmin
         .from('source_permissions')
         .insert({
@@ -94,7 +135,16 @@ Deno.serve(async (req) => {
 
       if (permissionError) {
         console.error('Error creating source permission:', permissionError)
-        throw new Error(`Error creating source permission: ${permissionError.message}`)
+        return new Response(
+          JSON.stringify({ 
+            error: 'Error creating source permission',
+            details: permissionError.message 
+          }),
+          { 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 400,
+          }
+        )
       }
 
       console.log('Source permission created successfully')
