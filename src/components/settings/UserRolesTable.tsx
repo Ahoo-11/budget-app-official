@@ -33,7 +33,7 @@ export function UserRolesTable({ users, onRoleUpdate }: {
   const { toast } = useToast();
   const [updating, setUpdating] = useState(false);
 
-  // Fetch user emails from auth.users
+  // Fetch user emails from auth profiles
   const { data: userEmails } = useQuery({
     queryKey: ['userEmails'],
     queryFn: async () => {
@@ -47,17 +47,27 @@ export function UserRolesTable({ users, onRoleUpdate }: {
         .eq('user_id', currentUser.id)
         .single();
 
-      // Only super_admin can fetch all user emails
       if (roleData?.role !== 'super_admin') return {};
 
-      const { data: userData, error } = await supabase.auth.admin.listUsers();
+      // Fetch user profiles using RPC function
+      const { data: profiles, error } = await supabase
+        .from('user_roles')
+        .select(`
+          user_id,
+          user:user_id (
+            email
+          )
+        `);
+
       if (error) {
-        console.error('Error fetching users:', error);
+        console.error('Error fetching user profiles:', error);
         return {};
       }
 
-      return userData.users.reduce((acc: Record<string, string>, user) => {
-        acc[user.id] = user.email || '';
+      return profiles.reduce((acc: Record<string, string>, profile: any) => {
+        if (profile.user?.email) {
+          acc[profile.user_id] = profile.user.email;
+        }
         return acc;
       }, {});
     }
