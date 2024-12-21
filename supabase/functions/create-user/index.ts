@@ -17,6 +17,27 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // Validate request payload
+    const payload = await req.json()
+    console.log('Received payload:', JSON.stringify(payload, null, 2))
+    
+    if (!payload.email || !payload.role || !payload.password) {
+      console.error('Missing required fields in payload')
+      return new Response(
+        JSON.stringify({ 
+          error: 'Missing required fields',
+          details: 'Email, role, and password are required' 
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400,
+        }
+      )
+    }
+
+    const { email, role, sourceId, password }: CreateUserPayload = payload
+    console.log('Creating user with email:', email, 'and role:', role)
+
     // Initialize Supabase client with admin privileges
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -28,9 +49,6 @@ Deno.serve(async (req) => {
         },
       }
     )
-
-    const { email, role, sourceId, password }: CreateUserPayload = await req.json()
-    console.log('Creating user with email:', email, 'and role:', role)
 
     // 1. Create user with Supabase Auth
     console.log('Step 1: Creating auth user...')
@@ -45,11 +63,12 @@ Deno.serve(async (req) => {
       return new Response(
         JSON.stringify({ 
           error: 'Error creating auth user',
-          details: userError.message 
+          details: userError.message,
+          code: userError.status
         }),
         { 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400,
+          status: userError.status || 400,
         }
       )
     }
@@ -80,6 +99,8 @@ Deno.serve(async (req) => {
 
     if (roleError) {
       console.error('Error creating user role:', roleError)
+      // Clean up: delete the auth user since role creation failed
+      await supabaseAdmin.auth.admin.deleteUser(userData.user.id)
       return new Response(
         JSON.stringify({ 
           error: 'Error creating user role',
@@ -105,6 +126,8 @@ Deno.serve(async (req) => {
 
     if (profileError) {
       console.error('Error creating profile:', profileError)
+      // Clean up: delete the auth user since profile creation failed
+      await supabaseAdmin.auth.admin.deleteUser(userData.user.id)
       return new Response(
         JSON.stringify({ 
           error: 'Error creating profile',
@@ -135,6 +158,8 @@ Deno.serve(async (req) => {
 
       if (permissionError) {
         console.error('Error creating source permission:', permissionError)
+        // Clean up: delete the auth user since permission creation failed
+        await supabaseAdmin.auth.admin.deleteUser(userData.user.id)
         return new Response(
           JSON.stringify({ 
             error: 'Error creating source permission',
@@ -165,6 +190,7 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         error: error.message || 'An unexpected error occurred',
+        details: error.stack
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
