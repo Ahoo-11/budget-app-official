@@ -8,13 +8,15 @@ import { Source } from "@/types/source";
 import { Transaction } from "@/types/transaction";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useToast } from "@/components/ui/use-toast";
 
 export default function Personal() {
   const session = useSession();
+  const { toast } = useToast();
   const [isAddingTransaction, setIsAddingTransaction] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
 
-  // First fetch the personal source
+  // First fetch the personal source - using maybeSingle() and taking the first created one if multiple exist
   const { data: personalSource, isLoading: isLoadingSource } = useQuery({
     queryKey: ['personal-source'],
     queryFn: async () => {
@@ -25,10 +27,29 @@ export default function Personal() {
         .select('*')
         .eq('user_id', session.user.id)
         .eq('name', 'Personal')
-        .single();
+        .order('created_at', { ascending: true })
+        .limit(1);
       
-      if (error) throw error;
-      return data as Source;
+      if (error) {
+        console.error('Error fetching personal source:', error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch personal source. Please try again.",
+          variant: "destructive",
+        });
+        throw error;
+      }
+
+      if (!data || data.length === 0) {
+        toast({
+          title: "Error",
+          description: "Personal source not found.",
+          variant: "destructive",
+        });
+        return null;
+      }
+
+      return data[0] as Source;
     },
     enabled: !!session?.user?.id
   });
