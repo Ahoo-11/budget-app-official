@@ -8,41 +8,25 @@ export const createUser = async (
   sourceId: string | 'none',
   defaultPassword: string = 'Welcome123@'
 ) => {
-  // Create the user in Supabase Auth
-  const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-    email,
-    password: defaultPassword,
-    email_confirm: true
+  const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-user`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      email,
+      role,
+      sourceId,
+      password: defaultPassword,
+    }),
   });
 
-  if (authError) throw authError;
-  if (!authData.user) throw new Error("Failed to create user");
-
-  // Create user role
-  const { error: roleError } = await supabase
-    .from('user_roles')
-    .insert({
-      user_id: authData.user.id,
-      role: role
-    });
-
-  if (roleError) throw roleError;
-
-  // If a source was selected, create source permission
-  if (sourceId !== 'none') {
-    const { error: permissionError } = await supabase
-      .from('source_permissions')
-      .insert({
-        user_id: authData.user.id,
-        source_id: sourceId,
-        can_view: true,
-        can_create: role !== 'viewer',
-        can_edit: role !== 'viewer',
-        can_delete: role === 'admin' || role === 'super_admin'
-      });
-
-    if (permissionError) throw permissionError;
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to create user');
   }
 
-  return authData.user;
+  const data = await response.json();
+  return data.user;
 };
