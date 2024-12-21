@@ -8,25 +8,19 @@ export const createUser = async (
   sourceId: string | 'none',
   defaultPassword: string = 'Welcome123@'
 ) => {
-  const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-user`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
+  const { data, error } = await supabase.functions.invoke('create-user', {
+    body: {
       email,
       role,
       sourceId,
       password: defaultPassword,
-    }),
+    },
   });
 
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || 'Failed to create user');
+  if (error) {
+    console.error('Error in createUser:', error);
+    throw error;
   }
 
-  const data = await response.json();
   return data.user;
 };
