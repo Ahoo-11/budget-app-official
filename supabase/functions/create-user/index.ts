@@ -1,34 +1,31 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3'
 import { corsHeaders } from '../_shared/cors.ts'
-
-interface CreateUserPayload {
-  email: string;
-  role: 'super_admin' | 'admin' | 'viewer';
-  sourceId: string;
-  password: string;
-}
+import { CreateUserPayload, ErrorResponse } from '../_shared/types.ts'
+import { 
+  createAuthUser, 
+  createUserRole, 
+  createUserProfile, 
+  createSourcePermission 
+} from './user-creation.ts'
 
 console.log('Create user function initialized')
 
 Deno.serve(async (req) => {
-  // Handle CORS
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    // Validate request payload
     const payload = await req.json()
     console.log('Received payload:', JSON.stringify(payload, null, 2))
     
     if (!payload.email || !payload.role || !payload.password) {
-      console.error('Missing required fields in payload')
+      console.error('Missing required fields')
       return new Response(
-        JSON.stringify({ 
+        JSON.stringify({
           error: 'Missing required fields',
-          details: 'Email, role, and password are required' 
-        }),
-        { 
+          details: 'Email, role, and password are required'
+        } as ErrorResponse),
+        {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 400,
         }
@@ -36,165 +33,76 @@ Deno.serve(async (req) => {
     }
 
     const { email, role, sourceId, password }: CreateUserPayload = payload
-    console.log('Creating user with email:', email, 'and role:', role)
 
-    // Initialize Supabase client with admin privileges
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false,
-        },
-      }
-    )
+    try {
+      // Step 1: Create auth user
+      const user = await createAuthUser(email, password)
+      console.log('Auth user created successfully:', user.id)
 
-    // 1. Create user with Supabase Auth
-    console.log('Step 1: Creating auth user...')
-    const { data: userData, error: userError } = await supabaseAdmin.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true,
-    })
+      try {
+        // Step 2: Create user role
+        await createUserRole(user.id, role)
+        console.log('User role created successfully')
 
-    if (userError) {
-      console.error('Error creating auth user:', userError)
-      return new Response(
-        JSON.stringify({ 
-          error: 'Error creating auth user',
-          details: userError.message,
-          code: userError.status
-        }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: userError.status || 400,
-        }
-      )
-    }
+        try {
+          // Step 3: Create profile
+          await createUserProfile(user.id, email)
+          console.log('Profile created successfully')
 
-    if (!userData.user) {
-      console.error('No user data returned')
-      return new Response(
-        JSON.stringify({ 
-          error: 'No user data returned after creation'
-        }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400,
-        }
-      )
-    }
-
-    console.log('Auth user created successfully:', userData.user.id)
-
-    // 2. Create user role
-    console.log('Step 2: Creating user role...')
-    const { error: roleError } = await supabaseAdmin
-      .from('user_roles')
-      .insert({
-        user_id: userData.user.id,
-        role: role
-      })
-
-    if (roleError) {
-      console.error('Error creating user role:', roleError)
-      // Clean up: delete the auth user since role creation failed
-      await supabaseAdmin.auth.admin.deleteUser(userData.user.id)
-      return new Response(
-        JSON.stringify({ 
-          error: 'Error creating user role',
-          details: roleError.message 
-        }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400,
-        }
-      )
-    }
-
-    console.log('User role created successfully')
-
-    // 3. Create profile
-    console.log('Step 3: Creating user profile...')
-    const { error: profileError } = await supabaseAdmin
-      .from('profiles')
-      .insert({
-        id: userData.user.id,
-        email: email
-      })
-
-    if (profileError) {
-      console.error('Error creating profile:', profileError)
-      // Clean up: delete the auth user since profile creation failed
-      await supabaseAdmin.auth.admin.deleteUser(userData.user.id)
-      return new Response(
-        JSON.stringify({ 
-          error: 'Error creating profile',
-          details: profileError.message 
-        }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400,
-        }
-      )
-    }
-
-    console.log('Profile created successfully')
-
-    // 4. Create source permission if sourceId is provided
-    if (sourceId && sourceId !== 'none') {
-      console.log('Step 4: Creating source permission...')
-      const { error: permissionError } = await supabaseAdmin
-        .from('source_permissions')
-        .insert({
-          user_id: userData.user.id,
-          source_id: sourceId,
-          can_view: true,
-          can_create: role !== 'viewer',
-          can_edit: role !== 'viewer',
-          can_delete: role === 'admin' || role === 'super_admin'
-        })
-
-      if (permissionError) {
-        console.error('Error creating source permission:', permissionError)
-        // Clean up: delete the auth user since permission creation failed
-        await supabaseAdmin.auth.admin.deleteUser(userData.user.id)
-        return new Response(
-          JSON.stringify({ 
-            error: 'Error creating source permission',
-            details: permissionError.message 
-          }),
-          { 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 400,
+          // Step 4: Create source permission if sourceId is provided
+          if (sourceId && sourceId !== 'none') {
+            try {
+              await createSourcePermission(user.id, sourceId, role)
+              console.log('Source permission created successfully')
+            } catch (error) {
+              console.error('Error in source permission creation:', error)
+              throw error
+            }
           }
-        )
-      }
 
-      console.log('Source permission created successfully')
+          return new Response(
+            JSON.stringify({
+              user,
+              message: 'User created successfully'
+            }),
+            {
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              status: 200,
+            }
+          )
+        } catch (error) {
+          console.error('Error in profile creation:', error)
+          throw error
+        }
+      } catch (error) {
+        console.error('Error in role creation:', error)
+        throw error
+      }
+    } catch (error) {
+      console.error('Error in user creation process:', error)
+      return new Response(
+        JSON.stringify({
+          error: 'Error creating user',
+          details: error.message,
+          code: 500
+        } as ErrorResponse),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 500,
+        }
+      )
     }
-
-    return new Response(
-      JSON.stringify({ 
-        user: userData.user,
-        message: 'User created successfully'
-      }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
-      }
-    )
   } catch (error) {
     console.error('Error in create-user function:', error)
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         error: error.message || 'An unexpected error occurred',
-        details: error.stack
-      }),
-      { 
+        details: error.stack,
+        code: 500
+      } as ErrorResponse),
+      {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400,
+        status: 500,
       }
     )
   }
