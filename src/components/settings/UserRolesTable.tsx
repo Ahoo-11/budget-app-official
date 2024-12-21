@@ -33,7 +33,7 @@ export function UserRolesTable({ users, onRoleUpdate }: {
   const { toast } = useToast();
   const [updating, setUpdating] = useState(false);
 
-  // Fetch user emails from auth profiles
+  // Fetch user emails from profiles table
   const { data: userEmails } = useQuery({
     queryKey: ['userEmails'],
     queryFn: async () => {
@@ -49,26 +49,21 @@ export function UserRolesTable({ users, onRoleUpdate }: {
 
       if (roleData?.role !== 'super_admin') return {};
 
-      // Get all user IDs from user_roles
-      const { data: userRoles, error: rolesError } = await supabase
-        .from('user_roles')
-        .select('user_id');
+      // Get all user emails from profiles table
+      const { data: profiles, error } = await supabase
+        .from('profiles')
+        .select('id, email');
 
-      if (rolesError) {
-        console.error('Error fetching user roles:', rolesError);
+      if (error) {
+        console.error('Error fetching profiles:', error);
         return {};
       }
 
-      // Get user emails one by one (not ideal but works with current permissions)
-      const emailMap: Record<string, string> = {};
-      for (const { user_id } of userRoles) {
-        const { data: userData } = await supabase.auth.admin.getUserById(user_id);
-        if (userData?.user?.email) {
-          emailMap[user_id] = userData.user.email;
-        }
-      }
-
-      return emailMap;
+      // Create a map of user IDs to emails
+      return profiles.reduce((acc: Record<string, string>, profile) => {
+        acc[profile.id] = profile.email;
+        return acc;
+      }, {});
     }
   });
 
