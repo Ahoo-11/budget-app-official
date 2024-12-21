@@ -43,11 +43,12 @@ export function UserManagement() {
       const { data, error } = await supabase
         .from('invitations')
         .select('*')
+        .eq('status', 'pending') // Only fetch pending invitations
+        .gt('expires_at', new Date().toISOString()) // Only fetch non-expired invitations
         .order('created_at', { ascending: false });
 
       if (error) throw error;
       
-      // Transform the data to include the default password
       return (data || []).map(invitation => ({
         ...invitation,
         password: 'Welcome123!' // Add the default password to each invitation
@@ -68,10 +69,12 @@ export function UserManagement() {
           <UserRolesTable users={users} onRoleUpdate={refetchUsers} />
         </div>
 
-        <div>
-          <h4 className="text-sm font-medium mb-4">Pending Invitations</h4>
-          <InvitationsTable invitations={invitations} />
-        </div>
+        {invitations.length > 0 && (
+          <div>
+            <h4 className="text-sm font-medium mb-4">Pending Invitations</h4>
+            <InvitationsTable invitations={invitations} />
+          </div>
+        )}
       </div>
     </div>
   );
