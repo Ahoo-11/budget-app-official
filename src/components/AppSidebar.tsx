@@ -25,9 +25,12 @@ export function AppSidebar() {
       const { data, error } = await supabase
         .from('sources')
         .select('*')
-        .order('name');
+        .order('created_at');
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching sources:', error);
+        throw error;
+      }
       return data as Source[];
     }
   });
