@@ -2,6 +2,8 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3'
 import { corsHeaders } from '../_shared/cors.ts'
 import { CreateUserPayload, ErrorResponse } from '../_shared/types.ts'
 
+console.log('Create user function initialized')
+
 Deno.serve(async (req) => {
   // Handle CORS
   if (req.method === 'OPTIONS') {
@@ -23,6 +25,7 @@ Deno.serve(async (req) => {
     const payload = await req.json()
     console.log('Received payload:', JSON.stringify(payload, null, 2))
     
+    // Validate payload
     if (!payload.email || !payload.role || !payload.password) {
       console.error('Missing required fields')
       return new Response(
