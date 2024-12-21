@@ -20,6 +20,7 @@ import {
 import { UserPlus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { createUser } from "@/utils/userManagement";
 
 type UserRole = 'super_admin' | 'admin' | 'viewer';
 
@@ -76,59 +77,7 @@ export function InviteUserDialog({ onInviteSent }: { onInviteSent: () => void })
         return;
       }
 
-      // Create the user in Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: inviteEmail,
-        password: defaultPassword,
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth`
-        }
-      });
-
-      if (authError) throw authError;
-      if (!authData.user) throw new Error("Failed to create user");
-
-      // Create invitation record
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("No authenticated user");
-
-      const { error: invitationError } = await supabase
-        .from('invitations')
-        .insert({
-          email: inviteEmail,
-          role: inviteRole,
-          invited_by: user.id,
-          status: 'accepted',
-          password: defaultPassword
-        });
-
-      if (invitationError) throw invitationError;
-
-      // Create user role
-      const { error: roleError } = await supabase
-        .from('user_roles')
-        .insert({
-          user_id: authData.user.id,
-          role: inviteRole
-        });
-
-      if (roleError) throw roleError;
-
-      // If a source was selected, create source permission
-      if (selectedSource !== 'none') {
-        const { error: permissionError } = await supabase
-          .from('source_permissions')
-          .insert({
-            user_id: authData.user.id,
-            source_id: selectedSource,
-            can_view: true,
-            can_create: inviteRole !== 'viewer',
-            can_edit: inviteRole !== 'viewer',
-            can_delete: inviteRole === 'admin' || inviteRole === 'super_admin'
-          });
-
-        if (permissionError) throw permissionError;
-      }
+      await createUser(inviteEmail, inviteRole, selectedSource, defaultPassword);
 
       toast({
         title: "Success",
