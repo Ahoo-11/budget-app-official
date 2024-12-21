@@ -287,7 +287,27 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      create_profile: {
+        Args: {
+          user_id: string
+          user_email: string
+        }
+        Returns: undefined
+      }
+      create_source_permission: {
+        Args: {
+          user_id: string
+          source_id: string
+        }
+        Returns: undefined
+      }
+      create_user_role: {
+        Args: {
+          user_id: string
+          user_role: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       invitation_status: "pending" | "accepted" | "expired"
