@@ -17,6 +17,12 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
+import { Info } from "lucide-react";
 
 type UserRole = 'super_admin' | 'admin' | 'viewer';
 
@@ -24,6 +30,11 @@ interface User {
   id: string;
   email?: string;
   role?: UserRole;
+}
+
+interface Source {
+  id: string;
+  name: string;
 }
 
 export function UserRolesTable({ users, onRoleUpdate }: { 
@@ -37,19 +48,6 @@ export function UserRolesTable({ users, onRoleUpdate }: {
   const { data: userEmails } = useQuery({
     queryKey: ['userEmails'],
     queryFn: async () => {
-      const { data: { user: currentUser } } = await supabase.auth.getUser();
-      if (!currentUser) return {};
-
-      // Get current user's role
-      const { data: roleData } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', currentUser.id)
-        .single();
-
-      if (roleData?.role !== 'super_admin') return {};
-
-      // Get all user emails from profiles table
       const { data: profiles, error } = await supabase
         .from('profiles')
         .select('id, email');
@@ -59,9 +57,48 @@ export function UserRolesTable({ users, onRoleUpdate }: {
         return {};
       }
 
-      // Create a map of user IDs to emails
       return profiles.reduce((acc: Record<string, string>, profile) => {
         acc[profile.id] = profile.email;
+        return acc;
+      }, {});
+    }
+  });
+
+  // Fetch sources and permissions for each user
+  const { data: sourcesData } = useQuery({
+    queryKey: ['sources'],
+    queryFn: async () => {
+      const { data: sources, error } = await supabase
+        .from('sources')
+        .select('id, name');
+
+      if (error) {
+        console.error('Error fetching sources:', error);
+        return [];
+      }
+
+      return sources;
+    }
+  });
+
+  const { data: permissions } = useQuery({
+    queryKey: ['sourcePermissions'],
+    queryFn: async () => {
+      const { data: perms, error } = await supabase
+        .from('source_permissions')
+        .select('user_id, source_id');
+
+      if (error) {
+        console.error('Error fetching permissions:', error);
+        return {};
+      }
+
+      // Group permissions by user_id
+      return perms.reduce((acc: Record<string, string[]>, perm) => {
+        if (!acc[perm.user_id]) {
+          acc[perm.user_id] = [];
+        }
+        acc[perm.user_id].push(perm.source_id);
         return acc;
       }, {});
     }
@@ -92,12 +129,27 @@ export function UserRolesTable({ users, onRoleUpdate }: {
     }
   };
 
+  const getUserSourcesInfo = (userId: string, userRole?: UserRole) => {
+    if (userRole === 'super_admin') {
+      return 'Has access to all sources';
+    }
+
+    const userPermissions = permissions?.[userId] || [];
+    const accessibleSources = sourcesData
+      ?.filter(source => userPermissions.includes(source.id))
+      .map(source => source.name)
+      .join(', ');
+
+    return accessibleSources || 'No sources assigned';
+  };
+
   return (
     <Table>
       <TableHeader>
         <TableRow>
           <TableHead>Email</TableHead>
           <TableHead>Role</TableHead>
+          <TableHead>Sources Access</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -119,6 +171,26 @@ export function UserRolesTable({ users, onRoleUpdate }: {
                   <SelectItem value="super_admin">Super Admin</SelectItem>
                 </SelectContent>
               </Select>
+            </TableCell>
+            <TableCell>
+              <HoverCard>
+                <HoverCardTrigger>
+                  <div className="flex items-center gap-2">
+                    <span className="truncate max-w-[200px]">
+                      {getUserSourcesInfo(user.id, user.role)}
+                    </span>
+                    <Info className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                </HoverCardTrigger>
+                <HoverCardContent>
+                  <div className="space-y-2">
+                    <h4 className="font-semibold">Source Access Details</h4>
+                    <p className="text-sm">
+                      {getUserSourcesInfo(user.id, user.role)}
+                    </p>
+                  </div>
+                </HoverCardContent>
+              </HoverCard>
             </TableCell>
           </TableRow>
         ))}
