@@ -1,4 +1,4 @@
-import { createClient } from 'https://esm.sh/@supabase_supabase-js@2'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3'
 import { corsHeaders } from '../_shared/cors.ts'
 
 interface CreateUserPayload {
@@ -9,7 +9,7 @@ interface CreateUserPayload {
 }
 
 Deno.serve(async (req) => {
-  // Handle CORS
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -40,7 +40,7 @@ Deno.serve(async (req) => {
     if (userError) {
       console.error('Error creating auth user:', userError)
       return new Response(
-        JSON.stringify({ error: 'Error creating auth user' }),
+        JSON.stringify({ error: 'Error creating auth user', details: userError.message }),
         { 
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -61,7 +61,7 @@ Deno.serve(async (req) => {
     if (roleError) {
       console.error('Error creating user role:', roleError)
       return new Response(
-        JSON.stringify({ error: 'Error creating user role' }),
+        JSON.stringify({ error: 'Error creating user role', details: roleError.message }),
         { 
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -82,7 +82,7 @@ Deno.serve(async (req) => {
     if (profileError) {
       console.error('Error creating profile:', profileError)
       return new Response(
-        JSON.stringify({ error: 'Error creating profile' }),
+        JSON.stringify({ error: 'Error creating profile', details: profileError.message }),
         { 
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -108,7 +108,7 @@ Deno.serve(async (req) => {
       if (permissionError) {
         console.error('Error creating source permission:', permissionError)
         return new Response(
-          JSON.stringify({ error: 'Error creating source permission' }),
+          JSON.stringify({ error: 'Error creating source permission', details: permissionError.message }),
           { 
             status: 400,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
