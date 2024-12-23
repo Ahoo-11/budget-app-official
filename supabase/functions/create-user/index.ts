@@ -1,10 +1,6 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3'
 import { corsHeaders } from '../_shared/cors.ts'
-
-const supabaseUrl = Deno.env.get('SUPABASE_URL')
-const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
-const resendApiKey = Deno.env.get('RESEND_API_KEY')
+import { getSupabaseAdmin } from '../_shared/supabase-client.ts'
 
 interface CreateUserRequest {
   email: string
@@ -22,16 +18,11 @@ serve(async (req) => {
     // Get the authorization header from the request
     const authHeader = req.headers.get('Authorization')
     if (!authHeader) {
+      console.error('No authorization header provided')
       throw new Error('No authorization header')
     }
 
-    // Create Supabase admin client
-    const supabaseAdmin = createClient(supabaseUrl!, supabaseServiceKey!, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    })
+    const supabaseAdmin = getSupabaseAdmin()
 
     // Get the inviting user's information
     const { data: { user: invitingUser }, error: userError } = await supabaseAdmin.auth.getUser(
@@ -47,6 +38,7 @@ serve(async (req) => {
     const { email, role, sourceId }: CreateUserRequest = await req.json()
 
     if (!email || !role || !sourceId) {
+      console.error('Missing required fields:', { email, role, sourceId })
       throw new Error('Missing required fields')
     }
 
@@ -70,8 +62,19 @@ serve(async (req) => {
       throw new Error('Error creating invitation record')
     }
 
+    if (!invitation) {
+      console.error('No invitation data returned')
+      throw new Error('No invitation data returned')
+    }
+
     // Generate invitation URL
     const invitationUrl = `${new URL(req.url).origin}/accept-invitation?token=${invitation.token}`
+
+    const resendApiKey = Deno.env.get('RESEND_API_KEY')
+    if (!resendApiKey) {
+      console.error('RESEND_API_KEY is not set')
+      throw new Error('Email service configuration error')
+    }
 
     // Send invitation email using Resend
     const emailResponse = await fetch('https://api.resend.com/emails', {
@@ -93,13 +96,20 @@ serve(async (req) => {
     })
 
     if (!emailResponse.ok) {
-      console.error('Error sending email:', await emailResponse.text())
+      const errorText = await emailResponse.text()
+      console.error('Error sending email:', errorText)
       throw new Error('Error sending invitation email')
     }
 
     return new Response(
-      JSON.stringify({ message: 'Invitation sent successfully' }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      JSON.stringify({ 
+        message: 'Invitation sent successfully',
+        invitationUrl 
+      }),
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200
+      }
     )
 
   } catch (error) {
