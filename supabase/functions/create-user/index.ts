@@ -41,7 +41,8 @@ Deno.serve(async (req) => {
         email,
         role,
         invited_by: invitingUser.id,
-        status: 'pending'
+        status: 'pending',
+        token: crypto.randomUUID()
       })
       .select()
       .single()
@@ -49,23 +50,6 @@ Deno.serve(async (req) => {
     if (invitationError) {
       console.error('Error creating invitation:', invitationError)
       throw new Error('Error creating invitation record')
-    }
-
-    // Create source permission
-    const { error: permissionError } = await supabaseAdmin
-      .from('source_permissions')
-      .insert({
-        user_id: invitation.id, // Use the invitation ID as a temporary user ID
-        source_id: sourceId,
-        can_view: true,
-        can_create: role !== 'viewer',
-        can_edit: role !== 'viewer',
-        can_delete: role === 'super_admin'
-      })
-
-    if (permissionError) {
-      console.error('Error creating source permission:', permissionError)
-      throw new Error('Error creating source permission')
     }
 
     // Generate invitation URL
