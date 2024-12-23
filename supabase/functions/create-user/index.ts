@@ -47,7 +47,7 @@ Deno.serve(async (req) => {
         email,
         role,
         invited_by: invitingUser.id,
-        source_id: sourceId,
+        status: 'pending',
       })
 
     if (invitationError) {
@@ -55,8 +55,9 @@ Deno.serve(async (req) => {
       throw new Error('Error creating invitation record')
     }
 
-    // Send invitation email
-    await sendInvitationEmail(email, role, req.headers.get('origin') || '')
+    // Send invitation email using our new email service
+    const origin = req.headers.get('origin') || ''
+    await sendInvitationEmail(email, role, origin)
 
     return new Response(
       JSON.stringify({
