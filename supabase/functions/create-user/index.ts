@@ -24,7 +24,7 @@ serve(async (req) => {
 
     const supabaseAdmin = getSupabaseAdmin()
 
-    // Get the inviting user's information
+    // Get the inviting user's information and validate their role
     const { data: { user: invitingUser }, error: userError } = await supabaseAdmin.auth.getUser(
       authHeader.replace('Bearer ', '')
     )
@@ -32,6 +32,23 @@ serve(async (req) => {
     if (userError || !invitingUser) {
       console.error('Error getting inviting user:', userError)
       throw new Error('Error getting inviting user')
+    }
+
+    // Verify the inviting user is a super_admin
+    const { data: roleData, error: roleError } = await supabaseAdmin
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', invitingUser.id)
+      .single()
+
+    if (roleError || !roleData) {
+      console.error('Error getting user role:', roleError)
+      throw new Error('Error verifying user role')
+    }
+
+    if (roleData.role !== 'super_admin') {
+      console.error('User is not a super admin:', invitingUser.id)
+      throw new Error('Only super admins can create users')
     }
 
     // Get request body
@@ -84,7 +101,7 @@ serve(async (req) => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        from: 'onboarding@resend.dev',
+        from: 'Expense Tracker <noreply@logicframeworks.com>',
         to: email,
         subject: 'Invitation to join',
         html: `
