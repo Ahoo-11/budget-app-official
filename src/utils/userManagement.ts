@@ -5,15 +5,13 @@ type UserRole = 'super_admin' | 'admin' | 'viewer';
 export const createUser = async (
   email: string, 
   role: UserRole, 
-  sourceId: string | 'none',
-  defaultPassword: string = 'Welcome123@'
+  sourceId: string,
 ) => {
   const { data, error } = await supabase.functions.invoke('create-user', {
     body: {
       email,
       role,
       sourceId,
-      password: defaultPassword,
     },
   });
 
@@ -22,5 +20,5 @@ export const createUser = async (
     throw error;
   }
 
-  return data.user;
+  return data;
 };
