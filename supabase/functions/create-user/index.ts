@@ -1,30 +1,20 @@
 import { corsHeaders } from '../_shared/cors.ts'
-import { getSupabaseAdmin } from './supabase-admin.ts'
-import { sendInvitationEmail } from './email-service.ts'
+import { getSupabaseAdmin } from '../_shared/supabase-admin.ts'
+import { CreateUserPayload } from '../_shared/types.ts'
 
 Deno.serve(async (req) => {
+  // Handle CORS
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    const { email, role, sourceId } = await req.json()
-    console.log('Received invitation request for:', { email, role, sourceId })
+    const { email, role, sourceId } = await req.json() as CreateUserPayload
+    console.log('Received request:', { email, role, sourceId })
 
     if (!email || !role || !sourceId) {
-      return new Response(
-        JSON.stringify({
-          error: 'Missing required fields',
-          details: 'Email, role, and sourceId are required'
-        }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400,
-        }
-      )
+      throw new Error('Missing required fields')
     }
-
-    const supabaseAdmin = getSupabaseAdmin()
 
     // Get the current user making the request
     const authHeader = req.headers.get('Authorization')
@@ -32,22 +22,26 @@ Deno.serve(async (req) => {
       throw new Error('No authorization header')
     }
 
+    const supabaseAdmin = getSupabaseAdmin()
+    
+    // Get the inviting user
     const { data: { user: invitingUser }, error: userError } = await supabaseAdmin.auth.getUser(
       authHeader.replace('Bearer ', '')
     )
 
     if (userError || !invitingUser) {
+      console.error('Error getting inviting user:', userError)
       throw new Error('Error getting inviting user')
     }
 
-    // Create invitation record with token
+    // Create invitation record
     const { data: invitation, error: invitationError } = await supabaseAdmin
       .from('invitations')
       .insert({
         email,
         role,
         invited_by: invitingUser.id,
-        status: 'pending',
+        status: 'pending'
       })
       .select()
       .single()
@@ -57,14 +51,34 @@ Deno.serve(async (req) => {
       throw new Error('Error creating invitation record')
     }
 
-    // Send invitation email using our email service
+    // Create source permission
+    const { error: permissionError } = await supabaseAdmin
+      .from('source_permissions')
+      .insert({
+        user_id: invitation.id, // Use the invitation ID as a temporary user ID
+        source_id: sourceId,
+        can_view: true,
+        can_create: role !== 'viewer',
+        can_edit: role !== 'viewer',
+        can_delete: role === 'super_admin'
+      })
+
+    if (permissionError) {
+      console.error('Error creating source permission:', permissionError)
+      throw new Error('Error creating source permission')
+    }
+
+    // Generate invitation URL
     const origin = req.headers.get('origin') || ''
     const invitationUrl = `${origin}/accept-invitation?token=${invitation.token}`
-    await sendInvitationEmail(email, role, invitationUrl)
+
+    // For now, just log the URL (we'll implement email sending later)
+    console.log('Invitation URL:', invitationUrl)
 
     return new Response(
       JSON.stringify({
-        message: 'Invitation sent successfully'
+        message: 'User invited successfully',
+        invitationUrl
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
