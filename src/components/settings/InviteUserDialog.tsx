@@ -31,7 +31,6 @@ export function InviteUserDialog({ onInviteSent }: { onInviteSent: () => void })
   const [selectedSource, setSelectedSource] = useState<string>("none");
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const defaultPassword = "Welcome123@";
 
   const { data: userRole } = useQuery({
     queryKey: ['userRole'],
@@ -86,11 +85,11 @@ export function InviteUserDialog({ onInviteSent }: { onInviteSent: () => void })
         return;
       }
 
-      await createUser(inviteEmail, inviteRole, selectedSource, defaultPassword);
+      await createUser(inviteEmail, inviteRole, selectedSource);
 
       toast({
         title: "Success",
-        description: `User created successfully. They can login with email: ${inviteEmail} and password: ${defaultPassword}`,
+        description: `Invitation sent to ${inviteEmail}`,
       });
       setInviteEmail("");
       setInviteRole("viewer");
@@ -125,7 +124,7 @@ export function InviteUserDialog({ onInviteSent }: { onInviteSent: () => void })
         <DialogHeader>
           <DialogTitle>Create New User</DialogTitle>
           <DialogDescription>
-            Create a new user with default password: {defaultPassword}
+            An invitation will be sent to the provided email address.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
