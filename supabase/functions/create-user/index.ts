@@ -40,8 +40,8 @@ Deno.serve(async (req) => {
       throw new Error('Error getting inviting user')
     }
 
-    // Create invitation record
-    const { error: invitationError } = await supabaseAdmin
+    // Create invitation record with token
+    const { data: invitation, error: invitationError } = await supabaseAdmin
       .from('invitations')
       .insert({
         email,
@@ -49,15 +49,18 @@ Deno.serve(async (req) => {
         invited_by: invitingUser.id,
         status: 'pending',
       })
+      .select()
+      .single()
 
     if (invitationError) {
       console.error('Error creating invitation:', invitationError)
       throw new Error('Error creating invitation record')
     }
 
-    // Send invitation email using our new email service
+    // Send invitation email using our email service
     const origin = req.headers.get('origin') || ''
-    await sendInvitationEmail(email, role, origin)
+    const invitationUrl = `${origin}/accept-invitation?token=${invitation.token}`
+    await sendInvitationEmail(email, role, invitationUrl)
 
     return new Response(
       JSON.stringify({
