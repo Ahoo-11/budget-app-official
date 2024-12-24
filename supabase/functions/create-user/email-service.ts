@@ -1,4 +1,4 @@
-import { getSupabaseAdmin } from './supabase-admin.ts'
+import { getSupabaseAdmin } from '../_shared/supabase-admin.ts'
 
 export const sendInvitationEmail = async (email: string, role: string, origin: string) => {
   console.log('Sending invitation email to:', email)

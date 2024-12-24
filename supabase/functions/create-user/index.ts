@@ -1,5 +1,5 @@
 import { corsHeaders } from '../_shared/cors.ts'
-import { getSupabaseAdmin } from './supabase-admin.ts'
+import { getSupabaseAdmin } from '../_shared/supabase-admin.ts'
 import { sendInvitationEmail } from './email-service.ts'
 
 Deno.serve(async (req) => {
@@ -37,7 +37,33 @@ Deno.serve(async (req) => {
     )
 
     if (userError || !invitingUser) {
+      console.error('Error getting inviting user:', userError)
       throw new Error('Error getting inviting user')
+    }
+
+    // Verify the inviting user is a super admin
+    const { data: userRole, error: roleError } = await supabaseAdmin
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', invitingUser.id)
+      .single()
+
+    if (roleError) {
+      console.error('Error getting user role:', roleError)
+      throw new Error('Error getting user role')
+    }
+
+    if (userRole.role !== 'super_admin') {
+      return new Response(
+        JSON.stringify({
+          error: 'Unauthorized',
+          details: 'Only super admins can create users'
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 403,
+        }
+      )
     }
 
     // Create invitation record
@@ -55,7 +81,7 @@ Deno.serve(async (req) => {
       throw new Error('Error creating invitation record')
     }
 
-    // Send invitation email using our new email service
+    // Send invitation email
     const origin = req.headers.get('origin') || ''
     await sendInvitationEmail(email, role, origin)
 
