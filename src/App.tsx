@@ -15,6 +15,7 @@ import Source from "./pages/Source";
 import Auth from "./pages/Auth";
 import Personal from "./pages/Personal";
 import { AccountSettings } from "./components/AccountSettings";
+import AcceptInvitation from "./pages/AcceptInvitation";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -64,6 +65,7 @@ export default function App() {
             <BrowserRouter>
               <Routes>
                 <Route path="/auth" element={<Auth />} />
+                <Route path="/accept-invitation" element={<AcceptInvitation />} />
                 <Route
                   path="/*"
                   element={

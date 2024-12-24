@@ -290,12 +290,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      accept_invitation: {
-        Args: {
-          token: string
-        }
-        Returns: Json
-      }
       create_profile: {
         Args: {
           user_id: string
