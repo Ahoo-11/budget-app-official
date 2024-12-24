@@ -1,4 +1,4 @@
-import { corsHeaders } from './utils';
+import { corsHeaders } from './utils.ts';
 
 export async function sendInvitationEmail(email: string, role: string, token: string, origin: string) {
   const resendApiKey = Deno.env.get('RESEND_API_KEY');
