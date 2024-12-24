@@ -63,7 +63,6 @@ export type Database = {
           invited_by: string
           role: Database["public"]["Enums"]["user_role_type"]
           status: Database["public"]["Enums"]["invitation_status"]
-          token: string | null
           updated_at: string | null
         }
         Insert: {
@@ -74,7 +73,6 @@ export type Database = {
           invited_by: string
           role?: Database["public"]["Enums"]["user_role_type"]
           status?: Database["public"]["Enums"]["invitation_status"]
-          token?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -85,7 +83,6 @@ export type Database = {
           invited_by?: string
           role?: Database["public"]["Enums"]["user_role_type"]
           status?: Database["public"]["Enums"]["invitation_status"]
-          token?: string | null
           updated_at?: string | null
         }
         Relationships: []
@@ -313,7 +310,7 @@ export type Database = {
       }
     }
     Enums: {
-      invitation_status: "pending" | "accepted" | "expired" | "completed"
+      invitation_status: "pending" | "accepted" | "expired"
       user_role_type: "super_admin" | "admin" | "manager" | "viewer"
     }
     CompositeTypes: {
