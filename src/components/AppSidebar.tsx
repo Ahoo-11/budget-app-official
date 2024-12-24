@@ -15,7 +15,7 @@ export function AppSidebar() {
   const [newSourceName, setNewSourceName] = useState("");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const { data: sources = [] } = useQuery({
+  const { data: sources = [], refetch } = useQuery({
     queryKey: ['sources'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -34,9 +34,13 @@ export function AppSidebar() {
   const handleAddSource = async () => {
     if (!newSourceName.trim()) return;
 
+    // Since we removed authentication, we'll use a default user_id
     const { error } = await supabase
       .from('sources')
-      .insert([{ name: newSourceName.trim() }]);
+      .insert([{ 
+        name: newSourceName.trim(),
+        user_id: '00000000-0000-0000-0000-000000000000' // Default user ID
+      }]);
 
     if (error) {
       console.error('Error adding source:', error);
@@ -45,6 +49,7 @@ export function AppSidebar() {
 
     setNewSourceName("");
     setIsAddSourceOpen(false);
+    refetch(); // Refresh the sources list
   };
 
   const NavContent = () => (
