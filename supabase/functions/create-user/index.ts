@@ -60,6 +60,23 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
+    // Check if user already exists
+    const { data: existingUser } = await supabaseAdmin.auth.admin.listUsers();
+    const userExists = existingUser.users.some(u => u.email === email);
+
+    if (userExists) {
+      return new Response(
+        JSON.stringify({
+          error: 'User exists',
+          details: 'A user with this email already exists'
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400,
+        }
+      );
+    }
+
     // Generate invitation token
     const token = crypto.randomUUID();
 
@@ -85,7 +102,8 @@ const handler = async (req: Request): Promise<Response> => {
           invited_by: invitingUser.id,
           updated_at: new Date().toISOString(),
           token,
-          source_id: sourceId
+          source_id: sourceId,
+          status: 'pending'
         })
         .eq('id', existingInvitation.id);
 

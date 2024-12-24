@@ -1,37 +1,23 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { getSupabaseAdmin } from "../_shared/supabase-admin.ts";
+import { corsHeaders } from "../_shared/cors.ts";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+const handler = async (req: Request): Promise<Response> => {
+  console.log('Starting accept-invitation function execution');
 
-serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response('ok', { headers: corsHeaders });
   }
 
   try {
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false,
-        },
-      }
-    );
+    const { token, password } = await req.json();
+    console.log('Processing invitation acceptance for token:', token);
 
-    const { token } = await req.json();
-
-    if (!token) {
-      return new Response(
-        JSON.stringify({ error: 'Token is required' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-      );
+    if (!token || !password) {
+      throw new Error('Token and password are required');
     }
+
+    const supabaseAdmin = getSupabaseAdmin();
 
     // Get the invitation
     const { data: invitation, error: invitationError } = await supabaseAdmin
@@ -43,23 +29,36 @@ serve(async (req) => {
 
     if (invitationError || !invitation) {
       console.error('Error fetching invitation:', invitationError);
-      return new Response(
-        JSON.stringify({ error: 'Invalid or expired invitation' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-      );
+      throw new Error('Invalid or expired invitation');
     }
 
-    // Get the user
-    const { data: { user }, error: userError } = await supabaseAdmin.auth.admin.getUserById(
-      req.headers.get('Authorization')?.split(' ')[1] ?? ''
-    );
+    console.log('Found valid invitation for email:', invitation.email);
 
-    if (userError || !user) {
-      console.error('Error fetching user:', userError);
-      return new Response(
-        JSON.stringify({ error: 'User not found' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-      );
+    // Create the user
+    const { data: { user }, error: createUserError } = await supabaseAdmin.auth.admin.createUser({
+      email: invitation.email,
+      password: password,
+      email_confirm: true
+    });
+
+    if (createUserError || !user) {
+      console.error('Error creating user:', createUserError);
+      throw new Error('Failed to create user account');
+    }
+
+    console.log('Created user account for:', user.email);
+
+    // Create user profile
+    const { error: profileError } = await supabaseAdmin
+      .from('profiles')
+      .insert({
+        id: user.id,
+        email: user.email
+      });
+
+    if (profileError) {
+      console.error('Error creating profile:', profileError);
+      throw new Error('Failed to create user profile');
     }
 
     // Create user role
@@ -72,13 +71,10 @@ serve(async (req) => {
 
     if (roleError) {
       console.error('Error creating user role:', roleError);
-      return new Response(
-        JSON.stringify({ error: 'Failed to create user role' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-      );
+      throw new Error('Failed to set user role');
     }
 
-    // Create source permission
+    // Create source permission if source_id exists
     if (invitation.source_id) {
       const { error: permissionError } = await supabaseAdmin
         .from('source_permissions')
@@ -93,36 +89,48 @@ serve(async (req) => {
 
       if (permissionError) {
         console.error('Error creating source permission:', permissionError);
-        return new Response(
-          JSON.stringify({ error: 'Failed to create source permission' }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-        );
+        throw new Error('Failed to set source permissions');
       }
     }
 
     // Update invitation status
     const { error: updateError } = await supabaseAdmin
       .from('invitations')
-      .update({ status: 'accepted' })
-      .eq('id', invitation.id);
+      .update({ 
+        status: 'accepted',
+        updated_at: new Date().toISOString()
+      })
+      .eq('token', token);
 
     if (updateError) {
-      console.error('Error updating invitation:', updateError);
-      return new Response(
-        JSON.stringify({ error: 'Failed to update invitation status' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-      );
+      console.error('Error updating invitation status:', updateError);
+      throw new Error('Failed to update invitation status');
     }
 
+    console.log('Successfully completed user creation process');
     return new Response(
-      JSON.stringify({ success: true }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      JSON.stringify({ 
+        message: 'Account created successfully',
+        email: invitation.email
+      }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      }
     );
   } catch (error) {
-    console.error('Error processing invitation:', error);
+    console.error('Error in accept-invitation function:', error);
     return new Response(
-      JSON.stringify({ error: 'Internal server error' }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+      JSON.stringify({
+        error: 'Failed to create account',
+        details: error.message
+      }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500,
+      }
     );
   }
-});
+};
+
+serve(handler);
