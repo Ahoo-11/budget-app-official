@@ -88,6 +88,9 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
+    // Generate invitation token
+    const token = crypto.randomUUID();
+
     // Check for existing pending invitation
     console.log('Checking for existing pending invitation');
     const { data: existingInvitation, error: invitationError } = await supabaseAdmin
@@ -110,7 +113,8 @@ const handler = async (req: Request): Promise<Response> => {
           role,
           invited_by: invitingUser.id,
           updated_at: new Date().toISOString(),
-          token: crypto.randomUUID()
+          token,
+          source_id: sourceId // Add source_id to the invitation
         })
         .eq('id', existingInvitation.id);
 
@@ -128,7 +132,8 @@ const handler = async (req: Request): Promise<Response> => {
           role,
           invited_by: invitingUser.id,
           status: 'pending',
-          token: crypto.randomUUID()
+          token,
+          source_id: sourceId // Add source_id to the invitation
         });
 
       if (createError) {
@@ -160,7 +165,7 @@ const handler = async (req: Request): Promise<Response> => {
           <h1>Welcome to Expense Tracker!</h1>
           <p>You've been invited to join Expense Tracker as a ${role}.</p>
           <p>Click the link below to accept the invitation:</p>
-          <p><a href="${origin}/auth">Accept Invitation</a></p>
+          <p><a href="${origin}/auth?invitation=${token}">Accept Invitation</a></p>
         `,
       }),
     });
