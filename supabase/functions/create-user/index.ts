@@ -1,7 +1,11 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { getSupabaseAdmin } from "./supabase-admin.ts";
-import { sendInvitationEmail } from "./email-service.ts";
-import { corsHeaders, validateRequest } from "./utils.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
+};
 
 const handler = async (req: Request): Promise<Response> => {
   console.log('Starting create-user function execution');
@@ -12,9 +16,33 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     const { email, role, sourceId } = await req.json();
-    validateRequest(email, role, sourceId);
+    console.log('Received request payload:', { email, role, sourceId });
 
-    const supabaseAdmin = getSupabaseAdmin();
+    if (!email || !role || !sourceId) {
+      console.error('Missing required fields:', { email, role, sourceId });
+      return new Response(
+        JSON.stringify({
+          error: 'Missing required fields',
+          details: 'Email, role, and sourceId are required'
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400,
+        }
+      );
+    }
+
+    // Initialize Supabase client
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      }
+    );
 
     // Get the current user making the request
     const authHeader = req.headers.get('Authorization');
@@ -60,27 +88,8 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Check if user already exists
-    const { data: existingUser } = await supabaseAdmin.auth.admin.listUsers();
-    const userExists = existingUser.users.some(u => u.email === email);
-
-    if (userExists) {
-      return new Response(
-        JSON.stringify({
-          error: 'User exists',
-          details: 'A user with this email already exists'
-        }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400,
-        }
-      );
-    }
-
-    // Generate invitation token
-    const token = crypto.randomUUID();
-
-    // Handle invitation creation/update
+    // Check for existing pending invitation
+    console.log('Checking for existing pending invitation');
     const { data: existingInvitation, error: invitationError } = await supabaseAdmin
       .from('invitations')
       .select('*')
@@ -88,7 +97,7 @@ const handler = async (req: Request): Promise<Response> => {
       .eq('status', 'pending')
       .single();
 
-    if (invitationError && invitationError.code !== 'PGRST116') {
+    if (invitationError && invitationError.code !== 'PGRST116') { // PGRST116 means no rows returned
       console.error('Error checking existing invitation:', invitationError);
       throw new Error(`Error checking existing invitation: ${invitationError.message}`);
     }
@@ -101,9 +110,7 @@ const handler = async (req: Request): Promise<Response> => {
           role,
           invited_by: invitingUser.id,
           updated_at: new Date().toISOString(),
-          token,
-          source_id: sourceId,
-          status: 'pending'
+          token: crypto.randomUUID()
         })
         .eq('id', existingInvitation.id);
 
@@ -112,6 +119,7 @@ const handler = async (req: Request): Promise<Response> => {
         throw new Error(`Error updating invitation: ${updateError.message}`);
       }
     } else {
+      // Create new invitation record
       console.log('Creating new invitation record');
       const { error: createError } = await supabaseAdmin
         .from('invitations')
@@ -120,8 +128,7 @@ const handler = async (req: Request): Promise<Response> => {
           role,
           invited_by: invitingUser.id,
           status: 'pending',
-          token,
-          source_id: sourceId
+          token: crypto.randomUUID()
         });
 
       if (createError) {
@@ -130,9 +137,39 @@ const handler = async (req: Request): Promise<Response> => {
       }
     }
 
-    // Send invitation email
+    // Send invitation email using Resend
+    console.log('Sending invitation email');
     const origin = req.headers.get('origin') || '';
-    await sendInvitationEmail(email, role, token, origin);
+    const resendApiKey = Deno.env.get('RESEND_API_KEY');
+    
+    if (!resendApiKey) {
+      throw new Error('RESEND_API_KEY is not set');
+    }
+
+    const emailResponse = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${resendApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: 'Expense Tracker <onboarding@resend.dev>',
+        to: [email],
+        subject: 'Invitation to Expense Tracker',
+        html: `
+          <h1>Welcome to Expense Tracker!</h1>
+          <p>You've been invited to join Expense Tracker as a ${role}.</p>
+          <p>Click the link below to accept the invitation:</p>
+          <p><a href="${origin}/auth">Accept Invitation</a></p>
+        `,
+      }),
+    });
+
+    if (!emailResponse.ok) {
+      const emailError = await emailResponse.text();
+      console.error('Error sending invitation email:', emailError);
+      throw new Error('Failed to send invitation email');
+    }
 
     console.log('Invitation process completed successfully');
     return new Response(

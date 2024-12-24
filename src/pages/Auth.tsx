@@ -1,15 +1,13 @@
 import { Auth } from "@supabase/auth-ui-react";
 import { ThemeSupa } from "@supabase/auth-ui-shared";
 import { supabase } from "@/integrations/supabase/client";
-import { useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 
 export default function AuthPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [searchParams] = useSearchParams();
-  const invitationToken = searchParams.get('invitation');
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -42,34 +40,6 @@ export default function AuthPage() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('Auth state changed:', event);
       if (event === 'SIGNED_IN' && session) {
-        if (invitationToken) {
-          try {
-            const { data, error } = await supabase.rpc('accept_invitation', {
-              token: invitationToken
-            });
-
-            if (error) {
-              console.error('Error accepting invitation:', error);
-              toast({
-                variant: "destructive",
-                title: "Error",
-                description: "Failed to accept invitation",
-              });
-            } else {
-              toast({
-                title: "Success",
-                description: "Invitation accepted successfully",
-              });
-            }
-          } catch (error) {
-            console.error('Error accepting invitation:', error);
-            toast({
-              variant: "destructive",
-              title: "Error",
-              description: "Failed to accept invitation",
-            });
-          }
-        }
         navigate("/");
       }
       if (event === 'SIGNED_OUT') {
@@ -91,7 +61,7 @@ export default function AuthPage() {
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate, toast, invitationToken]);
+  }, [navigate, toast]);
 
   // Get the current hostname
   const hostname = window.location.hostname;
@@ -105,8 +75,7 @@ export default function AuthPage() {
   // Construct the callback URL
   const redirectUrl = `${baseUrl}/auth/callback`;
 
-  console.log('Current redirect URL:', redirectUrl);
-  console.log('Invitation token:', invitationToken);
+  console.log('Current redirect URL:', redirectUrl); // For debugging
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -114,7 +83,7 @@ export default function AuthPage() {
         <div className="text-center">
           <h1 className="text-4xl font-bold tracking-tight">Welcome Back</h1>
           <p className="mt-2 text-muted-foreground">
-            {invitationToken ? "Complete your registration to access the shared data" : "Sign in to access your expense tracker"}
+            Sign in to access your expense tracker
           </p>
         </div>
         <div className="bg-white p-8 rounded-xl shadow-sm border">
@@ -143,14 +112,6 @@ export default function AuthPage() {
                   loading_button_label: "Signing in...",
                   social_provider_text: "Sign in with {{provider}}",
                   link_text: "Already have an account? Sign in",
-                },
-                sign_up: {
-                  email_label: "Email address",
-                  password_label: "Password",
-                  button_label: "Sign up",
-                  loading_button_label: "Signing up...",
-                  social_provider_text: "Sign up with {{provider}}",
-                  link_text: "Don't have an account? Sign up",
                 },
                 forgotten_password: {
                   email_label: "Email address",
