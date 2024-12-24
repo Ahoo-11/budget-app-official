@@ -9,6 +9,7 @@ import { Transaction } from "@/types/transaction";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
+import { Loader2 } from "lucide-react";
 
 export default function Personal() {
   const session = useSession();
@@ -16,19 +17,17 @@ export default function Personal() {
   const [isAddingTransaction, setIsAddingTransaction] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
 
-  // First fetch the personal source - using maybeSingle() and taking the first created one if multiple exist
+  // First fetch the personal source
   const { data: personalSource, isLoading: isLoadingSource } = useQuery({
     queryKey: ['personal-source'],
     queryFn: async () => {
-      if (!session?.user?.id) return null;
-      
       const { data, error } = await supabase
         .from('sources')
         .select('*')
-        .eq('user_id', session.user.id)
         .eq('name', 'Personal')
         .order('created_at', { ascending: true })
-        .limit(1);
+        .limit(1)
+        .single();
       
       if (error) {
         console.error('Error fetching personal source:', error);
@@ -40,22 +39,12 @@ export default function Personal() {
         throw error;
       }
 
-      if (!data || data.length === 0) {
-        toast({
-          title: "Error",
-          description: "Personal source not found.",
-          variant: "destructive",
-        });
-        return null;
-      }
-
-      return data[0] as Source;
-    },
-    enabled: !!session?.user?.id
+      return data as Source;
+    }
   });
 
   // Then use the personal source ID to fetch transactions
-  const { transactions, isLoading: isLoadingTransactions, addTransaction, deleteTransaction } = useTransactions(personalSource?.id);
+  const { transactions, isLoading: isLoadingTransactions, addTransaction, updateTransaction, deleteTransaction } = useTransactions(personalSource?.id);
 
   const handleEdit = (transaction: Transaction) => {
     setEditingTransaction(transaction);
@@ -63,16 +52,24 @@ export default function Personal() {
   };
 
   if (isLoadingSource || isLoadingTransactions) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex items-center justify-center h-[50vh]">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
   }
 
   if (!personalSource) {
-    return <div>Personal source not found</div>;
+    return (
+      <div className="flex items-center justify-center h-[50vh] text-muted-foreground">
+        Personal source not available. Please contact support.
+      </div>
+    );
   }
 
   return (
     <div className="container max-w-4xl mx-auto py-8 px-4 space-y-8">
-      <div className="bg-white rounded-2xl shadow-sm border p-6">
+      <div className="bg-card rounded-2xl shadow-sm border p-6">
         <h2 className="text-2xl font-semibold mb-6">Personal Transactions</h2>
         <AddTransaction
           isOpen={true}
@@ -80,6 +77,7 @@ export default function Personal() {
           onAdd={addTransaction}
           source_id={personalSource.id}
           editingTransaction={editingTransaction}
+          onUpdate={updateTransaction}
         />
       </div>
       <TransactionList
@@ -104,6 +102,7 @@ export default function Personal() {
             onAdd={addTransaction}
             source_id={personalSource.id}
             editingTransaction={editingTransaction}
+            onUpdate={updateTransaction}
           />
         </DialogContent>
       </Dialog>
