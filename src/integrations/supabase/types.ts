@@ -62,7 +62,9 @@ export type Database = {
           id: string
           invited_by: string
           role: Database["public"]["Enums"]["user_role_type"]
+          source_id: string | null
           status: Database["public"]["Enums"]["invitation_status"]
+          token: string | null
           updated_at: string | null
         }
         Insert: {
@@ -72,7 +74,9 @@ export type Database = {
           id?: string
           invited_by: string
           role?: Database["public"]["Enums"]["user_role_type"]
+          source_id?: string | null
           status?: Database["public"]["Enums"]["invitation_status"]
+          token?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -82,10 +86,20 @@ export type Database = {
           id?: string
           invited_by?: string
           role?: Database["public"]["Enums"]["user_role_type"]
+          source_id?: string | null
           status?: Database["public"]["Enums"]["invitation_status"]
+          token?: string | null
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "invitations_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "sources"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       payers: {
         Row: {
@@ -287,6 +301,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_invitation: {
+        Args: {
+          token: string
+        }
+        Returns: Json
+      }
       create_profile: {
         Args: {
           user_id: string
@@ -310,7 +330,7 @@ export type Database = {
       }
     }
     Enums: {
-      invitation_status: "pending" | "accepted" | "expired"
+      invitation_status: "pending" | "accepted" | "expired" | "completed"
       user_role_type: "super_admin" | "admin" | "manager" | "viewer"
     }
     CompositeTypes: {
