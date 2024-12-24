@@ -88,27 +88,72 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Create invitation record
-    console.log('Creating invitation record');
-    const { error: invitationError } = await supabaseAdmin
+    // Check for existing pending invitation
+    console.log('Checking for existing pending invitation');
+    const { data: existingInvitation, error: invitationError } = await supabaseAdmin
       .from('invitations')
-      .insert({
-        email,
-        role,
-        invited_by: invitingUser.id,
-        status: 'pending',
-      });
+      .select('*')
+      .eq('email', email)
+      .eq('status', 'pending')
+      .single();
 
-    if (invitationError) {
-      console.error('Error creating invitation:', invitationError);
-      throw new Error(`Error creating invitation record: ${invitationError.message}`);
+    if (invitationError && invitationError.code !== 'PGRST116') { // PGRST116 means no rows returned
+      console.error('Error checking existing invitation:', invitationError);
+      throw new Error(`Error checking existing invitation: ${invitationError.message}`);
     }
 
-    // Send invitation email using the new send-email function
+    if (existingInvitation) {
+      console.log('Found existing pending invitation, updating it');
+      const { error: updateError } = await supabaseAdmin
+        .from('invitations')
+        .update({
+          role,
+          invited_by: invitingUser.id,
+          updated_at: new Date().toISOString(),
+          token: crypto.randomUUID()
+        })
+        .eq('id', existingInvitation.id);
+
+      if (updateError) {
+        console.error('Error updating invitation:', updateError);
+        throw new Error(`Error updating invitation: ${updateError.message}`);
+      }
+    } else {
+      // Create new invitation record
+      console.log('Creating new invitation record');
+      const { error: createError } = await supabaseAdmin
+        .from('invitations')
+        .insert({
+          email,
+          role,
+          invited_by: invitingUser.id,
+          status: 'pending',
+          token: crypto.randomUUID()
+        });
+
+      if (createError) {
+        console.error('Error creating invitation:', createError);
+        throw new Error(`Error creating invitation record: ${createError.message}`);
+      }
+    }
+
+    // Send invitation email using Resend
     console.log('Sending invitation email');
     const origin = req.headers.get('origin') || '';
-    const emailResponse = await supabaseAdmin.functions.invoke('send-email', {
-      body: {
+    const resendApiKey = Deno.env.get('RESEND_API_KEY');
+    
+    if (!resendApiKey) {
+      throw new Error('RESEND_API_KEY is not set');
+    }
+
+    const emailResponse = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${resendApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: 'Expense Tracker <onboarding@resend.dev>',
         to: [email],
         subject: 'Invitation to Expense Tracker',
         html: `
@@ -117,11 +162,12 @@ const handler = async (req: Request): Promise<Response> => {
           <p>Click the link below to accept the invitation:</p>
           <p><a href="${origin}/auth">Accept Invitation</a></p>
         `,
-      },
+      }),
     });
 
-    if (emailResponse.error) {
-      console.error('Error sending invitation email:', emailResponse.error);
+    if (!emailResponse.ok) {
+      const emailError = await emailResponse.text();
+      console.error('Error sending invitation email:', emailError);
       throw new Error('Failed to send invitation email');
     }
 
