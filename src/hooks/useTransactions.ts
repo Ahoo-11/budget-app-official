@@ -12,12 +12,9 @@ export const useTransactions = (source_id?: string) => {
   const { data: transactions = [], isLoading } = useQuery({
     queryKey: ['transactions', source_id],
     queryFn: async () => {
-      if (!session?.user?.id) return [];
-      
       let query = supabase
         .from('transactions')
         .select('*')
-        .eq('user_id', session.user.id)
         .order('date', { ascending: false });
 
       if (source_id) {
@@ -35,27 +32,17 @@ export const useTransactions = (source_id?: string) => {
         throw error;
       }
       return data as Transaction[];
-    },
-    enabled: !!session?.user?.id
+    }
   });
 
   const addTransactionMutation = useMutation({
     mutationFn: async (transaction: Omit<Transaction, 'id' | 'created_at'>) => {
-      if (!session?.user?.id) {
-        throw new Error("You must be logged in to add transactions");
-      }
-
-      const parsedAmount = parseFloat(transaction.amount.toString());
-      if (isNaN(parsedAmount)) {
-        throw new Error("Invalid amount value");
-      }
-
       const cleanTransaction = {
         ...transaction,
-        amount: parsedAmount,
+        amount: parseFloat(transaction.amount.toString()),
         category_id: transaction.category_id || null,
         payer_id: transaction.payer_id || null,
-        user_id: session.user.id,
+        user_id: session?.user?.id || '00000000-0000-0000-0000-000000000000'
       };
 
       const { data, error } = await supabase
@@ -88,28 +75,18 @@ export const useTransactions = (source_id?: string) => {
 
   const updateTransactionMutation = useMutation({
     mutationFn: async ({ id, ...transaction }: Transaction) => {
-      if (!session?.user?.id) {
-        throw new Error("You must be logged in to update transactions");
-      }
-
-      const parsedAmount = parseFloat(transaction.amount.toString());
-      if (isNaN(parsedAmount)) {
-        throw new Error("Invalid amount value");
-      }
-
       const cleanTransaction = {
         ...transaction,
-        amount: parsedAmount,
+        amount: parseFloat(transaction.amount.toString()),
         category_id: transaction.category_id || null,
         payer_id: transaction.payer_id || null,
-        user_id: session.user.id,
+        user_id: session?.user?.id || '00000000-0000-0000-0000-000000000000'
       };
 
       const { error } = await supabase
         .from('transactions')
         .update(cleanTransaction)
-        .eq('id', id)
-        .eq('user_id', session.user.id);
+        .eq('id', id);
 
       if (error) {
         throw new Error(error.message);
@@ -133,15 +110,10 @@ export const useTransactions = (source_id?: string) => {
 
   const deleteTransactionMutation = useMutation({
     mutationFn: async (id: string) => {
-      if (!session?.user?.id) {
-        throw new Error("You must be logged in to delete transactions");
-      }
-
       const { error } = await supabase
         .from('transactions')
         .delete()
-        .eq('id', id)
-        .eq('user_id', session.user.id);
+        .eq('id', id);
       
       if (error) {
         throw new Error(error.message);
