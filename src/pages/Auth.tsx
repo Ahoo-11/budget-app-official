@@ -105,8 +105,8 @@ export default function AuthPage() {
   // Construct the callback URL
   const redirectUrl = `${baseUrl}/auth/callback`;
 
-  console.log('Current redirect URL:', redirectUrl); // For debugging
-  console.log('Invitation token:', invitationToken); // For debugging
+  console.log('Current redirect URL:', redirectUrl);
+  console.log('Invitation token:', invitationToken);
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
