@@ -4,8 +4,13 @@ export const corsHeaders = {
 };
 
 export function validateRequest(email: string, role: string, sourceId: string) {
-  if (!email || !role || !sourceId) {
-    console.error('Missing required fields:', { email, role, sourceId });
-    throw new Error('Missing required fields');
+  if (!email) {
+    throw new Error('Email is required');
+  }
+  if (!role) {
+    throw new Error('Role is required');
+  }
+  if (!sourceId) {
+    throw new Error('Source ID is required');
   }
 }
