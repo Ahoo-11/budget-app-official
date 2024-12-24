@@ -10,11 +10,11 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { token, password } = await req.json();
+    const { token } = await req.json();
     console.log('Processing invitation acceptance for token:', token);
 
-    if (!token || !password) {
-      throw new Error('Token and password are required');
+    if (!token) {
+      throw new Error('Token is required');
     }
 
     const supabaseAdmin = getSupabaseAdmin();
@@ -34,52 +34,12 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log('Found valid invitation for email:', invitation.email);
 
-    // Create the user
-    const { data: { user }, error: createUserError } = await supabaseAdmin.auth.admin.createUser({
-      email: invitation.email,
-      password: password,
-      email_confirm: true
-    });
-
-    if (createUserError || !user) {
-      console.error('Error creating user:', createUserError);
-      throw new Error('Failed to create user account');
-    }
-
-    console.log('Created user account for:', user.email);
-
-    // Create user profile
-    const { error: profileError } = await supabaseAdmin
-      .from('profiles')
-      .insert({
-        id: user.id,
-        email: user.email
-      });
-
-    if (profileError) {
-      console.error('Error creating profile:', profileError);
-      throw new Error('Failed to create user profile');
-    }
-
-    // Create user role
-    const { error: roleError } = await supabaseAdmin
-      .from('user_roles')
-      .insert({
-        user_id: user.id,
-        role: invitation.role
-      });
-
-    if (roleError) {
-      console.error('Error creating user role:', roleError);
-      throw new Error('Failed to set user role');
-    }
-
-    // Create source permission if source_id exists
+    // Create source permission
     if (invitation.source_id) {
       const { error: permissionError } = await supabaseAdmin
         .from('source_permissions')
         .insert({
-          user_id: user.id,
+          user_id: invitation.user_id,
           source_id: invitation.source_id,
           can_view: true,
           can_create: invitation.role !== 'viewer',
@@ -107,11 +67,10 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error('Failed to update invitation status');
     }
 
-    console.log('Successfully completed user creation process');
+    console.log('Successfully completed invitation acceptance process');
     return new Response(
       JSON.stringify({ 
-        message: 'Account created successfully',
-        email: invitation.email
+        message: 'Invitation accepted successfully'
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -122,7 +81,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.error('Error in accept-invitation function:', error);
     return new Response(
       JSON.stringify({
-        error: 'Failed to create account',
+        error: 'Failed to accept invitation',
         details: error.message
       }),
       {
