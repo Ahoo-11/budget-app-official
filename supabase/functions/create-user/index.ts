@@ -3,15 +3,19 @@ import { getSupabaseAdmin } from '../_shared/supabase-admin.ts'
 import { sendInvitationEmail } from './email-service.ts'
 
 Deno.serve(async (req) => {
+  // Add detailed logging
+  console.log('Starting create-user function execution')
+
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
     const { email, role, sourceId } = await req.json()
-    console.log('Received invitation request for:', { email, role, sourceId })
+    console.log('Received request payload:', { email, role, sourceId })
 
     if (!email || !role || !sourceId) {
+      console.error('Missing required fields:', { email, role, sourceId })
       return new Response(
         JSON.stringify({
           error: 'Missing required fields',
@@ -29,9 +33,11 @@ Deno.serve(async (req) => {
     // Get the current user making the request
     const authHeader = req.headers.get('Authorization')
     if (!authHeader) {
+      console.error('No authorization header provided')
       throw new Error('No authorization header')
     }
 
+    console.log('Verifying user authorization')
     const { data: { user: invitingUser }, error: userError } = await supabaseAdmin.auth.getUser(
       authHeader.replace('Bearer ', '')
     )
@@ -42,6 +48,7 @@ Deno.serve(async (req) => {
     }
 
     // Verify the inviting user is a super admin
+    console.log('Checking user role')
     const { data: userRole, error: roleError } = await supabaseAdmin
       .from('user_roles')
       .select('role')
@@ -54,6 +61,7 @@ Deno.serve(async (req) => {
     }
 
     if (userRole.role !== 'super_admin') {
+      console.error('Unauthorized: User is not a super admin')
       return new Response(
         JSON.stringify({
           error: 'Unauthorized',
@@ -67,6 +75,7 @@ Deno.serve(async (req) => {
     }
 
     // Create invitation record
+    console.log('Creating invitation record')
     const { error: invitationError } = await supabaseAdmin
       .from('invitations')
       .insert({
@@ -78,13 +87,15 @@ Deno.serve(async (req) => {
 
     if (invitationError) {
       console.error('Error creating invitation:', invitationError)
-      throw new Error('Error creating invitation record')
+      throw new Error(`Error creating invitation record: ${invitationError.message}`)
     }
 
     // Send invitation email
+    console.log('Sending invitation email')
     const origin = req.headers.get('origin') || ''
     await sendInvitationEmail(email, role, origin)
 
+    console.log('Invitation process completed successfully')
     return new Response(
       JSON.stringify({
         message: 'Invitation sent successfully'
