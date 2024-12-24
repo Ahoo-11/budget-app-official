@@ -1,20 +1,16 @@
 import { Button } from "@/components/ui/button";
-import { Home, LogOut, Menu, Plus, User, Settings2 } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { Home, Menu, Plus, User, Settings2 } from "lucide-react";
+import { Link } from "react-router-dom";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Source } from "@/types/source";
 import { useQuery } from "@tanstack/react-query";
-import { AccountSettings } from "./AccountSettings";
+import { supabase } from "@/integrations/supabase/client";
 import { SourceActions } from "./SourceActions";
 
 export function AppSidebar() {
-  const navigate = useNavigate();
-  const { toast } = useToast();
   const [isAddSourceOpen, setIsAddSourceOpen] = useState(false);
   const [newSourceName, setNewSourceName] = useState("");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -35,65 +31,20 @@ export function AppSidebar() {
     }
   });
 
-  const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      toast({
-        title: "Error",
-        description: "Failed to sign out. Please try again.",
-        variant: "destructive",
-      });
-    } else {
-      navigate("/auth");
-    }
-  };
-
   const handleAddSource = async () => {
-    if (!newSourceName.trim()) {
-      toast({
-        title: "Error",
-        description: "Please enter a source name",
-        variant: "destructive",
-      });
-      return;
-    }
+    if (!newSourceName.trim()) return;
 
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) {
-      toast({
-        title: "Error",
-        description: "You must be logged in to add a source",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('sources')
-      .insert([
-        { name: newSourceName.trim(), user_id: user.id }
-      ])
-      .select()
-      .single();
+      .insert([{ name: newSourceName.trim() }]);
 
     if (error) {
-      toast({
-        title: "Error",
-        description: "Failed to add source. Please try again.",
-        variant: "destructive",
-      });
+      console.error('Error adding source:', error);
       return;
     }
-
-    toast({
-      title: "Success",
-      description: "Source added successfully",
-    });
 
     setNewSourceName("");
     setIsAddSourceOpen(false);
-    navigate(`/source/${data.id}`);
   };
 
   const NavContent = () => (
@@ -151,21 +102,12 @@ export function AppSidebar() {
             <Settings2 className="h-4 w-4" />
           </Button>
         </Link>
-        <Button 
-          variant="outline" 
-          className="w-full justify-start" 
-          onClick={handleLogout}
-        >
-          <LogOut className="mr-2 h-4 w-4" />
-          Logout
-        </Button>
       </div>
     </div>
   );
 
   return (
     <>
-      {/* Mobile Menu Button */}
       <div className="md:hidden fixed top-4 left-4 z-50">
         <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
           <SheetTrigger asChild>
@@ -179,7 +121,6 @@ export function AppSidebar() {
         </Sheet>
       </div>
 
-      {/* Desktop Sidebar */}
       <div className="border-r bg-background fixed top-0 left-0 h-screen w-[200px] p-4 hidden md:block overflow-hidden">
         <NavContent />
       </div>
