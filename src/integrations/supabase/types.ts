@@ -331,7 +331,12 @@ export type Database = {
     }
     Enums: {
       invitation_status: "pending" | "accepted" | "expired" | "completed"
-      user_role_type: "super_admin" | "admin" | "manager" | "viewer"
+      user_role_type:
+        | "super_admin"
+        | "admin"
+        | "manager"
+        | "viewer"
+        | "controller"
     }
     CompositeTypes: {
       [_ in never]: never
