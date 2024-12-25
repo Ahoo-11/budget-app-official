@@ -1,4 +1,4 @@
-import { Settings2, User } from "lucide-react";
+import { Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeSelector } from "./settings/ThemeSelector";
 import { CategoryManager } from "./settings/CategoryManager";
@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { DisplayNameManager } from "./settings/DisplayNameManager";
+import { Alert, AlertDescription } from "./ui/alert";
 
 export function AccountSettings() {
   const navigate = useNavigate();
@@ -29,7 +30,21 @@ export function AccountSettings() {
     }
   });
 
+  const { data: hasSourceAccess } = useQuery({
+    queryKey: ['hasSourceAccess'],
+    queryFn: async () => {
+      const { data: permissions, error } = await supabase
+        .from('source_permissions')
+        .select('id')
+        .limit(1);
+
+      if (error) throw error;
+      return permissions && permissions.length > 0;
+    }
+  });
+
   const canManageUsers = userRole === 'controller' || userRole === 'admin' || userRole === 'super_admin';
+  const showNoAccessMessage = !userRole && !hasSourceAccess;
 
   return (
     <div className="space-y-6">
@@ -39,13 +54,26 @@ export function AccountSettings() {
           <Settings2 className="h-4 w-4" />
         </Button>
       </div>
-      <div className="space-y-6">
-        <DisplayNameManager />
-        <ThemeSelector />
-        <CategoryManager />
-        <PayerManager />
-        {canManageUsers && <UserManagement />}
-      </div>
+
+      {showNoAccessMessage ? (
+        <Alert>
+          <AlertDescription>
+            Your account is pending approval. A controller or administrator needs to grant you access to start using the application.
+          </AlertDescription>
+        </Alert>
+      ) : (
+        <div className="space-y-6">
+          <DisplayNameManager />
+          <ThemeSelector />
+          {hasSourceAccess && (
+            <>
+              <CategoryManager />
+              <PayerManager />
+            </>
+          )}
+          {canManageUsers && <UserManagement />}
+        </div>
+      )}
     </div>
   );
 }
