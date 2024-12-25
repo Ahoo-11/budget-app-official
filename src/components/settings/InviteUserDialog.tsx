@@ -77,24 +77,36 @@ export function InviteUserDialog({ onInviteSent }: { onInviteSent: () => void })
         return;
       }
 
-      // Update user role
+      // Update user role using upsert with proper conflict handling
       const { error: roleError } = await supabase
         .from('user_roles')
-        .upsert({ user_id: userId, role }, { onConflict: 'user_id' });
+        .upsert(
+          { user_id: userId, role },
+          { 
+            onConflict: 'user_id',
+            ignoreDuplicates: false 
+          }
+        );
 
       if (roleError) throw roleError;
 
       // Update source permissions
       const { error: permError } = await supabase
         .from('source_permissions')
-        .upsert({
-          user_id: userId,
-          source_id: sourceId,
-          can_view: true,
-          can_create: role !== 'viewer',
-          can_edit: role !== 'viewer',
-          can_delete: role === 'super_admin' || role === 'admin'
-        }, { onConflict: '(user_id, source_id)' });
+        .upsert(
+          {
+            user_id: userId,
+            source_id: sourceId,
+            can_view: true,
+            can_create: role !== 'viewer',
+            can_edit: role !== 'viewer',
+            can_delete: role === 'super_admin' || role === 'admin'
+          },
+          { 
+            onConflict: '(user_id, source_id)',
+            ignoreDuplicates: false 
+          }
+        );
 
       if (permError) throw permError;
 
