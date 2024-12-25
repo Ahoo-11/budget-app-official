@@ -14,11 +14,10 @@ import { Loader2 } from "lucide-react";
 export default function Personal() {
   const session = useSession();
   const { toast } = useToast();
-  const [isAddingTransaction, setIsAddingTransaction] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
 
   // First fetch the personal source
-  const { data: personalSource, isLoading: isLoadingSource, error } = useQuery({
+  const { data: personalSource, isLoading: isLoadingSource } = useQuery({
     queryKey: ['personal-source'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -26,9 +25,7 @@ export default function Personal() {
         .select('*')
         .eq('name', 'Personal')
         .eq('user_id', session?.user?.id)
-        .order('created_at', { ascending: true })
-        .limit(1)
-        .maybeSingle();
+        .single();
       
       if (error) {
         console.error('Error fetching personal source:', error);
@@ -38,29 +35,6 @@ export default function Personal() {
           variant: "destructive",
         });
         throw error;
-      }
-
-      if (!data) {
-        // If no personal source exists, create one
-        const { data: newSource, error: createError } = await supabase
-          .from('sources')
-          .insert([
-            { name: 'Personal', user_id: session?.user?.id }
-          ])
-          .select()
-          .single();
-
-        if (createError) {
-          console.error('Error creating personal source:', createError);
-          toast({
-            title: "Error",
-            description: "Failed to create personal source. Please try again.",
-            variant: "destructive",
-          });
-          throw createError;
-        }
-
-        return newSource as Source;
       }
 
       return data as Source;
@@ -73,7 +47,6 @@ export default function Personal() {
 
   const handleEdit = (transaction: Transaction) => {
     setEditingTransaction(transaction);
-    setIsAddingTransaction(true);
   };
 
   if (!session) {
@@ -88,14 +61,6 @@ export default function Personal() {
     return (
       <div className="flex items-center justify-center h-[50vh]">
         <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-center h-[50vh] text-muted-foreground">
-        Error loading personal transactions. Please try refreshing the page.
       </div>
     );
   }
@@ -126,27 +91,6 @@ export default function Personal() {
         onDelete={deleteTransaction}
         onEdit={handleEdit}
       />
-
-      <Dialog open={isAddingTransaction} onOpenChange={setIsAddingTransaction}>
-        <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              {editingTransaction ? 'Edit Transaction' : 'Add Transaction'}
-            </DialogTitle>
-          </DialogHeader>
-          <AddTransaction
-            isOpen={isAddingTransaction}
-            onClose={() => {
-              setIsAddingTransaction(false);
-              setEditingTransaction(null);
-            }}
-            onAdd={addTransaction}
-            source_id={personalSource.id}
-            editingTransaction={editingTransaction}
-            onUpdate={updateTransaction}
-          />
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

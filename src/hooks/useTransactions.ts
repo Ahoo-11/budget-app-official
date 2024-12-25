@@ -19,6 +19,18 @@ export const useTransactions = (source_id?: string) => {
 
       if (source_id) {
         query = query.eq('source_id', source_id);
+      } else {
+        // If no source_id is provided, fetch transactions from all sources the user has access to
+        const { data: permissions } = await supabase
+          .from('source_permissions')
+          .select('source_id')
+          .eq('user_id', session?.user?.id)
+          .eq('can_view', true);
+
+        if (permissions && permissions.length > 0) {
+          const sourceIds = permissions.map(p => p.source_id);
+          query = query.in('source_id', sourceIds);
+        }
       }
       
       const { data, error } = await query;
@@ -32,7 +44,8 @@ export const useTransactions = (source_id?: string) => {
         throw error;
       }
       return data as Transaction[];
-    }
+    },
+    enabled: !!session?.user?.id
   });
 
   const addTransactionMutation = useMutation({
