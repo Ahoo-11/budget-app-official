@@ -54,53 +54,6 @@ export type Database = {
         }
         Relationships: []
       }
-      invitations: {
-        Row: {
-          created_at: string
-          email: string
-          expires_at: string
-          id: string
-          invited_by: string
-          role: Database["public"]["Enums"]["user_role_type"]
-          source_id: string | null
-          status: Database["public"]["Enums"]["invitation_status"]
-          token: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string
-          email: string
-          expires_at?: string
-          id?: string
-          invited_by: string
-          role?: Database["public"]["Enums"]["user_role_type"]
-          source_id?: string | null
-          status?: Database["public"]["Enums"]["invitation_status"]
-          token?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string
-          email?: string
-          expires_at?: string
-          id?: string
-          invited_by?: string
-          role?: Database["public"]["Enums"]["user_role_type"]
-          source_id?: string | null
-          status?: Database["public"]["Enums"]["invitation_status"]
-          token?: string | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "invitations_source_id_fkey"
-            columns: ["source_id"]
-            isOneToOne: false
-            referencedRelation: "sources"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       payers: {
         Row: {
           created_at: string
@@ -336,7 +289,6 @@ export type Database = {
       }
     }
     Enums: {
-      invitation_status: "pending" | "accepted" | "expired" | "completed"
       user_role_type:
         | "super_admin"
         | "admin"
