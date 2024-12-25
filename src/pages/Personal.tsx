@@ -7,7 +7,6 @@ import { useTransactions } from "@/hooks/useTransactions";
 import { Source } from "@/types/source";
 import { Transaction } from "@/types/transaction";
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
 import { Loader2 } from "lucide-react";
 
