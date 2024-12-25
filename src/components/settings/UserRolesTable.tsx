@@ -12,22 +12,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { RoleSelect } from "./user-roles/RoleSelect";
 import { SourcesInfo } from "./user-roles/SourcesInfo";
-import { Button } from "@/components/ui/button";
-import { Check, X } from "lucide-react";
-
-export type UserRole = 'super_admin' | 'admin' | 'viewer' | 'pending';
-
-interface User {
-  id: string;
-  email?: string;
-  role?: UserRole;
-  status?: 'pending' | 'approved' | 'rejected';
-}
-
-interface Source {
-  id: string;
-  name: string;
-}
+import { UserStatusCell } from "./user-roles/UserStatusCell";
+import { UserActionsCell } from "./user-roles/UserActionsCell";
+import { User, UserRole } from "@/types/roles";
 
 export function UserRolesTable({ users, onRoleUpdate }: { 
   users: User[], 
@@ -99,7 +86,10 @@ export function UserRolesTable({ users, onRoleUpdate }: {
     try {
       const { error } = await supabase
         .from('user_roles')
-        .upsert({ user_id: userId, role: newRole }, { onConflict: 'user_id' });
+        .upsert({ 
+          user_id: userId, 
+          role: newRole 
+        });
 
       if (error) throw error;
 
@@ -136,7 +126,6 @@ export function UserRolesTable({ users, onRoleUpdate }: {
 
       if (error) throw error;
 
-      // Update user role from pending to viewer
       await handleRoleChange(userId, 'viewer');
 
       toast({
@@ -223,13 +212,7 @@ export function UserRolesTable({ users, onRoleUpdate }: {
             <TableRow key={user.id}>
               <TableCell>{userEmails?.[user.id]?.email || 'Loading...'}</TableCell>
               <TableCell>
-                <span className={`px-2 py-1 rounded-full text-sm ${
-                  userStatus === 'approved' ? 'bg-green-100 text-green-800' :
-                  userStatus === 'rejected' ? 'bg-red-100 text-red-800' :
-                  'bg-yellow-100 text-yellow-800'
-                }`}>
-                  {userStatus || 'Unknown'}
-                </span>
+                <UserStatusCell status={userStatus} />
               </TableCell>
               <TableCell>
                 <RoleSelect
@@ -246,30 +229,12 @@ export function UserRolesTable({ users, onRoleUpdate }: {
                 />
               </TableCell>
               <TableCell>
-                {isPending && (
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleApproveUser(user.id)}
-                      disabled={updating}
-                      className="bg-green-50 hover:bg-green-100 text-green-700"
-                    >
-                      <Check className="h-4 w-4 mr-1" />
-                      Approve
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleRejectUser(user.id)}
-                      disabled={updating}
-                      className="bg-red-50 hover:bg-red-100 text-red-700"
-                    >
-                      <X className="h-4 w-4 mr-1" />
-                      Reject
-                    </Button>
-                  </div>
-                )}
+                <UserActionsCell
+                  isPending={isPending}
+                  updating={updating}
+                  onApprove={() => handleApproveUser(user.id)}
+                  onReject={() => handleRejectUser(user.id)}
+                />
               </TableCell>
             </TableRow>
           );

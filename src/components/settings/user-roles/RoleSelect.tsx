@@ -5,7 +5,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { type UserRole } from "../UserRolesTable";
+import { UserRole } from "@/types/roles";
 
 interface RoleSelectProps {
   value?: UserRole;
@@ -26,6 +26,8 @@ export function RoleSelect({ value, disabled, onValueChange }: RoleSelectProps) 
       <SelectContent>
         <SelectItem value="viewer">Viewer</SelectItem>
         <SelectItem value="admin">Admin</SelectItem>
+        <SelectItem value="manager">Manager</SelectItem>
+        <SelectItem value="controller">Controller</SelectItem>
         <SelectItem value="super_admin">Super Admin</SelectItem>
         <SelectItem value="pending" disabled>Pending</SelectItem>
       </SelectContent>
