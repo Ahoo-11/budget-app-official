@@ -7,24 +7,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@/components/ui/hover-card";
-import { Info } from "lucide-react";
+import { RoleSelect } from "./user-roles/RoleSelect";
+import { SourcesInfo } from "./user-roles/SourcesInfo";
 
-type UserRole = 'super_admin' | 'admin' | 'viewer';
+export type UserRole = 'super_admin' | 'admin' | 'viewer';
 
 interface User {
   id: string;
@@ -45,7 +34,6 @@ export function UserRolesTable({ users, onRoleUpdate }: {
   const [updating, setUpdating] = useState(false);
   const queryClient = useQueryClient();
 
-  // Fetch user emails from profiles table
   const { data: userEmails } = useQuery({
     queryKey: ['userEmails'],
     queryFn: async () => {
@@ -65,7 +53,6 @@ export function UserRolesTable({ users, onRoleUpdate }: {
     }
   });
 
-  // Fetch sources and permissions for each user
   const { data: sourcesData } = useQuery({
     queryKey: ['sources'],
     queryFn: async () => {
@@ -94,7 +81,6 @@ export function UserRolesTable({ users, onRoleUpdate }: {
         return {};
       }
 
-      // Group permissions by user_id
       return perms.reduce((acc: Record<string, string[]>, perm) => {
         if (!acc[perm.user_id]) {
           acc[perm.user_id] = [];
@@ -119,10 +105,10 @@ export function UserRolesTable({ users, onRoleUpdate }: {
         description: "User role updated successfully",
       });
       
-      // Invalidate and refetch all relevant queries
+      // Fixed: invalidateQueries instead of invalidateQuery
       await Promise.all([
-        queryClient.invalidateQuery({ queryKey: ['userRoles'] }),
-        queryClient.invalidateQuery({ queryKey: ['sourcePermissions'] }),
+        queryClient.invalidateQueries({ queryKey: ['userRoles'] }),
+        queryClient.invalidateQueries({ queryKey: ['sourcePermissions'] }),
       ]);
       
       onRoleUpdate();
@@ -170,40 +156,18 @@ export function UserRolesTable({ users, onRoleUpdate }: {
           <TableRow key={user.id}>
             <TableCell>{userEmails?.[user.id] || 'Loading...'}</TableCell>
             <TableCell>
-              <Select
-                disabled={updating}
+              <RoleSelect
                 value={user.role}
-                onValueChange={(value: UserRole) => handleRoleChange(user.id, value)}
-              >
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Select role" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="viewer">Viewer</SelectItem>
-                  <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="super_admin">Super Admin</SelectItem>
-                </SelectContent>
-              </Select>
+                disabled={updating}
+                onValueChange={(value) => handleRoleChange(user.id, value)}
+              />
             </TableCell>
             <TableCell>
-              <HoverCard>
-                <HoverCardTrigger>
-                  <div className="flex items-center gap-2">
-                    <span className="truncate max-w-[200px]">
-                      {getUserSourcesInfo(user.id, user.role)}
-                    </span>
-                    <Info className="h-4 w-4 text-muted-foreground" />
-                  </div>
-                </HoverCardTrigger>
-                <HoverCardContent>
-                  <div className="space-y-2">
-                    <h4 className="font-semibold">Source Access Details</h4>
-                    <p className="text-sm">
-                      {getUserSourcesInfo(user.id, user.role)}
-                    </p>
-                  </div>
-                </HoverCardContent>
-              </HoverCard>
+              <SourcesInfo
+                userId={user.id}
+                userRole={user.role}
+                sourcesInfo={getUserSourcesInfo(user.id, user.role)}
+              />
             </TableCell>
           </TableRow>
         ))}
