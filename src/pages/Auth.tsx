@@ -63,30 +63,6 @@ export default function AuthPage() {
     return () => subscription.unsubscribe();
   }, [navigate, toast]);
 
-  const handlePasswordReset = async (email: string) => {
-    try {
-      const { error } = await supabase.functions.invoke('send-password-reset', {
-        body: { email }
-      });
-
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      toast({
-        title: "Password Reset",
-        description: "Check your email for the password reset link",
-      });
-    } catch (error: any) {
-      console.error('Password reset error:', error);
-      toast({
-        variant: "destructive",
-        title: "Password Reset Error",
-        description: error.message || "Failed to send password reset email",
-      });
-    }
-  };
-
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-8">
@@ -113,7 +89,6 @@ export default function AuthPage() {
             providers={[]}
             redirectTo={window.location.origin}
             magicLink={false}
-            onPasswordReset={handlePasswordReset}
             localization={{
               variables: {
                 sign_in: {
