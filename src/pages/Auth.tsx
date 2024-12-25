@@ -65,32 +65,24 @@ export default function AuthPage() {
 
   const handlePasswordReset = async (email: string) => {
     try {
-      const response = await fetch(
-        `${window.location.origin}/functions/v1/send-password-reset`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`,
-          },
-          body: JSON.stringify({ email }),
-        }
-      );
+      const response = await supabase.functions.invoke('send-password-reset', {
+        body: { email }
+      });
 
-      if (!response.ok) {
-        throw new Error('Failed to send password reset email');
+      if (response.error) {
+        throw new Error(response.error.message);
       }
 
       toast({
         title: "Password Reset",
         description: "Check your email for the password reset link",
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Password reset error:', error);
       toast({
         variant: "destructive",
         title: "Password Reset Error",
-        description: "Failed to send password reset email. Please try again later.",
+        description: error.message || "Failed to send password reset email",
       });
     }
   };

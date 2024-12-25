@@ -18,7 +18,8 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     const { email } = await req.json();
-    
+    console.log("Processing password reset for email:", email);
+
     // Create Supabase client with service role key
     const supabase = createClient(
       SUPABASE_URL!,
@@ -32,8 +33,11 @@ const handler = async (req: Request): Promise<Response> => {
     });
 
     if (resetError) {
+      console.error("Reset error:", resetError);
       throw resetError;
     }
+
+    console.log("Generated reset link for user");
 
     // Send email using Resend
     const res = await fetch("https://api.resend.com/emails", {
@@ -57,8 +61,11 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (!res.ok) {
       const error = await res.text();
+      console.error("Resend API error:", error);
       throw new Error(error);
     }
+
+    console.log("Password reset email sent successfully");
 
     return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
