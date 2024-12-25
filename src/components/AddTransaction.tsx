@@ -8,6 +8,7 @@ import { SourceSelector } from "./SourceSelector";
 import { PayerSelector } from "./PayerSelector";
 import { CategorySelector } from "./CategorySelector";
 import { TransactionForm } from "./TransactionForm";
+import { supabase } from "@/integrations/supabase/client";
 
 interface AddTransactionProps {
   isOpen: boolean;
@@ -35,8 +36,28 @@ const AddTransaction = ({
   const [selectedCategory, setSelectedCategory] = useState("");
   const [date, setDate] = useState(new Date());
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [displayName, setDisplayName] = useState("Unknown User");
   const session = useSession();
   const { toast } = useToast();
+
+  // Fetch user's display name
+  useEffect(() => {
+    const fetchDisplayName = async () => {
+      if (session?.user?.id) {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('display_name')
+          .eq('id', session.user.id)
+          .single();
+        
+        if (data?.display_name) {
+          setDisplayName(data.display_name);
+        }
+      }
+    };
+    
+    fetchDisplayName();
+  }, [session?.user?.id]);
 
   // Pre-fill form when editing
   useEffect(() => {
@@ -76,6 +97,7 @@ const AddTransaction = ({
         date: date.toISOString(),
         source_id: source_id || selectedSource,
         user_id: session.user.id,
+        created_by_name: displayName
       };
 
       if (editingTransaction && onUpdate) {
@@ -83,6 +105,7 @@ const AddTransaction = ({
           ...transactionData,
           id: editingTransaction.id,
           created_at: editingTransaction.created_at,
+          created_by_name: displayName
         });
       } else {
         await onAdd(transactionData);
