@@ -63,20 +63,6 @@ export default function AuthPage() {
     return () => subscription.unsubscribe();
   }, [navigate, toast]);
 
-  // Get the current hostname
-  const hostname = window.location.hostname;
-  
-  // Determine if we're in preview mode
-  const isPreview = hostname.includes('preview--') || hostname.includes('lovableproject.com');
-  
-  // Construct the base URL without /auth
-  const baseUrl = window.location.origin;
-  
-  // Construct the callback URL
-  const redirectUrl = `${baseUrl}/auth/callback`;
-
-  console.log('Current redirect URL:', redirectUrl); // For debugging
-
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-8">
@@ -100,8 +86,8 @@ export default function AuthPage() {
                 }
               }
             }}
-            providers={["google"]}
-            redirectTo={redirectUrl}
+            providers={[]}
+            redirectTo={`${window.location.origin}/auth/callback`}
             magicLink={false}
             localization={{
               variables: {
@@ -112,6 +98,14 @@ export default function AuthPage() {
                   loading_button_label: "Signing in...",
                   social_provider_text: "Sign in with {{provider}}",
                   link_text: "Already have an account? Sign in",
+                },
+                sign_up: {
+                  email_label: "Email address",
+                  password_label: "Create a password",
+                  button_label: "Sign up",
+                  loading_button_label: "Signing up...",
+                  social_provider_text: "Sign up with {{provider}}",
+                  link_text: "Don't have an account? Sign up",
                 },
                 forgotten_password: {
                   email_label: "Email address",
