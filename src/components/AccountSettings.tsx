@@ -30,6 +30,23 @@ export function AccountSettings() {
     }
   });
 
+  const { data: userStatus } = useQuery({
+    queryKey: ['userStatus'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('status')
+        .eq('id', user.id)
+        .single();
+
+      if (error) throw error;
+      return data?.status;
+    }
+  });
+
   const { data: hasSourceAccess } = useQuery({
     queryKey: ['hasSourceAccess'],
     queryFn: async () => {
@@ -37,13 +54,7 @@ export function AccountSettings() {
       if (!user) return false;
 
       // First check if user is approved
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('status')
-        .eq('id', user.id)
-        .single();
-
-      if (profileError || profile?.status !== 'approved') {
+      if (userStatus !== 'approved') {
         return false;
       }
 
@@ -56,11 +67,12 @@ export function AccountSettings() {
 
       if (error) throw error;
       return permissions && permissions.length > 0;
-    }
+    },
+    enabled: !!userStatus // Only run this query when we have the user status
   });
 
   const canManageUsers = userRole === 'controller' || userRole === 'admin' || userRole === 'super_admin';
-  const showNoAccessMessage = !userRole && !hasSourceAccess;
+  const showNoAccessMessage = userStatus === 'pending';
 
   return (
     <div className="space-y-6">
