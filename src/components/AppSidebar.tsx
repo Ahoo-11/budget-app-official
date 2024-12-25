@@ -23,6 +23,8 @@ export function AppSidebar() {
   const { data: sources = [], refetch } = useQuery({
     queryKey: ['sources'],
     queryFn: async () => {
+      if (!session?.user?.id) return [];
+      
       const { data, error } = await supabase
         .from('sources')
         .select('*')
@@ -33,7 +35,8 @@ export function AppSidebar() {
         throw error;
       }
       return data as Source[];
-    }
+    },
+    enabled: !!session?.user?.id
   });
 
   const handleLogout = async () => {
