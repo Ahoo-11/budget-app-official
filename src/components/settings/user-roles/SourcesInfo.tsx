@@ -4,7 +4,7 @@ import {
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import { Info } from "lucide-react";
-import { type UserRole } from "../UserRolesTable";
+import { type UserRole } from "@/types/roles";
 
 interface SourcesInfoProps {
   userId: string;

@@ -15,6 +15,7 @@ import { SourcesInfo } from "./user-roles/SourcesInfo";
 import { UserStatusCell } from "./user-roles/UserStatusCell";
 import { UserActionsCell } from "./user-roles/UserActionsCell";
 import { User, UserRole } from "@/types/roles";
+import { useUserRoleManagement } from "./hooks/useUserRoleManagement";
 
 export function UserRolesTable({ users, onRoleUpdate }: { 
   users: User[], 
@@ -23,6 +24,12 @@ export function UserRolesTable({ users, onRoleUpdate }: {
   const { toast } = useToast();
   const [updating, setUpdating] = useState(false);
   const queryClient = useQueryClient();
+  const { handleRoleChange, handleApproveUser, handleRejectUser } = useUserRoleManagement({
+    toast,
+    setUpdating,
+    queryClient,
+    onRoleUpdate
+  });
 
   const { data: userEmails } = useQuery({
     queryKey: ['userEmails'],
@@ -80,99 +87,6 @@ export function UserRolesTable({ users, onRoleUpdate }: {
       }, {});
     }
   });
-
-  const handleRoleChange = async (userId: string, newRole: UserRole) => {
-    setUpdating(true);
-    try {
-      const { error } = await supabase
-        .from('user_roles')
-        .upsert({ 
-          user_id: userId, 
-          role: newRole 
-        });
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "User role updated successfully",
-      });
-      
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['userRoles'] }),
-        queryClient.invalidateQueries({ queryKey: ['sourcePermissions'] }),
-      ]);
-      
-      onRoleUpdate();
-    } catch (error) {
-      console.error('Error updating role:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update user role",
-        variant: "destructive",
-      });
-    } finally {
-      setUpdating(false);
-    }
-  };
-
-  const handleApproveUser = async (userId: string) => {
-    setUpdating(true);
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ status: 'approved' })
-        .eq('id', userId);
-
-      if (error) throw error;
-
-      await handleRoleChange(userId, 'viewer');
-
-      toast({
-        title: "Success",
-        description: "User approved successfully",
-      });
-      
-      queryClient.invalidateQueries({ queryKey: ['userEmails'] });
-    } catch (error) {
-      console.error('Error approving user:', error);
-      toast({
-        title: "Error",
-        description: "Failed to approve user",
-        variant: "destructive",
-      });
-    } finally {
-      setUpdating(false);
-    }
-  };
-
-  const handleRejectUser = async (userId: string) => {
-    setUpdating(true);
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ status: 'rejected' })
-        .eq('id', userId);
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "User rejected successfully",
-      });
-      
-      queryClient.invalidateQueries({ queryKey: ['userEmails'] });
-    } catch (error) {
-      console.error('Error rejecting user:', error);
-      toast({
-        title: "Error",
-        description: "Failed to reject user",
-        variant: "destructive",
-      });
-    } finally {
-      setUpdating(false);
-    }
-  };
 
   const getUserSourcesInfo = (userId: string, userRole?: UserRole) => {
     if (userRole === 'super_admin') {
