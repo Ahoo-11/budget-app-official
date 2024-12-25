@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Home, Menu, Plus, User, Settings2, LogOut } from "lucide-react";
+import { Home, Menu, Plus, Settings2, LogOut } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -84,28 +84,20 @@ export function AppSidebar() {
               Home
             </Button>
           </Link>
-          <Link to="/personal" onClick={() => setIsMobileMenuOpen(false)}>
-            <Button variant="ghost" className="w-full justify-start">
-              <User className="mr-2 h-4 w-4" />
-              Personal
-            </Button>
-          </Link>
-          {sources
-            .filter(source => source.name.toLowerCase() !== 'personal')
-            .map((source) => (
-              <div key={source.id} className="flex items-center">
-                <Link 
-                  to={`/source/${source.id}`}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="flex-1"
-                >
-                  <Button variant="ghost" className="w-full justify-start">
-                    <User className="mr-2 h-4 w-4" />
-                    {source.name}
-                  </Button>
-                </Link>
-                <SourceActions sourceId={source.id} sourceName={source.name} />
-              </div>
+          {sources.map((source) => (
+            <div key={source.id} className="flex items-center">
+              <Link 
+                to={`/source/${source.id}`}
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="flex-1"
+              >
+                <Button variant="ghost" className="w-full justify-start">
+                  <Home className="mr-2 h-4 w-4" />
+                  {source.name}
+                </Button>
+              </Link>
+              <SourceActions sourceId={source.id} sourceName={source.name} />
+            </div>
           ))}
           <Button 
             variant="ghost" 

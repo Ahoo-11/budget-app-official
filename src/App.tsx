@@ -9,7 +9,6 @@ import Index from "./pages/Index";
 import Types from "./pages/Types";
 import Reports from "./pages/Reports";
 import Source from "./pages/Source";
-import Personal from "./pages/Personal";
 import { AccountSettings } from "./components/AccountSettings";
 import AuthPage from "./pages/Auth";
 import { useEffect, useState } from "react";
@@ -77,7 +76,6 @@ export default function App() {
                             <Route path="/types" element={<Types />} />
                             <Route path="/reports" element={<Reports />} />
                             <Route path="/source/:sourceId" element={<Source />} />
-                            <Route path="/personal" element={<Personal />} />
                             <Route path="/settings" element={<AccountSettings />} />
                           </Routes>
                         </main>
