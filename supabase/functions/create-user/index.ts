@@ -1,8 +1,8 @@
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3'
 import { corsHeaders } from '../_shared/cors.ts'
-import { getSupabaseAdmin } from '../_shared/supabase-admin.ts'
-import { CreateUserPayload } from '../_shared/types.ts'
 
 Deno.serve(async (req) => {
+  // Handle CORS
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
@@ -24,51 +24,92 @@ Deno.serve(async (req) => {
       )
     }
 
-    const supabaseAdmin = getSupabaseAdmin()
+    // Initialize Supabase Admin client
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
+    )
 
-    // Create user with Supabase Auth
-    const { data: userData, error: userError } = await supabaseAdmin.auth.admin.createUser({
-      email,
-      email_confirm: true,
-      user_metadata: { role }
-    })
+    // Check if user already exists
+    const { data: existingUser, error: userCheckError } = await supabaseAdmin.auth.admin.listUsers()
+    const userExists = existingUser?.users.find(u => u.email === email)
 
-    if (userError) {
-      console.error('Error creating user:', userError)
-      throw userError
-    }
+    let userId: string
 
-    // Create user role
-    const { error: roleError } = await supabaseAdmin
-      .from('user_roles')
-      .insert({ user_id: userData.user.id, role })
-
-    if (roleError) {
-      console.error('Error creating user role:', roleError)
-      throw roleError
-    }
-
-    // Create source permission
-    const { error: permError } = await supabaseAdmin
-      .from('source_permissions')
-      .insert({
-        user_id: userData.user.id,
-        source_id: sourceId,
-        can_view: true,
-        can_create: role !== 'viewer',
-        can_edit: role !== 'viewer',
-        can_delete: role === 'admin' || role === 'super_admin'
+    if (userExists) {
+      console.log('User already exists:', email)
+      userId = userExists.id
+    } else {
+      // Create new user
+      const { data: userData, error: createError } = await supabaseAdmin.auth.admin.createUser({
+        email,
+        email_confirm: true,
       })
 
-    if (permError) {
-      console.error('Error creating source permission:', permError)
-      throw permError
+      if (createError) {
+        console.error('Error creating user:', createError)
+        throw createError
+      }
+
+      userId = userData.user.id
+    }
+
+    // Check if user role already exists
+    const { data: existingRole } = await supabaseAdmin
+      .from('user_roles')
+      .select('*')
+      .eq('user_id', userId)
+      .single()
+
+    if (!existingRole) {
+      // Create user role only if it doesn't exist
+      const { error: roleError } = await supabaseAdmin
+        .from('user_roles')
+        .insert({ user_id: userId, role })
+
+      if (roleError) {
+        console.error('Error creating user role:', roleError)
+        throw roleError
+      }
+    }
+
+    // Check if source permission already exists
+    const { data: existingPermission } = await supabaseAdmin
+      .from('source_permissions')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('source_id', sourceId)
+      .single()
+
+    if (!existingPermission) {
+      // Create source permission only if it doesn't exist
+      const { error: permError } = await supabaseAdmin
+        .from('source_permissions')
+        .insert({
+          user_id: userId,
+          source_id: sourceId,
+          can_view: true,
+          can_create: role !== 'viewer',
+          can_edit: role !== 'viewer',
+          can_delete: role === 'admin' || role === 'super_admin'
+        })
+
+      if (permError) {
+        console.error('Error creating source permission:', permError)
+        throw permError
+      }
     }
 
     return new Response(
       JSON.stringify({ 
         success: true,
-        user: userData.user
+        user: { id: userId, email }
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
