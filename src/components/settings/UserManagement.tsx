@@ -14,15 +14,30 @@ export function UserManagement() {
   const { data: users = [], refetch: refetchUsers } = useQuery({
     queryKey: ['users'],
     queryFn: async () => {
+      // First, get all profiles
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id');
+
+      if (profilesError) throw profilesError;
+
+      // Then get all user roles
       const { data: userRoles, error: rolesError } = await supabase
         .from('user_roles')
         .select('*');
 
       if (rolesError) throw rolesError;
 
-      return userRoles.map(userRole => ({
-        id: userRole.user_id,
-        role: userRole.role as UserRole
+      // Create a map of user roles
+      const roleMap = userRoles.reduce((acc: Record<string, UserRole>, role) => {
+        acc[role.user_id] = role.role as UserRole;
+        return acc;
+      }, {});
+
+      // Map all profiles to users, including those without roles
+      return profiles.map(profile => ({
+        id: profile.id,
+        role: roleMap[profile.id]
       }));
     }
   });
