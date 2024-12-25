@@ -20,14 +20,13 @@ import {
 import { UserPlus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import { createUser } from "@/utils/userManagement";
 
 type UserRole = 'super_admin' | 'admin' | 'viewer';
 
 export function InviteUserDialog({ onInviteSent }: { onInviteSent: () => void }) {
   const { toast } = useToast();
-  const [inviteEmail, setInviteEmail] = useState("");
-  const [inviteRole, setInviteRole] = useState<UserRole>("viewer");
+  const [email, setEmail] = useState("");
+  const [role, setRole] = useState<UserRole>("viewer");
   const [selectedSource, setSelectedSource] = useState<string>("none");
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -85,14 +84,42 @@ export function InviteUserDialog({ onInviteSent }: { onInviteSent: () => void })
         return;
       }
 
-      await createUser(inviteEmail, inviteRole, selectedSource);
+      // Create user with Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+        email: email,
+        email_confirm: true,
+        user_metadata: { role }
+      });
+
+      if (authError) throw authError;
+
+      // Create user role
+      const { error: roleError } = await supabase
+        .from('user_roles')
+        .insert({ user_id: authData.user.id, role });
+
+      if (roleError) throw roleError;
+
+      // Create source permission
+      const { error: permError } = await supabase
+        .from('source_permissions')
+        .insert({
+          user_id: authData.user.id,
+          source_id: selectedSource,
+          can_view: true,
+          can_create: role !== 'viewer',
+          can_edit: role !== 'viewer',
+          can_delete: role === 'admin' || role === 'super_admin'
+        });
+
+      if (permError) throw permError;
 
       toast({
         title: "Success",
-        description: `Invitation sent to ${inviteEmail}`,
+        description: `User created successfully: ${email}`,
       });
-      setInviteEmail("");
-      setInviteRole("viewer");
+      setEmail("");
+      setRole("viewer");
       setSelectedSource("none");
       setIsOpen(false);
       onInviteSent();
@@ -124,7 +151,7 @@ export function InviteUserDialog({ onInviteSent }: { onInviteSent: () => void })
         <DialogHeader>
           <DialogTitle>Create New User</DialogTitle>
           <DialogDescription>
-            An invitation will be sent to the provided email address.
+            Create a new user account with specified permissions.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
@@ -132,12 +159,12 @@ export function InviteUserDialog({ onInviteSent }: { onInviteSent: () => void })
             <Input
               type="email"
               placeholder="Email address"
-              value={inviteEmail}
-              onChange={(e) => setInviteEmail(e.target.value)}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
             />
           </div>
           <div className="space-y-2">
-            <Select value={inviteRole} onValueChange={(value: UserRole) => setInviteRole(value)}>
+            <Select value={role} onValueChange={(value: UserRole) => setRole(value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Select role" />
               </SelectTrigger>
