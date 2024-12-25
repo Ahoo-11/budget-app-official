@@ -18,16 +18,17 @@ export default function Personal() {
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
 
   // First fetch the personal source
-  const { data: personalSource, isLoading: isLoadingSource } = useQuery({
+  const { data: personalSource, isLoading: isLoadingSource, error } = useQuery({
     queryKey: ['personal-source'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('sources')
         .select('*')
         .eq('name', 'Personal')
+        .eq('user_id', session?.user?.id)
         .order('created_at', { ascending: true })
         .limit(1)
-        .single();
+        .maybeSingle();
       
       if (error) {
         console.error('Error fetching personal source:', error);
@@ -39,8 +40,32 @@ export default function Personal() {
         throw error;
       }
 
+      if (!data) {
+        // If no personal source exists, create one
+        const { data: newSource, error: createError } = await supabase
+          .from('sources')
+          .insert([
+            { name: 'Personal', user_id: session?.user?.id }
+          ])
+          .select()
+          .single();
+
+        if (createError) {
+          console.error('Error creating personal source:', createError);
+          toast({
+            title: "Error",
+            description: "Failed to create personal source. Please try again.",
+            variant: "destructive",
+          });
+          throw createError;
+        }
+
+        return newSource as Source;
+      }
+
       return data as Source;
-    }
+    },
+    enabled: !!session?.user?.id
   });
 
   // Then use the personal source ID to fetch transactions
@@ -51,10 +76,26 @@ export default function Personal() {
     setIsAddingTransaction(true);
   };
 
+  if (!session) {
+    return (
+      <div className="flex items-center justify-center h-[50vh] text-muted-foreground">
+        Please sign in to view your personal transactions.
+      </div>
+    );
+  }
+
   if (isLoadingSource || isLoadingTransactions) {
     return (
       <div className="flex items-center justify-center h-[50vh]">
         <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-[50vh] text-muted-foreground">
+        Error loading personal transactions. Please try refreshing the page.
       </div>
     );
   }
