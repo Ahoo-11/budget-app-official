@@ -1,6 +1,6 @@
 import { corsHeaders } from '../_shared/cors.ts'
-import { getSupabaseAdmin } from './supabase-admin.ts'
-import { sendInvitationEmail } from './email-service.ts'
+import { getSupabaseAdmin } from '../_shared/supabase-admin.ts'
+import { CreateUserPayload } from '../_shared/types.ts'
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -9,8 +9,8 @@ Deno.serve(async (req) => {
 
   try {
     const { email, role, sourceId } = await req.json()
-    console.log('Received invitation request for:', { email, role, sourceId })
 
+    // Validate required fields
     if (!email || !role || !sourceId) {
       return new Response(
         JSON.stringify({
@@ -26,42 +26,49 @@ Deno.serve(async (req) => {
 
     const supabaseAdmin = getSupabaseAdmin()
 
-    // Get the current user making the request
-    const authHeader = req.headers.get('Authorization')
-    if (!authHeader) {
-      throw new Error('No authorization header')
+    // Create user with Supabase Auth
+    const { data: userData, error: userError } = await supabaseAdmin.auth.admin.createUser({
+      email,
+      email_confirm: true,
+      user_metadata: { role }
+    })
+
+    if (userError) {
+      console.error('Error creating user:', userError)
+      throw userError
     }
 
-    const { data: { user: invitingUser }, error: userError } = await supabaseAdmin.auth.getUser(
-      authHeader.replace('Bearer ', '')
-    )
+    // Create user role
+    const { error: roleError } = await supabaseAdmin
+      .from('user_roles')
+      .insert({ user_id: userData.user.id, role })
 
-    if (userError || !invitingUser) {
-      throw new Error('Error getting inviting user')
+    if (roleError) {
+      console.error('Error creating user role:', roleError)
+      throw roleError
     }
 
-    // Create invitation record
-    const { error: invitationError } = await supabaseAdmin
-      .from('invitations')
+    // Create source permission
+    const { error: permError } = await supabaseAdmin
+      .from('source_permissions')
       .insert({
-        email,
-        role,
-        invited_by: invitingUser.id,
-        status: 'pending',
+        user_id: userData.user.id,
+        source_id: sourceId,
+        can_view: true,
+        can_create: role !== 'viewer',
+        can_edit: role !== 'viewer',
+        can_delete: role === 'admin' || role === 'super_admin'
       })
 
-    if (invitationError) {
-      console.error('Error creating invitation:', invitationError)
-      throw new Error('Error creating invitation record')
+    if (permError) {
+      console.error('Error creating source permission:', permError)
+      throw permError
     }
 
-    // Send invitation email using our new email service
-    const origin = req.headers.get('origin') || ''
-    await sendInvitationEmail(email, role, origin)
-
     return new Response(
-      JSON.stringify({
-        message: 'Invitation sent successfully'
+      JSON.stringify({ 
+        success: true,
+        user: userData.user
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -72,7 +79,7 @@ Deno.serve(async (req) => {
     console.error('Error in create-user function:', error)
     return new Response(
       JSON.stringify({
-        error: 'Error processing invitation',
+        error: 'Error creating user',
         details: error.message
       }),
       {
