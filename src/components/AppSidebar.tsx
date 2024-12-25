@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
-import { Home, Menu, Plus, User, Settings2 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Home, Menu, Plus, User, Settings2, LogOut } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -9,11 +9,14 @@ import { Source } from "@/types/source";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { SourceActions } from "./SourceActions";
+import { useToast } from "@/hooks/use-toast";
 
 export function AppSidebar() {
   const [isAddSourceOpen, setIsAddSourceOpen] = useState(false);
   const [newSourceName, setNewSourceName] = useState("");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
   const { data: sources = [], refetch } = useQuery({
     queryKey: ['sources'],
@@ -31,15 +34,31 @@ export function AppSidebar() {
     }
   });
 
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to log out. Please try again.",
+      });
+    } else {
+      toast({
+        title: "Success",
+        description: "You have been logged out.",
+      });
+      navigate('/auth');
+    }
+  };
+
   const handleAddSource = async () => {
     if (!newSourceName.trim()) return;
 
-    // Since we removed authentication, we'll use a default user_id
     const { error } = await supabase
       .from('sources')
       .insert([{ 
         name: newSourceName.trim(),
-        user_id: '00000000-0000-0000-0000-000000000000' // Default user ID
+        user_id: '00000000-0000-0000-0000-000000000000'
       }]);
 
     if (error) {
@@ -49,7 +68,7 @@ export function AppSidebar() {
 
     setNewSourceName("");
     setIsAddSourceOpen(false);
-    refetch(); // Refresh the sources list
+    refetch();
   };
 
   const NavContent = () => (
@@ -107,6 +126,9 @@ export function AppSidebar() {
             <Settings2 className="h-4 w-4" />
           </Button>
         </Link>
+        <Button variant="outline" size="icon" onClick={handleLogout}>
+          <LogOut className="h-4 w-4" />
+        </Button>
       </div>
     </div>
   );
