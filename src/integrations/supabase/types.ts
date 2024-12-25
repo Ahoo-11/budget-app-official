@@ -290,6 +290,12 @@ export type Database = {
         }
         Returns: undefined
       }
+      delete_auth_user: {
+        Args: {
+          user_email: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       user_role_type:
