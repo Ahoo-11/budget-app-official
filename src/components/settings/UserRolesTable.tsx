@@ -16,6 +16,8 @@ import { UserStatusCell } from "./user-roles/UserStatusCell";
 import { UserActionsCell } from "./user-roles/UserActionsCell";
 import { User, UserRole } from "@/types/roles";
 import { useUserRoleManagement } from "./hooks/useUserRoleManagement";
+import { Button } from "../ui/button";
+import { ManageSourcesDialog } from "./ManageSourcesDialog";
 
 export function UserRolesTable({ users, onRoleUpdate }: { 
   users: User[], 
@@ -23,6 +25,7 @@ export function UserRolesTable({ users, onRoleUpdate }: {
 }) {
   const { toast } = useToast();
   const [updating, setUpdating] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const queryClient = useQueryClient();
   const { handleRoleChange, handleApproveUser, handleRejectUser } = useUserRoleManagement({
     toast,
@@ -136,11 +139,21 @@ export function UserRolesTable({ users, onRoleUpdate }: {
                 />
               </TableCell>
               <TableCell>
-                <SourcesInfo
-                  userId={user.id}
-                  userRole={user.role}
-                  sourcesInfo={getUserSourcesInfo(user.id, user.role)}
-                />
+                <div className="flex items-center gap-2">
+                  <SourcesInfo
+                    userId={user.id}
+                    userRole={user.role}
+                    sourcesInfo={getUserSourcesInfo(user.id, user.role)}
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSelectedUserId(user.id)}
+                    className="ml-2"
+                  >
+                    Manage Sources
+                  </Button>
+                </div>
               </TableCell>
               <TableCell>
                 <UserActionsCell
@@ -154,6 +167,16 @@ export function UserRolesTable({ users, onRoleUpdate }: {
           );
         })}
       </TableBody>
+      {selectedUserId && (
+        <ManageSourcesDialog
+          userId={selectedUserId}
+          onClose={() => setSelectedUserId(null)}
+          onUpdate={() => {
+            queryClient.invalidateQueries({ queryKey: ['sourcePermissions'] });
+            setSelectedUserId(null);
+          }}
+        />
+      )}
     </Table>
   );
 }
