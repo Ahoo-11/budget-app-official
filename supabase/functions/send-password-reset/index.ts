@@ -30,6 +30,9 @@ const handler = async (req: Request): Promise<Response> => {
     const { data: { user }, error: resetError } = await supabase.auth.admin.generateLink({
       type: 'recovery',
       email: email,
+      options: {
+        redirectTo: `${req.headers.get("origin")}/auth/callback`
+      }
     });
 
     if (resetError) {
