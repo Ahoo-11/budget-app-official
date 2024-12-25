@@ -79,16 +79,45 @@ export const TransactionFormWrapper = ({
       });
       return;
     }
+
+    // Validate required fields
+    if (!description.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Description is required",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const parsedAmount = parseFloat(amount);
+    if (isNaN(parsedAmount) || parsedAmount <= 0) {
+      toast({
+        title: "Validation Error",
+        description: "Please enter a valid amount greater than 0",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!selectedSource && !source_id) {
+      toast({
+        title: "Validation Error",
+        description: "Please select a source",
+        variant: "destructive"
+      });
+      return;
+    }
     
     setIsSubmitting(true);
     try {
       const transactionData = {
-        description,
-        amount: parseFloat(amount),
+        description: description.trim(),
+        amount: parsedAmount,
         type,
         category,
-        category_id: selectedCategory,
-        payer_id: selectedPayer,
+        category_id: selectedCategory || null,
+        payer_id: selectedPayer || null,
         date: date.toISOString(),
         source_id: source_id || selectedSource,
         user_id: session.user.id,
