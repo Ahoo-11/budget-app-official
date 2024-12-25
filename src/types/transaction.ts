@@ -10,4 +10,5 @@ export interface Transaction {
   payer_id?: string;
   date: string;
   created_at?: string;
+  created_by_name: string;
 }
