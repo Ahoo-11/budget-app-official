@@ -81,6 +81,7 @@ export type Database = {
           display_name: string | null
           email: string
           id: string
+          status: string | null
           updated_at: string | null
         }
         Insert: {
@@ -88,6 +89,7 @@ export type Database = {
           display_name?: string | null
           email: string
           id: string
+          status?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -95,6 +97,7 @@ export type Database = {
           display_name?: string | null
           email?: string
           id?: string
+          status?: string | null
           updated_at?: string | null
         }
         Relationships: []
@@ -295,6 +298,7 @@ export type Database = {
         | "manager"
         | "viewer"
         | "controller"
+      user_status_type: "pending" | "approved" | "rejected"
     }
     CompositeTypes: {
       [_ in never]: never

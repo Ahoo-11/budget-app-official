@@ -27,6 +27,7 @@ export function RoleSelect({ value, disabled, onValueChange }: RoleSelectProps) 
         <SelectItem value="viewer">Viewer</SelectItem>
         <SelectItem value="admin">Admin</SelectItem>
         <SelectItem value="super_admin">Super Admin</SelectItem>
+        <SelectItem value="pending" disabled>Pending</SelectItem>
       </SelectContent>
     </Select>
   );
