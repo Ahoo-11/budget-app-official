@@ -10,6 +10,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { SourceActions } from "./SourceActions";
 import { useToast } from "@/hooks/use-toast";
+import { useSession } from "@supabase/auth-helpers-react";
 
 export function AppSidebar() {
   const [isAddSourceOpen, setIsAddSourceOpen] = useState(false);
@@ -17,6 +18,7 @@ export function AppSidebar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const session = useSession();
 
   const { data: sources = [], refetch } = useQuery({
     queryKey: ['sources'],
@@ -52,20 +54,36 @@ export function AppSidebar() {
   };
 
   const handleAddSource = async () => {
-    if (!newSourceName.trim()) return;
+    if (!newSourceName.trim() || !session?.user?.id) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Please enter a source name and make sure you're logged in.",
+      });
+      return;
+    }
 
     const { error } = await supabase
       .from('sources')
       .insert([{ 
         name: newSourceName.trim(),
-        user_id: '00000000-0000-0000-0000-000000000000'
+        user_id: session.user.id
       }]);
 
     if (error) {
       console.error('Error adding source:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to add source. Please try again.",
+      });
       return;
     }
 
+    toast({
+      title: "Success",
+      description: "Source added successfully.",
+    });
     setNewSourceName("");
     setIsAddSourceOpen(false);
     refetch();
