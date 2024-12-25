@@ -9,6 +9,7 @@ Deno.serve(async (req) => {
 
   try {
     const { email, role, sourceId } = await req.json()
+    console.log('Creating user with:', { email, role, sourceId })
 
     // Validate required fields
     if (!email || !role || !sourceId) {
@@ -58,6 +59,7 @@ Deno.serve(async (req) => {
       }
 
       userId = userData.user.id
+      console.log('Created new user with ID:', userId)
     }
 
     // Check if user role already exists
@@ -77,6 +79,21 @@ Deno.serve(async (req) => {
         console.error('Error creating user role:', roleError)
         throw roleError
       }
+      console.log('Created user role:', role)
+    } else {
+      // Update existing role if different
+      if (existingRole.role !== role) {
+        const { error: updateRoleError } = await supabaseAdmin
+          .from('user_roles')
+          .update({ role })
+          .eq('user_id', userId)
+
+        if (updateRoleError) {
+          console.error('Error updating user role:', updateRoleError)
+          throw updateRoleError
+        }
+        console.log('Updated user role to:', role)
+      }
     }
 
     // Check if source permission already exists
@@ -88,7 +105,7 @@ Deno.serve(async (req) => {
       .single()
 
     if (!existingPermission) {
-      // Create source permission only if it doesn't exist
+      // Create source permission with appropriate permissions based on role
       const { error: permError } = await supabaseAdmin
         .from('source_permissions')
         .insert({
@@ -104,6 +121,7 @@ Deno.serve(async (req) => {
         console.error('Error creating source permission:', permError)
         throw permError
       }
+      console.log('Created source permission for source:', sourceId)
     }
 
     return new Response(

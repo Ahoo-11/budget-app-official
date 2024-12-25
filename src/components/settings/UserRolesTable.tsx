@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   HoverCard,
   HoverCardContent,
@@ -43,6 +43,7 @@ export function UserRolesTable({ users, onRoleUpdate }: {
 }) {
   const { toast } = useToast();
   const [updating, setUpdating] = useState(false);
+  const queryClient = useQueryClient();
 
   // Fetch user emails from profiles table
   const { data: userEmails } = useQuery({
@@ -117,8 +118,16 @@ export function UserRolesTable({ users, onRoleUpdate }: {
         title: "Success",
         description: "User role updated successfully",
       });
+      
+      // Invalidate and refetch all relevant queries
+      await Promise.all([
+        queryClient.invalidateQuery({ queryKey: ['userRoles'] }),
+        queryClient.invalidateQuery({ queryKey: ['sourcePermissions'] }),
+      ]);
+      
       onRoleUpdate();
     } catch (error) {
+      console.error('Error updating role:', error);
       toast({
         title: "Error",
         description: "Failed to update user role",
@@ -135,6 +144,10 @@ export function UserRolesTable({ users, onRoleUpdate }: {
     }
 
     const userPermissions = permissions?.[userId] || [];
+    if (userPermissions.length === 0) {
+      return 'No sources assigned';
+    }
+
     const accessibleSources = sourcesData
       ?.filter(source => userPermissions.includes(source.id))
       .map(source => source.name)
