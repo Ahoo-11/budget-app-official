@@ -33,9 +33,25 @@ export function AccountSettings() {
   const { data: hasSourceAccess } = useQuery({
     queryKey: ['hasSourceAccess'],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return false;
+
+      // First check if user is approved
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('status')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError || profile?.status !== 'approved') {
+        return false;
+      }
+
+      // Then check for source permissions
       const { data: permissions, error } = await supabase
         .from('source_permissions')
         .select('id')
+        .eq('user_id', user.id)
         .limit(1);
 
       if (error) throw error;
