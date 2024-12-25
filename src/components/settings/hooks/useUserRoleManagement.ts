@@ -20,10 +20,17 @@ export function useUserRoleManagement({
     try {
       const { error } = await supabase
         .from('user_roles')
-        .upsert({ 
-          user_id: userId, 
-          role: newRole 
-        });
+        .upsert(
+          { 
+            user_id: userId, 
+            role: newRole,
+            updated_at: new Date().toISOString()
+          },
+          { 
+            onConflict: 'user_id',
+            ignoreDuplicates: false
+          }
+        );
 
       if (error) throw error;
 
