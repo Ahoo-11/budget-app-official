@@ -28,7 +28,7 @@ export function AccountSettings() {
     }
   });
 
-  const isAdmin = userRole === 'admin' || userRole === 'super_admin';
+  const canManageUsers = userRole === 'controller' || userRole === 'admin' || userRole === 'super_admin';
 
   return (
     <div className="space-y-6">
@@ -42,7 +42,7 @@ export function AccountSettings() {
         <ThemeSelector />
         <CategoryManager />
         <PayerManager />
-        {isAdmin && <UserManagement />}
+        {canManageUsers && <UserManagement />}
       </div>
     </div>
   );
