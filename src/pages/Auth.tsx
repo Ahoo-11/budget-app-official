@@ -63,6 +63,38 @@ export default function AuthPage() {
     return () => subscription.unsubscribe();
   }, [navigate, toast]);
 
+  const handlePasswordReset = async (email: string) => {
+    try {
+      const response = await fetch(
+        `${window.location.origin}/functions/v1/send-password-reset`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({ email }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to send password reset email');
+      }
+
+      toast({
+        title: "Password Reset",
+        description: "Check your email for the password reset link",
+      });
+    } catch (error) {
+      console.error('Password reset error:', error);
+      toast({
+        variant: "destructive",
+        title: "Password Reset Error",
+        description: "Failed to send password reset email. Please try again later.",
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-8">
@@ -89,6 +121,7 @@ export default function AuthPage() {
             providers={[]}
             redirectTo={window.location.origin}
             magicLink={false}
+            onPasswordReset={handlePasswordReset}
             localization={{
               variables: {
                 sign_in: {
