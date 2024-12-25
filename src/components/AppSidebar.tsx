@@ -20,10 +20,27 @@ export function AppSidebar() {
   const { toast } = useToast();
   const session = useSession();
 
+  const { data: userStatus } = useQuery({
+    queryKey: ['userStatus'],
+    queryFn: async () => {
+      if (!session?.user?.id) return null;
+      
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('status')
+        .eq('id', session.user.id)
+        .single();
+      
+      if (error) throw error;
+      return data?.status;
+    },
+    enabled: !!session?.user?.id
+  });
+
   const { data: sources = [], refetch } = useQuery({
     queryKey: ['sources'],
     queryFn: async () => {
-      if (!session?.user?.id) return [];
+      if (!session?.user?.id || userStatus !== 'approved') return [];
       
       const { data, error } = await supabase
         .from('sources')
@@ -36,7 +53,7 @@ export function AppSidebar() {
       }
       return data as Source[];
     },
-    enabled: !!session?.user?.id
+    enabled: !!session?.user?.id && userStatus === 'approved'
   });
 
   const handleLogout = async () => {
@@ -57,11 +74,11 @@ export function AppSidebar() {
   };
 
   const handleAddSource = async () => {
-    if (!newSourceName.trim() || !session?.user?.id) {
+    if (!newSourceName.trim() || !session?.user?.id || userStatus !== 'approved') {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Please enter a source name and make sure you're logged in.",
+        description: "Please enter a source name and make sure you're logged in and approved.",
       });
       return;
     }
@@ -105,32 +122,36 @@ export function AppSidebar() {
               Home
             </Button>
           </Link>
-          {sources.map((source) => (
-            <div key={source.id} className="flex items-center">
-              <Link 
-                to={`/source/${source.id}`}
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="flex-1"
+          {userStatus === 'approved' && (
+            <>
+              {sources.map((source) => (
+                <div key={source.id} className="flex items-center">
+                  <Link 
+                    to={`/source/${source.id}`}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex-1"
+                  >
+                    <Button variant="ghost" className="w-full justify-start">
+                      <Home className="mr-2 h-4 w-4" />
+                      {source.name}
+                    </Button>
+                  </Link>
+                  <SourceActions sourceId={source.id} sourceName={source.name} />
+                </div>
+              ))}
+              <Button 
+                variant="ghost" 
+                className="w-full justify-start"
+                onClick={() => {
+                  setIsAddSourceOpen(true);
+                  setIsMobileMenuOpen(false);
+                }}
               >
-                <Button variant="ghost" className="w-full justify-start">
-                  <Home className="mr-2 h-4 w-4" />
-                  {source.name}
-                </Button>
-              </Link>
-              <SourceActions sourceId={source.id} sourceName={source.name} />
-            </div>
-          ))}
-          <Button 
-            variant="ghost" 
-            className="w-full justify-start"
-            onClick={() => {
-              setIsAddSourceOpen(true);
-              setIsMobileMenuOpen(false);
-            }}
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Add Source
-          </Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Add Source
+              </Button>
+            </>
+          )}
         </nav>
       </div>
       <div className="flex items-center space-x-2">
