@@ -1,4 +1,4 @@
-import { Settings2 } from "lucide-react";
+import { Settings2, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeSelector } from "./settings/ThemeSelector";
 import { CategoryManager } from "./settings/CategoryManager";
@@ -7,6 +7,7 @@ import { UserManagement } from "./settings/UserManagement";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { DisplayNameManager } from "./settings/DisplayNameManager";
 
 export function AccountSettings() {
   const navigate = useNavigate();
@@ -39,6 +40,7 @@ export function AccountSettings() {
         </Button>
       </div>
       <div className="space-y-6">
+        <DisplayNameManager />
         <ThemeSelector />
         <CategoryManager />
         <PayerManager />

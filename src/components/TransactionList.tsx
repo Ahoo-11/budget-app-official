@@ -69,6 +69,9 @@ export const TransactionList = ({ transactions, onDelete, onEdit }: TransactionL
                 <p className="text-xs text-muted-foreground">
                   {format(new Date(transaction.date), "PPP")}
                 </p>
+                <p className="text-xs text-muted-foreground">
+                  Created by: {transaction.created_by_name}
+                </p>
               </div>
             </div>
           </div>
@@ -106,4 +109,4 @@ export const TransactionList = ({ transactions, onDelete, onEdit }: TransactionL
       ))}
     </div>
   );
-};
+}
