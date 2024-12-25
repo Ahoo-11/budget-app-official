@@ -58,6 +58,14 @@ export default function AuthPage() {
         });
         navigate("/");
       }
+      // Add specific handling for recovery email errors
+      if (event === 'RECOVERY_EMAIL_ERROR') {
+        toast({
+          variant: "destructive",
+          title: "Recovery Email Error",
+          description: "Unable to send recovery email. Please contact support or try signing in with your existing password.",
+        });
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -87,7 +95,7 @@ export default function AuthPage() {
               }
             }}
             providers={[]}
-            redirectTo={`${window.location.origin}/auth/callback`}
+            redirectTo={window.location.origin}
             magicLink={false}
             localization={{
               variables: {
