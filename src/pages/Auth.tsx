@@ -3,7 +3,7 @@ import { Auth as SupabaseAuth } from '@supabase/auth-ui-react';
 import { ThemeSupa } from '@supabase/auth-ui-shared';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 
 export function Auth() {
   const navigate = useNavigate();
@@ -63,11 +63,7 @@ export function Auth() {
                 }
               }
             }}
-            providers={['google']}
-            redirectTo={`${window.location.origin}/auth/callback`}
             view="sign_in"
-            showLinks={false}
-            onlyThirdPartyProviders={true}
           />
         </div>
       </div>
