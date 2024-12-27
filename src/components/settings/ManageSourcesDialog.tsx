@@ -1,10 +1,10 @@
-import { useEffect, useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useState, useEffect } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useToast } from '@/components/ui/use-toast';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
-import { Checkbox } from "@/components/ui/checkbox";
 
 interface ManageSourcesDialogProps {
   userId: string;
@@ -27,9 +27,21 @@ export function ManageSourcesDialog({ userId, onClose, onUpdate }: ManageSources
         .from('user_roles')
         .select('role')
         .eq('user_id', userId)
-        .single();
+        .maybeSingle();
       
-      if (error) throw error;
+      if (error && error.code !== 'PGRST116') throw error;
+      
+      // If no role is found, set as viewer
+      if (!data) {
+        const { error: insertError } = await supabase
+          .from('user_roles')
+          .insert([{ user_id: userId, role: 'viewer' }]);
+
+        if (insertError) throw insertError;
+        setUserRole('viewer');
+        return 'viewer';
+      }
+
       setUserRole(data.role);
       return data.role;
     },
@@ -176,7 +188,7 @@ export function ManageSourcesDialog({ userId, onClose, onUpdate }: ManageSources
           ) : (
             <div className="space-y-4">
               <div className="text-sm text-gray-500 mb-4">
-                Select sources this admin can manage.
+                Select sources this admin can access (full permissions).
               </div>
               {sources.map((source) => (
                 <div key={source.id} className="flex items-center space-x-2">
