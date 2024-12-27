@@ -7,6 +7,28 @@ interface TemplateListProps {
   onConfigureTemplate: (template: Template) => void;
 }
 
+interface RawTemplate {
+  id: string;
+  name: string;
+  type: 'business' | 'personal';
+  config: any;
+  created_at: string;
+  updated_at: string;
+}
+
+const transformTemplate = (raw: RawTemplate): Template => {
+  const config = typeof raw.config === 'string' ? JSON.parse(raw.config) : raw.config;
+  return {
+    ...raw,
+    config: {
+      layout: config.layout || 'grid',
+      itemLabel: config.itemLabel || 'Item',
+      fields: config.fields || {},
+      categories: config.categories || []
+    }
+  };
+};
+
 export const TemplateList = ({ onConfigureTemplate }: TemplateListProps) => {
   const { data: templates = [], isLoading } = useQuery({
     queryKey: ['templates'],
@@ -17,7 +39,7 @@ export const TemplateList = ({ onConfigureTemplate }: TemplateListProps) => {
         .order('name');
       
       if (error) throw error;
-      return data;
+      return (data as RawTemplate[]).map(transformTemplate);
     }
   });
 
