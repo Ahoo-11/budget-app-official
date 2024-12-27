@@ -23,7 +23,7 @@ export function AccountSettings() {
         .from('user_roles')
         .select('role')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       return data?.role;
@@ -41,7 +41,7 @@ export function AccountSettings() {
         .from('profiles')
         .select('status')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       return data?.status;
@@ -63,7 +63,7 @@ export function AccountSettings() {
         .from('user_roles')
         .select('role')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
       if (roleData?.role === 'controller' || roleData?.role === 'super_admin') {
         return true;
