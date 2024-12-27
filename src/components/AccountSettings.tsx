@@ -1,118 +1,46 @@
-import { Settings2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { ThemeSelector } from "./settings/ThemeSelector";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { UserManagement } from "./settings/UserManagement";
 import { CategoryManager } from "./settings/CategoryManager";
 import { PayerManager } from "./settings/PayerManager";
-import { UserManagement } from "./settings/UserManagement";
-import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { DisplayNameManager } from "./settings/DisplayNameManager";
-import { Alert, AlertDescription } from "./ui/alert";
+import { ThemeSelector } from "./settings/ThemeSelector";
+import { TemplateManager } from "./settings/templates/TemplateManager";
 
 export function AccountSettings() {
-  const navigate = useNavigate();
-
-  const { data: userRole } = useQuery({
-    queryKey: ['userRole'],
-    queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return null;
-
-      const { data, error } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (error && error.code !== 'PGRST116') throw error;
-      return data?.role || 'viewer'; // Default to viewer if no role is set
-    },
-    staleTime: 0
-  });
-
-  const { data: userStatus } = useQuery({
-    queryKey: ['userStatus'],
-    queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return null;
-
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('status')
-        .eq('id', user.id)
-        .maybeSingle();
-
-      if (error && error.code !== 'PGRST116') throw error;
-      return data?.status || 'pending'; // Default to pending if no status is set
-    },
-    staleTime: 0
-  });
-
-  const { data: hasSourceAccess } = useQuery({
-    queryKey: ['hasSourceAccess'],
-    queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return false;
-
-      if (userStatus !== 'approved') {
-        return false;
-      }
-
-      const { data: roleData } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (roleData?.role === 'controller' || roleData?.role === 'super_admin') {
-        return true;
-      }
-
-      const { data: permissions, error } = await supabase
-        .from('source_permissions')
-        .select('id')
-        .eq('user_id', user.id)
-        .limit(1);
-
-      if (error) throw error;
-      return permissions && permissions.length > 0;
-    },
-    enabled: !!userStatus && userStatus === 'approved',
-    staleTime: 0
-  });
-
-  const canManageUsers = userRole === 'controller' || userRole === 'super_admin';
-  const showNoAccessMessage = userStatus === 'pending';
-
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Account Settings</h2>
-        <Button variant="outline" size="icon" onClick={() => navigate(-1)}>
-          <Settings2 className="h-4 w-4" />
-        </Button>
-      </div>
+    <div className="container mx-auto py-6">
+      <Tabs defaultValue="users" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="users">Users</TabsTrigger>
+          <TabsTrigger value="categories">Categories</TabsTrigger>
+          <TabsTrigger value="payers">Payers</TabsTrigger>
+          <TabsTrigger value="templates">Templates</TabsTrigger>
+          <TabsTrigger value="preferences">Preferences</TabsTrigger>
+        </TabsList>
 
-      {showNoAccessMessage ? (
-        <Alert>
-          <AlertDescription>
-            Your account is pending approval. A controller or administrator needs to grant you access to start using the application.
-          </AlertDescription>
-        </Alert>
-      ) : (
-        <div className="space-y-6">
-          <DisplayNameManager />
-          <ThemeSelector />
-          {hasSourceAccess && (
-            <>
-              <CategoryManager />
-              <PayerManager />
-            </>
-          )}
-          {canManageUsers && <UserManagement />}
-        </div>
-      )}
+        <TabsContent value="users" className="space-y-6">
+          <UserManagement />
+        </TabsContent>
+
+        <TabsContent value="categories" className="space-y-6">
+          <CategoryManager />
+        </TabsContent>
+
+        <TabsContent value="payers" className="space-y-6">
+          <PayerManager />
+        </TabsContent>
+
+        <TabsContent value="templates" className="space-y-6">
+          <TemplateManager />
+        </TabsContent>
+
+        <TabsContent value="preferences" className="space-y-6">
+          <div className="grid gap-6">
+            <DisplayNameManager />
+            <ThemeSelector />
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
