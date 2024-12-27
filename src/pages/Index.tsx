@@ -1,33 +1,22 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { PlusCircle, TrendingUp, DollarSign, CreditCard } from "lucide-react";
 import { addDays } from "date-fns";
 import { DateRange } from "react-day-picker";
-import AddTransaction from "@/components/AddTransaction";
 import { TransactionList } from "@/components/TransactionList";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useTransactions } from "@/hooks/useTransactions";
-import { Transaction } from "@/types/transaction";
 import { Card } from "@/components/ui/card";
 import { DailyTransactionsChart } from "@/components/DailyTransactionsChart";
 import { StatsHeader } from "@/components/stats/StatsHeader";
 import { FiltersCard } from "@/components/stats/FiltersCard";
 
 const Index = () => {
-  const [isAddingTransaction, setIsAddingTransaction] = useState(false);
-  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [selectedSource, setSelectedSource] = useState("");
   const [date, setDate] = useState<DateRange>({
     from: addDays(new Date(), -30),
     to: new Date(),
   });
 
-  const { transactions, isLoading, addTransaction, updateTransaction, deleteTransaction } = useTransactions();
-
-  const handleEdit = (transaction: Transaction) => {
-    setEditingTransaction(transaction);
-    setIsAddingTransaction(true);
-  };
+  const { transactions, isLoading } = useTransactions();
 
   const filteredTransactions = transactions.filter((transaction) => {
     const transactionDate = new Date(transaction.date);
@@ -149,44 +138,12 @@ const Index = () => {
 
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-semibold">Recent Transactions</h2>
-            <button
-              onClick={() => {
-                setEditingTransaction(null);
-                setIsAddingTransaction(true);
-              }}
-              className="button-hover inline-flex items-center gap-2 bg-success text-white px-4 py-2 rounded-full"
-            >
-              <PlusCircle className="w-5 h-5" />
-              Add Transaction
-            </button>
           </div>
 
           <TransactionList 
-            transactions={filteredTransactions} 
-            onDelete={deleteTransaction}
-            onEdit={handleEdit}
+            transactions={filteredTransactions}
           />
         </Card>
-
-        <Dialog open={isAddingTransaction} onOpenChange={setIsAddingTransaction}>
-          <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>
-                {editingTransaction ? 'Edit Transaction' : 'Add Transaction'}
-              </DialogTitle>
-            </DialogHeader>
-            <AddTransaction
-              isOpen={isAddingTransaction}
-              onClose={() => {
-                setIsAddingTransaction(false);
-                setEditingTransaction(null);
-              }}
-              onAdd={addTransaction}
-              onUpdate={updateTransaction}
-              editingTransaction={editingTransaction}
-            />
-          </DialogContent>
-        </Dialog>
       </motion.div>
     </div>
   );
