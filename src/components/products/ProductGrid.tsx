@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { useState } from "react";
 import { ProductForm } from "./ProductForm";
+import { Product } from "@/types/product";
 import {
   Dialog,
   DialogContent,
@@ -14,9 +15,10 @@ import {
 
 interface ProductGridProps {
   sourceId: string;
+  onProductClick?: (product: Product) => void;
 }
 
-export const ProductGrid = ({ sourceId }: ProductGridProps) => {
+export const ProductGrid = ({ sourceId, onProductClick }: ProductGridProps) => {
   const [isAddingProduct, setIsAddingProduct] = useState(false);
   
   const { data: products, isLoading } = useQuery({
@@ -49,7 +51,13 @@ export const ProductGrid = ({ sourceId }: ProductGridProps) => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {products?.map((product) => (
-          <ProductCard key={product.id} product={product} />
+          <div
+            key={product.id}
+            className={onProductClick ? "cursor-pointer" : undefined}
+            onClick={() => onProductClick?.(product)}
+          >
+            <ProductCard product={product} />
+          </div>
         ))}
       </div>
 

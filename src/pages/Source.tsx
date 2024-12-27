@@ -10,6 +10,7 @@ import { Transaction } from "@/types/transaction";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ProductGrid } from "@/components/products/ProductGrid";
+import { OrderInterface } from "@/components/pos/OrderInterface";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Source = () => {
@@ -49,6 +50,7 @@ const Source = () => {
         <Tabs defaultValue="transactions" className="space-y-6">
           <TabsList>
             <TabsTrigger value="transactions">Transactions</TabsTrigger>
+            <TabsTrigger value="pos">POS</TabsTrigger>
             <TabsTrigger value="products">Products</TabsTrigger>
           </TabsList>
 
@@ -65,6 +67,10 @@ const Source = () => {
               onDelete={deleteTransaction}
               onEdit={handleEdit}
             />
+          </TabsContent>
+
+          <TabsContent value="pos">
+            <OrderInterface sourceId={sourceId!} />
           </TabsContent>
 
           <TabsContent value="products">
