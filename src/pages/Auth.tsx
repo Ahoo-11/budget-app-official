@@ -1,94 +1,49 @@
-import { Auth } from "@supabase/auth-ui-react";
-import { ThemeSupa } from "@supabase/auth-ui-shared";
-import { supabase } from "@/integrations/supabase/client";
-import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { useToast } from "@/hooks/use-toast";
+import { useEffect } from 'react';
+import { Auth as SupabaseAuth } from '@supabase/auth-ui-react';
+import { ThemeSupa } from '@supabase/auth-ui-shared';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/components/ui/use-toast';
 
-export default function AuthPage() {
+export default function Auth() {
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        if (error) {
-          console.error('Session check error:', error);
-          toast({
-            variant: "destructive",
-            title: "Authentication Error",
-            description: error.message,
-          });
-          return;
-        }
-        if (session) {
-          navigate("/");
-        }
-      } catch (error) {
-        console.error('Session check error:', error);
-        toast({
-          variant: "destructive",
-          title: "Authentication Error",
-          description: "Failed to check authentication status",
-        });
-      }
-    };
-    
-    checkAuth();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state changed:', event);
-      if (event === 'SIGNED_IN' && session) {
-        navigate("/");
-      }
-      if (event === 'SIGNED_OUT') {
-        navigate("/auth");
-      }
-      if (event === 'PASSWORD_RECOVERY') {
-        toast({
-          title: "Password Recovery",
-          description: "Check your email for the password reset link",
-        });
-      }
-      if (event === 'USER_UPDATED') {
-        toast({
-          title: "Success",
-          description: "Your password has been updated",
-        });
-        navigate("/");
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN') {
+        navigate('/');
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate, toast]);
+  }, [navigate]);
+
+  const handleError = (error: Error) => {
+    toast({
+      title: "Authentication Error",
+      description: error.message,
+      variant: "destructive"
+    });
+  };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-md space-y-8">
+    <div className="flex min-h-screen items-center justify-center bg-background">
+      <div className="w-full max-w-md space-y-8 px-4">
         <div className="text-center">
-          <h1 className="text-4xl font-bold tracking-tight">Welcome Back</h1>
-          <p className="mt-2 text-muted-foreground">
-            Sign in to access your expense tracker
+          <h2 className="text-2xl font-bold tracking-tight">Welcome back</h2>
+          <p className="text-sm text-muted-foreground">
+            Sign in to your account
           </p>
         </div>
-        <div className="bg-white p-8 rounded-xl shadow-sm border">
-          <Auth
+        
+        <div className="rounded-lg border bg-card p-8">
+          <SupabaseAuth
             supabaseClient={supabase}
-            view="sign_in"
-            appearance={{
-              theme: ThemeSupa,
-              variables: {
-                default: {
-                  colors: {
-                    brand: 'rgb(22 163 74)',
-                    brandAccent: 'rgb(21 128 61)'
-                  }
-                }
-              }
-            }}
+            appearance={{ theme: ThemeSupa }}
             providers={[]}
             redirectTo="https://budget-app-official.lovable.app/auth/callback"
+            onError={handleError}
           />
         </div>
       </div>

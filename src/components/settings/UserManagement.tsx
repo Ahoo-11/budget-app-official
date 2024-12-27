@@ -18,7 +18,7 @@ export function UserManagement() {
         .maybeSingle();
 
       if (error) throw error;
-      return data?.role as UserRole | null;
+      return data?.role as UserRole;
     },
     staleTime: 0
   });
@@ -31,30 +31,26 @@ export function UserManagement() {
         throw new Error('Unauthorized access');
       }
 
-      // First, get all profiles
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('id');
 
       if (profilesError) throw profilesError;
 
-      // Then get all user roles
       const { data: userRoles, error: rolesError } = await supabase
         .from('user_roles')
         .select('*');
 
       if (rolesError) throw rolesError;
 
-      // Create a map of user roles
       const roleMap = userRoles.reduce((acc: Record<string, UserRole>, role) => {
         acc[role.user_id] = role.role as UserRole;
         return acc;
       }, {});
 
-      // Map all profiles to users, including those without roles
       return profiles.map(profile => ({
         id: profile.id,
-        role: roleMap[profile.id]
+        role: roleMap[profile.id] || 'viewer'
       })) as User[];
     },
     enabled: !!currentUserRole && currentUserRole === 'controller',
