@@ -10,14 +10,37 @@ export function Auth() {
   const { toast } = useToast();
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'SIGNED_IN') {
+    // Check current session on mount
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error) {
+        console.error('Error checking session:', error);
+        toast({
+          variant: "destructive",
+          title: "Authentication Error",
+          description: "There was a problem checking your session. Please try again.",
+        });
+        return;
+      }
+      
+      if (session) {
         navigate('/');
       }
     });
 
-    return () => subscription.unsubscribe();
-  }, [navigate]);
+    // Listen for auth state changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        navigate('/');
+      }
+    });
+
+    // Cleanup subscription
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [navigate, toast]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background">
@@ -42,6 +65,14 @@ export function Auth() {
             }}
             providers={['google']}
             redirectTo={`${window.location.origin}/auth/callback`}
+            onError={(error) => {
+              console.error('Auth error:', error);
+              toast({
+                variant: "destructive",
+                title: "Authentication Error",
+                description: error.message,
+              });
+            }}
           />
         </div>
       </div>
