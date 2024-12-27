@@ -2,18 +2,17 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
-import { UserRole, UserRoleInfo } from "@/types/roles";
+import { User, UserRole, UserStatus } from "@/types/roles";
 import { useUserRoleManagement } from "./hooks/useUserRoleManagement";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { RoleSelect } from "./user-roles/RoleSelect";
-import { SourcesInfo } from "./user-roles/SourcesInfo";
 import { UserStatusCell } from "./user-roles/UserStatusCell";
 import { UserActionsCell } from "./user-roles/UserActionsCell";
 import { Button } from "../ui/button";
 import { ManageSourcesDialog } from "./ManageSourcesDialog";
 
 interface UserRolesTableProps {
-  users: UserRoleInfo[];
+  users: User[];
   onRoleUpdate: () => void;
 }
 
@@ -41,8 +40,11 @@ export function UserRolesTable({ users, onRoleUpdate }: UserRolesTableProps) {
         return {};
       }
 
-      return profiles.reduce((acc: Record<string, { email: string; status: string }>, profile) => {
-        acc[profile.id] = { email: profile.email, status: profile.status };
+      return profiles.reduce((acc: Record<string, { email: string; status: UserStatus }>, profile) => {
+        acc[profile.id] = { 
+          email: profile.email, 
+          status: profile.status as UserStatus 
+        };
         return acc;
       }, {});
     }
@@ -87,7 +89,7 @@ export function UserRolesTable({ users, onRoleUpdate }: UserRolesTableProps) {
   });
 
   const getUserSourcesInfo = (userId: string, userRole?: UserRole) => {
-    if (userRole === 'super_admin') {
+    if (userRole === 'controller') {
       return 'Has access to all sources';
     }
 
@@ -130,32 +132,32 @@ export function UserRolesTable({ users, onRoleUpdate }: UserRolesTableProps) {
                 <RoleSelect
                   value={user.role}
                   disabled={updating || isPending}
-                  onValueChange={(value) => handleRoleChange(user.id, value)}
+                  onChange={(newRole) => handleRoleChange(user.id, newRole)}
                 />
               </TableCell>
               <TableCell>
                 <div className="flex items-center gap-2">
-                  <SourcesInfo
-                    userId={user.id}
-                    userRole={user.role}
-                    sourcesInfo={getUserSourcesInfo(user.id, user.role)}
-                  />
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setSelectedUserId(user.id)}
-                    className="ml-2"
-                  >
-                    Manage Sources
-                  </Button>
+                  <span className="text-sm text-muted-foreground">
+                    {getUserSourcesInfo(user.id, user.role)}
+                  </span>
+                  {!isPending && user.role !== 'controller' && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSelectedUserId(user.id)}
+                    >
+                      Manage
+                    </Button>
+                  )}
                 </div>
               </TableCell>
               <TableCell>
                 <UserActionsCell
-                  isPending={isPending}
-                  updating={updating}
-                  onApprove={() => handleApproveUser(user.id)}
-                  onReject={() => handleRejectUser(user.id)}
+                  userId={user.id}
+                  status={userStatus}
+                  disabled={updating}
+                  onApprove={handleApproveUser}
+                  onReject={handleRejectUser}
                 />
               </TableCell>
             </TableRow>
@@ -166,10 +168,7 @@ export function UserRolesTable({ users, onRoleUpdate }: UserRolesTableProps) {
         <ManageSourcesDialog
           userId={selectedUserId}
           onClose={() => setSelectedUserId(null)}
-          onUpdate={() => {
-            queryClient.invalidateQueries({ queryKey: ['sourcePermissions'] });
-            setSelectedUserId(null);
-          }}
+          onUpdate={onRoleUpdate}
         />
       )}
     </Table>

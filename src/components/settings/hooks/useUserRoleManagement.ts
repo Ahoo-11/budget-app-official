@@ -1,10 +1,12 @@
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { QueryClient } from "@tanstack/react-query";
 import { UserRole } from "@/types/roles";
+import { QueryClient } from "@tanstack/react-query";
+import { Dispatch, SetStateAction } from "react";
 
 interface UseUserRoleManagementProps {
-  toast: any;
-  setUpdating: (updating: boolean) => void;
+  toast: ReturnType<typeof useToast>["toast"];
+  setUpdating: Dispatch<SetStateAction<boolean>>;
   queryClient: QueryClient;
   onRoleUpdate: () => void;
 }
@@ -13,44 +15,30 @@ export function useUserRoleManagement({
   toast,
   setUpdating,
   queryClient,
-  onRoleUpdate
+  onRoleUpdate,
 }: UseUserRoleManagementProps) {
   const handleRoleChange = async (userId: string, newRole: UserRole) => {
     setUpdating(true);
     try {
       const { error } = await supabase
         .from('user_roles')
-        .upsert(
-          { 
-            user_id: userId, 
-            role: newRole,
-            updated_at: new Date().toISOString()
-          },
-          { 
-            onConflict: 'user_id',
-            ignoreDuplicates: false
-          }
-        );
+        .update({ role: newRole })
+        .eq('user_id', userId);
 
       if (error) throw error;
 
-      toast({
-        title: "Success",
-        description: "User role updated successfully",
-      });
-      
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['userRoles'] }),
-        queryClient.invalidateQueries({ queryKey: ['sourcePermissions'] }),
-      ]);
-      
+      queryClient.invalidateQueries({ queryKey: ['users'] });
       onRoleUpdate();
+      toast({
+        title: "Role updated",
+        description: "User role has been successfully updated.",
+      });
     } catch (error) {
       console.error('Error updating role:', error);
       toast({
-        title: "Error",
-        description: "Failed to update user role",
         variant: "destructive",
+        title: "Error",
+        description: "Failed to update user role. Please try again.",
       });
     } finally {
       setUpdating(false);
@@ -67,20 +55,18 @@ export function useUserRoleManagement({
 
       if (error) throw error;
 
-      await handleRoleChange(userId, 'viewer');
-
-      toast({
-        title: "Success",
-        description: "User approved successfully",
-      });
-      
       queryClient.invalidateQueries({ queryKey: ['userEmails'] });
+      onRoleUpdate();
+      toast({
+        title: "User approved",
+        description: "User has been successfully approved.",
+      });
     } catch (error) {
       console.error('Error approving user:', error);
       toast({
-        title: "Error",
-        description: "Failed to approve user",
         variant: "destructive",
+        title: "Error",
+        description: "Failed to approve user. Please try again.",
       });
     } finally {
       setUpdating(false);
@@ -97,18 +83,18 @@ export function useUserRoleManagement({
 
       if (error) throw error;
 
-      toast({
-        title: "Success",
-        description: "User rejected successfully",
-      });
-      
       queryClient.invalidateQueries({ queryKey: ['userEmails'] });
+      onRoleUpdate();
+      toast({
+        title: "User rejected",
+        description: "User has been successfully rejected.",
+      });
     } catch (error) {
       console.error('Error rejecting user:', error);
       toast({
-        title: "Error",
-        description: "Failed to reject user",
         variant: "destructive",
+        title: "Error",
+        description: "Failed to reject user. Please try again.",
       });
     } finally {
       setUpdating(false);
@@ -118,6 +104,6 @@ export function useUserRoleManagement({
   return {
     handleRoleChange,
     handleApproveUser,
-    handleRejectUser
+    handleRejectUser,
   };
 }
