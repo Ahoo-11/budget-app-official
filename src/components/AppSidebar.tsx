@@ -42,10 +42,31 @@ export function AppSidebar() {
     queryFn: async () => {
       if (!session?.user?.id || userStatus !== 'approved') return [];
       
-      const { data, error } = await supabase
-        .from('sources')
-        .select('*')
-        .order('created_at');
+      // First check user's role
+      const { data: userRole } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', session.user.id)
+        .single();
+
+      let query = supabase.from('sources').select('*');
+
+      // If not a controller/super_admin, only fetch permitted sources
+      if (!userRole || !['controller', 'super_admin'].includes(userRole.role)) {
+        const { data: permissions } = await supabase
+          .from('source_permissions')
+          .select('source_id')
+          .eq('user_id', session.user.id);
+
+        if (permissions && permissions.length > 0) {
+          const sourceIds = permissions.map(p => p.source_id);
+          query = query.in('id', sourceIds);
+        } else {
+          return [];
+        }
+      }
+
+      const { data, error } = await query.order('created_at');
       
       if (error) {
         console.error('Error fetching sources:', error);

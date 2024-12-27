@@ -21,15 +21,28 @@ export const useTransactions = (source_id?: string) => {
         query = query.eq('source_id', source_id);
       } else {
         // If no source_id is provided, fetch transactions from all sources the user has access to
-        const { data: permissions } = await supabase
-          .from('source_permissions')
-          .select('source_id')
+        const { data: userRole } = await supabase
+          .from('user_roles')
+          .select('role')
           .eq('user_id', session?.user?.id)
-          .eq('can_view', true);
+          .single();
 
-        if (permissions && permissions.length > 0) {
-          const sourceIds = permissions.map(p => p.source_id);
-          query = query.in('source_id', sourceIds);
+        if (userRole?.role === 'controller' || userRole?.role === 'super_admin') {
+          // Controller and super_admin can access all sources
+          // No need to modify the query
+        } else {
+          const { data: permissions } = await supabase
+            .from('source_permissions')
+            .select('source_id')
+            .eq('user_id', session?.user?.id);
+
+          if (permissions && permissions.length > 0) {
+            const sourceIds = permissions.map(p => p.source_id);
+            query = query.in('source_id', sourceIds);
+          } else {
+            // If no permissions found, return no transactions
+            return [];
+          }
         }
       }
       

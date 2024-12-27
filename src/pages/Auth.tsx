@@ -75,6 +75,7 @@ export default function AuthPage() {
         <div className="bg-white p-8 rounded-xl shadow-sm border">
           <Auth
             supabaseClient={supabase}
+            view="magic_link"
             appearance={{
               theme: ThemeSupa,
               variables: {
@@ -87,25 +88,14 @@ export default function AuthPage() {
               }
             }}
             providers={[]}
-            redirectTo={window.location.origin}
-            magicLink={false}
+            redirectTo="https://budget-app-official.lovable.app/auth/callback"
+            magicLink={true}
             localization={{
               variables: {
-                sign_in: {
-                  email_label: "Email address",
-                  password_label: "Password",
-                  button_label: "Sign in",
-                  loading_button_label: "Signing in...",
-                  social_provider_text: "Sign in with {{provider}}",
-                  link_text: "Already have an account? Sign in",
-                },
-                sign_up: {
-                  email_label: "Email address",
-                  password_label: "Create a password",
-                  button_label: "Sign up",
-                  loading_button_label: "Signing up...",
-                  social_provider_text: "Sign up with {{provider}}",
-                  link_text: "Don't have an account? Sign up",
+                magic_link: {
+                  button_label: "Send Magic Link",
+                  loading_button_label: "Sending Magic Link...",
+                  confirmation_text: "Check your email for the magic link",
                 },
                 forgotten_password: {
                   email_label: "Email address",
@@ -115,6 +105,14 @@ export default function AuthPage() {
                   confirmation_text: "Check your email for the password reset link",
                 },
               },
+            }}
+            onError={(error) => {
+              console.error('Auth error:', error);
+              toast({
+                variant: "destructive",
+                title: "Authentication Error",
+                description: error.message,
+              });
             }}
           />
         </div>

@@ -8,6 +8,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { UserRole } from "@/types/roles";
+import { Source } from "@/types/source";
 
 type UserRole = 'super_admin' | 'admin' | 'viewer';
 
@@ -56,7 +58,6 @@ export function CreateUserForm({ sources, onSubmit, isLoading }: CreateUserFormP
           <SelectContent>
             <SelectItem value="viewer">Viewer</SelectItem>
             <SelectItem value="admin">Admin</SelectItem>
-            <SelectItem value="super_admin">Super Admin</SelectItem>
           </SelectContent>
         </Select>
       </div>

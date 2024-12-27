@@ -15,13 +15,46 @@ export const SourceSelector = ({ selectedSource, setSelectedSource, source_id }:
   const { data: sources = [] } = useQuery({
     queryKey: ['sources'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('sources')
-        .select('*')
-        .order('name');
-      
-      if (error) throw error;
-      return data as Source[];
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      // First check user's role
+      const { data: userRole } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .single();
+
+      // If controller, return all sources
+      if (userRole?.role === 'controller') {
+        const { data, error } = await supabase
+          .from('sources')
+          .select('*')
+          .order('name');
+        
+        if (error) throw error;
+        return data;
+      }
+
+      // For other roles, check permissions
+      const { data: permissions } = await supabase
+        .from('source_permissions')
+        .select('source_id')
+        .eq('user_id', user.id);
+
+      if (permissions && permissions.length > 0) {
+        const sourceIds = permissions.map(p => p.source_id);
+        const { data, error } = await supabase
+          .from('sources')
+          .select('*')
+          .in('id', sourceIds)
+          .order('name');
+        
+        if (error) throw error;
+        return data;
+      }
+
+      return [];
     },
     enabled: !!session?.user?.id
   });

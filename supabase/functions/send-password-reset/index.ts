@@ -7,11 +7,12 @@ const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
 const handler = async (req: Request): Promise<Response> => {
+  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -26,12 +27,12 @@ const handler = async (req: Request): Promise<Response> => {
       SUPABASE_SERVICE_ROLE_KEY!
     );
 
-    // Generate password reset token
+    // Generate password reset token with the correct redirect URL
     const { data: { user }, error: resetError } = await supabase.auth.admin.generateLink({
       type: 'recovery',
       email: email,
       options: {
-        redirectTo: `${req.headers.get("origin")}/auth/callback`
+        redirectTo: 'https://budget-app-official.lovable.app/auth/callback'
       }
     });
 
@@ -50,7 +51,7 @@ const handler = async (req: Request): Promise<Response> => {
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "Expense Tracker <onboarding@resend.dev>",
+        from: "Expense Tracker <noreply@logicframeworks.com>",
         to: [email],
         subject: "Reset Your Password",
         html: `
@@ -70,10 +71,13 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("Password reset email sent successfully");
 
-    return new Response(JSON.stringify({ success: true }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
-    });
+    return new Response(
+      JSON.stringify({ success: true }),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      }
+    );
   } catch (error: any) {
     console.error("Password reset error:", error);
     return new Response(
