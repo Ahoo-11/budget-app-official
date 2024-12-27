@@ -15,7 +15,7 @@ export function UserManagement() {
         .from('user_roles')
         .select('role')
         .eq('user_id', user.id)
-        .maybeSingle();
+        .single();
 
       if (error) throw error;
       return data?.role as UserRole;

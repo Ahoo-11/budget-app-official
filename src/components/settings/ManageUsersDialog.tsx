@@ -1,112 +1,131 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
-import { UserRole } from "@/types/roles";
+import { Checkbox } from "@/components/ui/checkbox";
 
-interface ManageUsersDialogProps {
+interface ManageSourcesDialogProps {
   userId: string;
   onClose: () => void;
   onUpdate: () => void;
 }
 
-export function ManageUsersDialog({ userId, onClose, onUpdate }: ManageUsersDialogProps) {
+export function ManageSourcesDialog({ userId, onClose, onUpdate }: ManageSourcesDialogProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [updating, setUpdating] = useState(false);
-  const [selectedRole, setSelectedRole] = useState<UserRole>('viewer');
+  const [selectedSources, setSelectedSources] = useState<string[]>([]);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
-  const { data: currentUser } = useQuery({
-    queryKey: ['currentUser'],
+  // Get user's role
+  useQuery({
+    queryKey: ['userRole', userId],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
-
       const { data, error } = await supabase
-        .from('profiles')
-        .select('email')
-        .eq('id', user.id)
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId)
         .single();
+      
+      if (error) throw error;
+      setUserRole(data.role);
+      return data.role;
+    },
+  });
 
+  const { data: sources = [] } = useQuery({
+    queryKey: ['sources'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('sources')
+        .select('*')
+        .order('name');
+      
       if (error) throw error;
       return data;
     },
   });
 
-  const { data: userInfo } = useQuery({
-    queryKey: ['userInfo', userId],
+  const { data: permissions = [] } = useQuery({
+    queryKey: ['userSourcePermissions', userId],
     queryFn: async () => {
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('email')
-        .eq('id', userId)
-        .single();
-
-      if (profileError) throw profileError;
-
-      const { data: role, error: roleError } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', userId)
-        .maybeSingle();
-
-      if (roleError && roleError.code !== 'PGRST116') throw roleError;
-
-      setSelectedRole(role?.role || 'viewer');
+      const { data, error } = await supabase
+        .from('source_permissions')
+        .select('source_id')
+        .eq('user_id', userId);
       
-      return {
-        email: profile.email,
-        role: role?.role || 'viewer'
-      };
+      if (error) throw error;
+      return data;
     },
+    enabled: userRole !== 'controller', // Don't fetch permissions for controller
   });
 
-  const isController = currentUser?.email === 'ahoo11official@gmail.com';
-  const isTargetController = userInfo?.email === 'ahoo11official@gmail.com';
+  // Update selectedSources when permissions data changes
+  useEffect(() => {
+    if (userRole === 'controller') {
+      // Controller has access to all sources
+      setSelectedSources(sources.map(s => s.id));
+    } else {
+      setSelectedSources(permissions.map(p => p.source_id));
+    }
+  }, [permissions, userRole, sources]);
 
   const handleSave = async () => {
-    if (!selectedRole || !isController) return;
+    if (userRole === 'controller') {
+      toast({
+        title: "Info",
+        description: "Controller account automatically has access to all sources",
+      });
+      onClose();
+      return;
+    }
 
     setUpdating(true);
     try {
-      if (isTargetController) {
-        toast({
-          title: "Error",
-          description: "Cannot modify the controller account's role",
-          variant: "destructive",
-        });
-        return;
+      // Delete existing permissions
+      const { error: deleteError } = await supabase
+        .from('source_permissions')
+        .delete()
+        .eq('user_id', userId);
+
+      if (deleteError) throw deleteError;
+
+      // Add new permissions for selected sources
+      if (selectedSources.length > 0) {
+        const { error: insertError } = await supabase
+          .from('source_permissions')
+          .insert(
+            selectedSources.map(sourceId => ({
+              user_id: userId,
+              source_id: sourceId,
+              can_view: true,
+              can_create: userRole === 'admin',
+              can_edit: userRole === 'admin',
+              can_delete: userRole === 'admin'
+            }))
+          );
+
+        if (insertError) throw insertError;
       }
 
-      const { error } = await supabase
-        .from('user_roles')
-        .upsert({
-          user_id: userId,
-          role: selectedRole
-        }, {
-          onConflict: 'user_id'
-        });
-
-      if (error) throw error;
-
-      await queryClient.invalidateQueries({ queryKey: ['userInfo'] });
-      await queryClient.invalidateQueries({ queryKey: ['userRole'] });
+      // Invalidate relevant queries to refresh data
+      await queryClient.invalidateQueries({ queryKey: ['sources'] });
+      await queryClient.invalidateQueries({ queryKey: ['userSourcePermissions'] });
+      await queryClient.invalidateQueries({ queryKey: ['sourcePermissions'] });
 
       toast({
         title: "Success",
-        description: "User role updated successfully",
+        description: "Source permissions updated successfully",
       });
       onUpdate();
       onClose();
     } catch (error) {
-      console.error('Error updating user role:', error);
+      console.error('Error updating permissions:', error);
       toast({
         title: "Error",
-        description: "Failed to update user role",
+        description: "Failed to update source permissions",
         variant: "destructive",
       });
     } finally {
@@ -114,63 +133,79 @@ export function ManageUsersDialog({ userId, onClose, onUpdate }: ManageUsersDial
     }
   };
 
-  if (!isController) {
-    return (
-      <Dialog open={true} onOpenChange={() => onClose()}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Access Denied</DialogTitle>
-          </DialogHeader>
-          <div className="text-sm text-gray-500">
-            Only the controller account can manage user roles.
-          </div>
-          <div className="flex justify-end">
-            <Button variant="outline" onClick={onClose}>
-              Close
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-    );
-  }
-
   return (
     <Dialog open={true} onOpenChange={() => onClose()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Manage User Role</DialogTitle>
+          <DialogTitle>
+            {userRole === 'controller' ? 'Controller Source Access' : 'Manage Source Access'}
+          </DialogTitle>
         </DialogHeader>
-        <div className="space-y-6">
-          {isTargetController ? (
+        <div className="space-y-4">
+          {userRole === 'controller' ? (
             <div className="text-sm text-gray-500">
-              This is the controller account. Its role cannot be modified.
+              As the controller account, you automatically have access to all sources.
+            </div>
+          ) : userRole === 'viewer' ? (
+            <div className="space-y-4">
+              <div className="text-sm text-gray-500 mb-4">
+                Select sources this viewer can access (view-only permissions).
+              </div>
+              {sources.map((source) => (
+                <div key={source.id} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={source.id}
+                    checked={selectedSources.includes(source.id)}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setSelectedSources([...selectedSources, source.id]);
+                      } else {
+                        setSelectedSources(selectedSources.filter(id => id !== source.id));
+                      }
+                    }}
+                  />
+                  <label
+                    htmlFor={source.id}
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
+                    {source.name}
+                  </label>
+                </div>
+              ))}
             </div>
           ) : (
-            <>
-              <div className="text-sm text-gray-500">
-                Select the role for this user:
+            <div className="space-y-4">
+              <div className="text-sm text-gray-500 mb-4">
+                Select sources this admin can manage.
               </div>
-              <RadioGroup
-                value={selectedRole}
-                onValueChange={(value: UserRole) => setSelectedRole(value)}
-                className="space-y-4"
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="admin" id="admin" />
-                  <Label htmlFor="admin">Admin (can manage assigned sources)</Label>
+              {sources.map((source) => (
+                <div key={source.id} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={source.id}
+                    checked={selectedSources.includes(source.id)}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setSelectedSources([...selectedSources, source.id]);
+                      } else {
+                        setSelectedSources(selectedSources.filter(id => id !== source.id));
+                      }
+                    }}
+                  />
+                  <label
+                    htmlFor={source.id}
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
+                    {source.name}
+                  </label>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="viewer" id="viewer" />
-                  <Label htmlFor="viewer">Viewer (read-only access)</Label>
-                </div>
-              </RadioGroup>
-            </>
+              ))}
+            </div>
           )}
           <div className="flex justify-end space-x-2">
             <Button variant="outline" onClick={onClose} disabled={updating}>
               Cancel
             </Button>
-            {!isTargetController && (
+            {userRole !== 'controller' && (
               <Button onClick={handleSave} disabled={updating}>
                 {updating ? "Saving..." : "Save Changes"}
               </Button>
