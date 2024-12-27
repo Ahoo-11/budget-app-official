@@ -10,7 +10,7 @@ export default function Auth() {
   const { toast } = useToast();
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'SIGNED_IN') {
         navigate('/');
       }
@@ -18,14 +18,6 @@ export default function Auth() {
 
     return () => subscription.unsubscribe();
   }, [navigate]);
-
-  const handleError = (error: Error) => {
-    toast({
-      title: "Authentication Error",
-      description: error.message,
-      variant: "destructive"
-    });
-  };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background">
@@ -40,10 +32,20 @@ export default function Auth() {
         <div className="rounded-lg border bg-card p-8">
           <SupabaseAuth
             supabaseClient={supabase}
-            appearance={{ theme: ThemeSupa }}
+            theme="default"
+            appearance={{
+              theme: ThemeSupa,
+              variables: {
+                default: {
+                  colors: {
+                    brand: 'rgb(22 163 74)',
+                    brandAccent: 'rgb(21 128 61)'
+                  }
+                }
+              }
+            }}
             providers={[]}
             redirectTo="https://budget-app-official.lovable.app/auth/callback"
-            onError={handleError}
           />
         </div>
       </div>
