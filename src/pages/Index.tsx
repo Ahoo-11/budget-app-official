@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/card";
 import { DailyTransactionsChart } from "@/components/DailyTransactionsChart";
 import { StatsHeader } from "@/components/stats/StatsHeader";
 import { FiltersCard } from "@/components/stats/FiltersCard";
+import { DollarSign, CreditCard, TrendingUp } from "lucide-react";
 
 const Index = () => {
   const [selectedSource, setSelectedSource] = useState("");
@@ -84,7 +85,7 @@ const Index = () => {
         <Card className="p-6">
           <div className="grid gap-6 sm:grid-cols-3 mb-8">
             <motion.div
-              className="p-6 rounded-2xl bg-white shadow-sm border card-hover"
+              className="p-6 rounded-2xl bg-white shadow-sm border card-hover dark:bg-gray-800"
               whileHover={{ y: -4 }}
               transition={{ duration: 0.2 }}
             >
@@ -102,7 +103,7 @@ const Index = () => {
             </motion.div>
 
             <motion.div
-              className="p-6 rounded-2xl bg-white shadow-sm border card-hover"
+              className="p-6 rounded-2xl bg-white shadow-sm border card-hover dark:bg-gray-800"
               whileHover={{ y: -4 }}
               transition={{ duration: 0.2 }}
             >
@@ -120,7 +121,7 @@ const Index = () => {
             </motion.div>
 
             <motion.div
-              className="p-6 rounded-2xl bg-white shadow-sm border card-hover"
+              className="p-6 rounded-2xl bg-white shadow-sm border card-hover dark:bg-gray-800"
               whileHover={{ y: -4 }}
               transition={{ duration: 0.2 }}
             >
