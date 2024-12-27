@@ -25,8 +25,8 @@ export function AccountSettings() {
         .eq('user_id', user.id)
         .maybeSingle();
 
-      if (error) throw error;
-      return data?.role;
+      if (error && error.code !== 'PGRST116') throw error;
+      return data?.role || 'viewer'; // Default to viewer if no role is set
     },
     staleTime: 0
   });
@@ -43,8 +43,8 @@ export function AccountSettings() {
         .eq('id', user.id)
         .maybeSingle();
 
-      if (error) throw error;
-      return data?.status;
+      if (error && error.code !== 'PGRST116') throw error;
+      return data?.status || 'pending'; // Default to pending if no status is set
     },
     staleTime: 0
   });
