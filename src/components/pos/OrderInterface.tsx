@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Product } from "@/types/product";
 import { ProductGrid } from "../products/ProductGrid";
 import { OrderCart } from "./OrderCart";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface OrderInterfaceProps {
   sourceId: string;
@@ -39,11 +38,11 @@ export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
   };
 
   return (
-    <div className="h-full grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <div className="lg:col-span-2">
+    <div className="grid grid-cols-12 gap-4">
+      <div className="col-span-8">
         <ProductGrid sourceId={sourceId} onProductClick={addToCart} />
       </div>
-      <div className="lg:col-span-1">
+      <div className="col-span-4">
         <OrderCart
           products={selectedProducts}
           onRemove={removeFromCart}

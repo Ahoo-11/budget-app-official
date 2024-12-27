@@ -1,5 +1,5 @@
 import { Product } from "@/types/product";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Image } from "lucide-react";
 
 interface ProductCardProps {
@@ -8,8 +8,8 @@ interface ProductCardProps {
 
 export const ProductCard = ({ product }: ProductCardProps) => {
   return (
-    <Card className="overflow-hidden">
-      <div className="aspect-square relative bg-muted">
+    <Card className="overflow-hidden h-full hover:shadow-md transition-shadow">
+      <div className="aspect-[4/3] relative bg-muted">
         {product.image_url ? (
           <img
             src={product.image_url}
@@ -18,17 +18,17 @@ export const ProductCard = ({ product }: ProductCardProps) => {
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <Image className="w-12 h-12 text-muted-foreground" />
+            <Image className="w-8 h-8 text-muted-foreground" />
           </div>
         )}
       </div>
-      <CardContent className="p-4">
-        <h3 className="font-semibold">{product.name}</h3>
-        <p className="text-sm text-muted-foreground">{product.category}</p>
+      <CardContent className="p-3">
+        <h3 className="font-medium text-sm truncate">{product.name}</h3>
+        <div className="flex justify-between items-center mt-1">
+          <p className="text-sm text-muted-foreground truncate">{product.category}</p>
+          <p className="font-semibold text-sm">${product.price.toFixed(2)}</p>
+        </div>
       </CardContent>
-      <CardFooter className="p-4 pt-0">
-        <p className="font-semibold">${product.price.toFixed(2)}</p>
-      </CardFooter>
     </Card>
   );
 };

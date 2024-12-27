@@ -65,7 +65,6 @@ export const OrderCart = ({
         title: "Success",
         description: "Transaction created successfully",
       });
-      // Clear the cart
       products.forEach(product => onRemove(product.id));
       setCustomerName("");
     },
@@ -81,11 +80,11 @@ export const OrderCart = ({
   if (products.length === 0) {
     return (
       <Card>
-        <CardHeader>
-          <CardTitle>Cart</CardTitle>
+        <CardHeader className="py-3">
+          <CardTitle className="text-lg">Cart</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-muted-foreground text-center py-8">
+          <p className="text-muted-foreground text-center py-4">
             No items in cart
           </p>
         </CardContent>
@@ -95,63 +94,66 @@ export const OrderCart = ({
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Cart</CardTitle>
+      <CardHeader className="py-3">
+        <CardTitle className="text-lg">Cart</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-3 p-3">
         <Input
           placeholder="Customer Name (optional)"
           value={customerName}
           onChange={(e) => setCustomerName(e.target.value)}
+          className="mb-2"
         />
-        <div className="space-y-4">
+        <div className="space-y-2 max-h-[calc(100vh-300px)] overflow-y-auto">
           {products.map((product) => (
             <div
               key={product.id}
-              className="flex items-center justify-between gap-4 p-4 border rounded-lg"
+              className="flex items-center justify-between gap-2 p-2 border rounded-lg bg-muted/5"
             >
-              <div className="flex-1">
-                <p className="font-medium">{product.name}</p>
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-sm truncate">{product.name}</p>
                 <p className="text-sm text-muted-foreground">
                   ${product.price.toFixed(2)}
                 </p>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
                 <Button
                   variant="outline"
                   size="icon"
+                  className="h-7 w-7"
                   onClick={() => onUpdateQuantity(product.id, product.quantity - 1)}
                 >
-                  <Minus className="h-4 w-4" />
+                  <Minus className="h-3 w-3" />
                 </Button>
-                <span className="w-8 text-center">{product.quantity}</span>
+                <span className="w-8 text-center text-sm">{product.quantity}</span>
                 <Button
                   variant="outline"
                   size="icon"
+                  className="h-7 w-7"
                   onClick={() => onUpdateQuantity(product.id, product.quantity + 1)}
                 >
-                  <Plus className="h-4 w-4" />
+                  <Plus className="h-3 w-3" />
                 </Button>
                 <Button
                   variant="outline"
                   size="icon"
+                  className="h-7 w-7"
                   onClick={() => onRemove(product.id)}
                 >
-                  <Trash2 className="h-4 w-4" />
+                  <Trash2 className="h-3 w-3" />
                 </Button>
               </div>
             </div>
           ))}
         </div>
       </CardContent>
-      <CardFooter className="flex-col gap-4">
+      <CardFooter className="flex-col gap-3 p-3">
         <div className="flex justify-between w-full text-lg font-semibold">
           <span>Total:</span>
           <span>${total.toFixed(2)}</span>
         </div>
         <Button 
           className="w-full" 
-          size="lg"
           onClick={() => createTransaction.mutate()}
           disabled={createTransaction.isPending}
         >

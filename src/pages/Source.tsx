@@ -25,25 +25,24 @@ const Source = () => {
   });
 
   return (
-    <div className="container max-w-7xl mx-auto py-8 px-4 space-y-8">
-      <div className="bg-white rounded-2xl shadow-sm border p-6">
-        <h2 className="text-2xl font-semibold mb-6">{source?.name || 'Loading...'}</h2>
-        
-        <Tabs defaultValue="pos" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="pos">POS</TabsTrigger>
-            <TabsTrigger value="products">Products</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="pos">
-            <OrderInterface sourceId={sourceId!} />
-          </TabsContent>
-
-          <TabsContent value="products">
-            <ProductGrid sourceId={sourceId!} />
-          </TabsContent>
-        </Tabs>
+    <div className="container max-w-full mx-auto py-4 px-4">
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-2xl font-semibold">{source?.name || 'Loading...'}</h2>
+        <TabsList className="ml-4">
+          <TabsTrigger value="pos">POS</TabsTrigger>
+          <TabsTrigger value="products">Products</TabsTrigger>
+        </TabsList>
       </div>
+      
+      <Tabs defaultValue="pos" className="space-y-4">
+        <TabsContent value="pos" className="m-0">
+          <OrderInterface sourceId={sourceId!} />
+        </TabsContent>
+
+        <TabsContent value="products" className="m-0">
+          <ProductGrid sourceId={sourceId!} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
