@@ -1,28 +1,23 @@
-import { useState } from "react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
+import { UserRole, UserRoleInfo } from "@/types/roles";
+import { useUserRoleManagement } from "./hooks/useUserRoleManagement";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { RoleSelect } from "./user-roles/RoleSelect";
 import { SourcesInfo } from "./user-roles/SourcesInfo";
 import { UserStatusCell } from "./user-roles/UserStatusCell";
 import { UserActionsCell } from "./user-roles/UserActionsCell";
-import { User, UserRole } from "@/types/roles";
-import { useUserRoleManagement } from "./hooks/useUserRoleManagement";
 import { Button } from "../ui/button";
 import { ManageSourcesDialog } from "./ManageSourcesDialog";
 
-export function UserRolesTable({ users, onRoleUpdate }: { 
-  users: User[], 
-  onRoleUpdate: () => void 
-}) {
+interface UserRolesTableProps {
+  users: UserRoleInfo[];
+  onRoleUpdate: () => void;
+}
+
+export function UserRolesTable({ users, onRoleUpdate }: UserRolesTableProps) {
   const { toast } = useToast();
   const [updating, setUpdating] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);

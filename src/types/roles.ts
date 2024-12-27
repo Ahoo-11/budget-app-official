@@ -1,4 +1,4 @@
-export type UserRole = 'controller' | 'admin' | 'viewer';
+export type UserRole = 'super_admin' | 'admin' | 'viewer' | 'controller' | 'manager';
 
 export type UserStatus = 'pending' | 'approved' | 'rejected';
 
@@ -8,3 +8,8 @@ export interface User {
   role?: UserRole;
   status?: UserStatus;
 }
+
+export type UserRoleInfo = {
+  id: string;
+  role?: UserRole;
+};

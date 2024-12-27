@@ -90,39 +90,6 @@ export default function AuthPage() {
             providers={[]}
             redirectTo="https://budget-app-official.lovable.app/auth/callback"
             magicLink={false}
-            localization={{
-              variables: {
-                sign_in: {
-                  email_label: "Email",
-                  password_label: "Password",
-                  button_label: "Sign In",
-                  loading_button_label: "Signing In...",
-                  link_text: "Already have an account? Sign in",
-                },
-                sign_up: {
-                  email_label: "Email",
-                  password_label: "Password",
-                  button_label: "Sign Up",
-                  loading_button_label: "Signing Up...",
-                  link_text: "Don't have an account? Sign up",
-                },
-                forgotten_password: {
-                  email_label: "Email address",
-                  button_label: "Send reset instructions",
-                  loading_button_label: "Sending reset instructions...",
-                  link_text: "Forgot your password?",
-                  confirmation_text: "Check your email for the password reset link",
-                },
-              },
-            }}
-            onError={(error) => {
-              console.error('Auth error:', error);
-              toast({
-                variant: "destructive",
-                title: "Authentication Error",
-                description: error.message,
-              });
-            }}
           />
         </div>
       </div>

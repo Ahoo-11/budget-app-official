@@ -2,13 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { InviteUserDialog } from "./InviteUserDialog";
 import { UserRolesTable } from "./UserRolesTable";
-
-type UserRole = 'super_admin' | 'admin' | 'viewer' | 'controller';
-
-interface User {
-  id: string;
-  role?: UserRole;
-}
+import { UserRole, UserRoleInfo } from "@/types/roles";
 
 export function UserManagement() {
   const { data: currentUserRole } = useQuery({
@@ -24,10 +18,10 @@ export function UserManagement() {
         .single();
 
       if (error) throw error;
-      return data?.role;
+      return data?.role as UserRole | null;
     },
-    staleTime: 0,
-    cacheTime: 0
+    gcTime: 0,
+    staleTime: 0
   });
 
   const { data: users = [], refetch: refetchUsers } = useQuery({
@@ -62,11 +56,11 @@ export function UserManagement() {
       return profiles.map(profile => ({
         id: profile.id,
         role: roleMap[profile.id]
-      }));
+      })) as UserRoleInfo[];
     },
     enabled: !!currentUserRole && (currentUserRole === 'controller' || currentUserRole === 'super_admin'),
-    staleTime: 0,
-    cacheTime: 0
+    gcTime: 0,
+    staleTime: 0
   });
 
   if (currentUserRole !== 'controller' && currentUserRole !== 'super_admin') {
