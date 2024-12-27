@@ -11,16 +11,33 @@ export function UserManagement() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return null;
 
-      const { data, error } = await supabase
+      // First, try to get the user's role
+      const { data: roleData, error: roleError } = await supabase
         .from('user_roles')
         .select('role')
         .eq('user_id', user.id)
         .maybeSingle();
 
-      if (error) throw error;
-      return data?.role as UserRole;
+      if (roleError && roleError.code !== 'PGRST116') {
+        throw roleError;
+      }
+
+      // If user has no role, set them as viewer by default
+      if (!roleData) {
+        const { error: insertError } = await supabase
+          .from('user_roles')
+          .insert([
+            { user_id: user.id, role: 'viewer' as UserRole }
+          ]);
+
+        if (insertError) throw insertError;
+        return 'viewer' as UserRole;
+      }
+
+      return roleData.role as UserRole;
     },
-    staleTime: 0
+    staleTime: 0,
+    retry: 1
   });
 
   const { data: users = [], refetch: refetchUsers } = useQuery({
