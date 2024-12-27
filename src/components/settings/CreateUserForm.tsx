@@ -11,13 +11,6 @@ import {
 import { UserRole } from "@/types/roles";
 import { Source } from "@/types/source";
 
-type UserRole = 'super_admin' | 'admin' | 'viewer';
-
-interface Source {
-  id: string;
-  name: string;
-}
-
 interface CreateUserFormProps {
   sources: Source[];
   onSubmit: (data: { email: string; role: UserRole; sourceId: string }) => Promise<void>;
