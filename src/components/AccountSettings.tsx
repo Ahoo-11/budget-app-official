@@ -27,7 +27,9 @@ export function AccountSettings() {
 
       if (error) throw error;
       return data?.role;
-    }
+    },
+    staleTime: 0, // Disable caching to ensure fresh data
+    cacheTime: 0
   });
 
   const { data: userStatus } = useQuery({
@@ -44,7 +46,9 @@ export function AccountSettings() {
 
       if (error) throw error;
       return data?.status;
-    }
+    },
+    staleTime: 0, // Disable caching to ensure fresh data
+    cacheTime: 0
   });
 
   const { data: hasSourceAccess } = useQuery({
@@ -58,7 +62,19 @@ export function AccountSettings() {
         return false;
       }
 
-      // Then check for source permissions
+      // Check user role first
+      const { data: roleData } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .single();
+
+      // If user is controller or super_admin, they have access to all sources
+      if (roleData?.role === 'controller' || roleData?.role === 'super_admin') {
+        return true;
+      }
+
+      // For other roles, check source permissions
       const { data: permissions, error } = await supabase
         .from('source_permissions')
         .select('id')
@@ -68,10 +84,12 @@ export function AccountSettings() {
       if (error) throw error;
       return permissions && permissions.length > 0;
     },
-    enabled: !!userStatus // Only run this query when we have the user status
+    enabled: !!userStatus && userStatus === 'approved', // Only run this query when user is approved
+    staleTime: 0, // Disable caching to ensure fresh data
+    cacheTime: 0
   });
 
-  const canManageUsers = userRole === 'controller' || userRole === 'admin' || userRole === 'super_admin';
+  const canManageUsers = userRole === 'controller' || userRole === 'super_admin'; // Removed admin role access
   const showNoAccessMessage = userStatus === 'pending';
 
   return (

@@ -176,11 +176,13 @@ export function AppSidebar() {
         </nav>
       </div>
       <div className="flex items-center space-x-2">
-        <Link to="/settings">
-          <Button variant="outline" size="icon">
-            <Settings2 className="h-4 w-4" />
-          </Button>
-        </Link>
+        {userStatus === 'approved' && (
+          <Link to="/settings">
+            <Button variant="outline" size="icon">
+              <Settings2 className="h-4 w-4" />
+            </Button>
+          </Link>
+        )}
         <Button variant="outline" size="icon" onClick={handleLogout}>
           <LogOut className="h-4 w-4" />
         </Button>
