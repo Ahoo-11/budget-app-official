@@ -75,7 +75,7 @@ export default function AuthPage() {
         <div className="bg-white p-8 rounded-xl shadow-sm border">
           <Auth
             supabaseClient={supabase}
-            view="magic_link"
+            view="sign_in"
             appearance={{
               theme: ThemeSupa,
               variables: {
@@ -89,13 +89,22 @@ export default function AuthPage() {
             }}
             providers={[]}
             redirectTo="https://budget-app-official.lovable.app/auth/callback"
-            magicLink={true}
+            magicLink={false}
             localization={{
               variables: {
-                magic_link: {
-                  button_label: "Send Magic Link",
-                  loading_button_label: "Sending Magic Link...",
-                  confirmation_text: "Check your email for the magic link",
+                sign_in: {
+                  email_label: "Email",
+                  password_label: "Password",
+                  button_label: "Sign In",
+                  loading_button_label: "Signing In...",
+                  link_text: "Already have an account? Sign in",
+                },
+                sign_up: {
+                  email_label: "Email",
+                  password_label: "Password",
+                  button_label: "Sign Up",
+                  loading_button_label: "Signing Up...",
+                  link_text: "Don't have an account? Sign up",
                 },
                 forgotten_password: {
                   email_label: "Email address",
