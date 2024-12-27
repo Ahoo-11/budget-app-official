@@ -28,13 +28,16 @@ const Source = () => {
     <div className="container max-w-full mx-auto py-4 px-4">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-semibold">{source?.name || 'Loading...'}</h2>
-        <TabsList className="ml-4">
-          <TabsTrigger value="pos">POS</TabsTrigger>
-          <TabsTrigger value="products">Products</TabsTrigger>
-        </TabsList>
       </div>
       
       <Tabs defaultValue="pos" className="space-y-4">
+        <div className="border-b">
+          <TabsList>
+            <TabsTrigger value="pos">POS</TabsTrigger>
+            <TabsTrigger value="products">Products</TabsTrigger>
+          </TabsList>
+        </div>
+
         <TabsContent value="pos" className="m-0">
           <OrderInterface sourceId={sourceId!} />
         </TabsContent>
