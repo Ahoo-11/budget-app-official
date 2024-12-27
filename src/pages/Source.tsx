@@ -9,6 +9,8 @@ import { Source as SourceType } from "@/types/source";
 import { Transaction } from "@/types/transaction";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ProductGrid } from "@/components/products/ProductGrid";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Source = () => {
   const { sourceId } = useParams();
@@ -40,22 +42,36 @@ const Source = () => {
   }
 
   return (
-    <div className="container max-w-4xl mx-auto py-8 px-4 space-y-8">
+    <div className="container max-w-7xl mx-auto py-8 px-4 space-y-8">
       <div className="bg-white rounded-2xl shadow-sm border p-6">
         <h2 className="text-2xl font-semibold mb-6">{source?.name || 'Loading...'}</h2>
-        <AddTransaction
-          isOpen={true}
-          onClose={() => {}}
-          onAdd={addTransaction}
-          source_id={sourceId}
-          editingTransaction={editingTransaction}
-        />
+        
+        <Tabs defaultValue="transactions" className="space-y-6">
+          <TabsList>
+            <TabsTrigger value="transactions">Transactions</TabsTrigger>
+            <TabsTrigger value="products">Products</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="transactions">
+            <AddTransaction
+              isOpen={true}
+              onClose={() => {}}
+              onAdd={addTransaction}
+              source_id={sourceId}
+              editingTransaction={editingTransaction}
+            />
+            <TransactionList
+              transactions={transactions}
+              onDelete={deleteTransaction}
+              onEdit={handleEdit}
+            />
+          </TabsContent>
+
+          <TabsContent value="products">
+            <ProductGrid sourceId={sourceId!} />
+          </TabsContent>
+        </Tabs>
       </div>
-      <TransactionList
-        transactions={transactions}
-        onDelete={deleteTransaction}
-        onEdit={handleEdit}
-      />
 
       <Dialog open={isAddingTransaction} onOpenChange={setIsAddingTransaction}>
         <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
