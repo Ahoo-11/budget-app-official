@@ -269,6 +269,13 @@ export type Database = {
         }
         Returns: Json
       }
+      assign_source_to_user: {
+        Args: {
+          target_user_email: string
+          source_name: string
+        }
+        Returns: undefined
+      }
       create_profile: {
         Args: {
           user_id: string
@@ -295,6 +302,18 @@ export type Database = {
           user_email: string
         }
         Returns: undefined
+      }
+      has_full_access: {
+        Args: {
+          user_id: string
+        }
+        Returns: boolean
+      }
+      is_controller: {
+        Args: {
+          user_id: string
+        }
+        Returns: boolean
       }
     }
     Enums: {

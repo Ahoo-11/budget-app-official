@@ -15,6 +15,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
 import { SessionContextProvider } from "@supabase/auth-helpers-react";
+import { useToast } from "./components/ui/use-toast";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -28,21 +29,38 @@ const queryClient = new QueryClient({
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error) {
+        console.error('Error getting session:', error);
+        toast({
+          variant: "destructive",
+          title: "Authentication Error",
+          description: "There was a problem with your session. Please try logging in again.",
+        });
+      }
       setSession(session);
       setLoading(false);
     });
 
+    // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session);
+      if (_event === 'SIGNED_OUT') {
+        // Clear any cached data
+        queryClient.clear();
+      }
     });
 
-    return () => subscription.unsubscribe();
-  }, []);
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [toast]);
 
   if (loading) {
     return <div>Loading...</div>;
