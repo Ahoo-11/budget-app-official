@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { UserRole } from "@/types/roles";
 
 interface ManageUsersDialogProps {
   userId: string;
@@ -17,9 +18,8 @@ export function ManageUsersDialog({ userId, onClose, onUpdate }: ManageUsersDial
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [updating, setUpdating] = useState(false);
-  const [selectedRole, setSelectedRole] = useState<string | null>(null);
+  const [selectedRole, setSelectedRole] = useState<UserRole>('viewer');
 
-  // Get current user's email to check if they're the controller
   const { data: currentUser } = useQuery({
     queryKey: ['currentUser'],
     queryFn: async () => {
@@ -37,7 +37,6 @@ export function ManageUsersDialog({ userId, onClose, onUpdate }: ManageUsersDial
     },
   });
 
-  // Get target user's current role and email
   const { data: userInfo } = useQuery({
     queryKey: ['userInfo', userId],
     queryFn: async () => {
@@ -53,7 +52,7 @@ export function ManageUsersDialog({ userId, onClose, onUpdate }: ManageUsersDial
         .from('user_roles')
         .select('role')
         .eq('user_id', userId)
-        .single();
+        .maybeSingle();
 
       if (roleError && roleError.code !== 'PGRST116') throw roleError;
 
@@ -74,7 +73,6 @@ export function ManageUsersDialog({ userId, onClose, onUpdate }: ManageUsersDial
 
     setUpdating(true);
     try {
-      // Don't allow changing controller's role
       if (isTargetController) {
         toast({
           title: "Error",
@@ -84,7 +82,6 @@ export function ManageUsersDialog({ userId, onClose, onUpdate }: ManageUsersDial
         return;
       }
 
-      // Update or insert role
       const { error } = await supabase
         .from('user_roles')
         .upsert({
@@ -96,7 +93,6 @@ export function ManageUsersDialog({ userId, onClose, onUpdate }: ManageUsersDial
 
       if (error) throw error;
 
-      // Invalidate queries to refresh data
       await queryClient.invalidateQueries({ queryKey: ['userInfo'] });
       await queryClient.invalidateQueries({ queryKey: ['userRole'] });
 
@@ -155,8 +151,8 @@ export function ManageUsersDialog({ userId, onClose, onUpdate }: ManageUsersDial
                 Select the role for this user:
               </div>
               <RadioGroup
-                value={selectedRole || ''}
-                onValueChange={setSelectedRole}
+                value={selectedRole}
+                onValueChange={(value: UserRole) => setSelectedRole(value)}
                 className="space-y-4"
               >
                 <div className="flex items-center space-x-2">

@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { InviteUserDialog } from "./InviteUserDialog";
 import { UserRolesTable } from "./UserRolesTable";
-import { UserRole, UserRoleInfo } from "@/types/roles";
+import { UserRole } from "@/types/roles";
 
 export function UserManagement() {
   const { data: currentUserRole } = useQuery({
@@ -15,51 +15,44 @@ export function UserManagement() {
         .from('user_roles')
         .select('role')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
-      return data?.role as UserRole | null;
+      return data?.role as UserRole;
     },
-    gcTime: 0,
     staleTime: 0
   });
 
   const { data: users = [], refetch: refetchUsers } = useQuery({
     queryKey: ['users'],
     queryFn: async () => {
-      // Check if current user is controller or super_admin
       if (currentUserRole !== 'controller' && currentUserRole !== 'super_admin') {
         throw new Error('Unauthorized access');
       }
 
-      // First, get all profiles
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('id');
 
       if (profilesError) throw profilesError;
 
-      // Then get all user roles
       const { data: userRoles, error: rolesError } = await supabase
         .from('user_roles')
         .select('*');
 
       if (rolesError) throw rolesError;
 
-      // Create a map of user roles
       const roleMap = userRoles.reduce((acc: Record<string, UserRole>, role) => {
         acc[role.user_id] = role.role as UserRole;
         return acc;
       }, {});
 
-      // Map all profiles to users, including those without roles
       return profiles.map(profile => ({
         id: profile.id,
-        role: roleMap[profile.id]
-      })) as UserRoleInfo[];
+        role: roleMap[profile.id] || 'viewer'
+      }));
     },
     enabled: !!currentUserRole && (currentUserRole === 'controller' || currentUserRole === 'super_admin'),
-    gcTime: 0,
     staleTime: 0
   });
 

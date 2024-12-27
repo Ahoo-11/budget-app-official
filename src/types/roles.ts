@@ -1,4 +1,4 @@
-export type UserRole = 'controller' | 'admin' | 'viewer';
+export type UserRole = 'controller' | 'super_admin' | 'admin' | 'viewer';
 
 export type UserStatus = 'pending' | 'approved' | 'rejected';
 
