@@ -1,54 +1,37 @@
-import { useEffect } from 'react';
 import { Auth as SupabaseAuth } from '@supabase/auth-ui-react';
 import { ThemeSupa } from '@supabase/auth-ui-shared';
-import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
-export default function Auth() {
-  const navigate = useNavigate();
+export function Auth() {
   const { toast } = useToast();
 
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'SIGNED_IN') {
-        navigate('/');
-      }
+  const handleError = (error: Error) => {
+    toast({
+      title: "Authentication Error",
+      description: error.message,
+      variant: "destructive"
     });
-
-    return () => subscription.unsubscribe();
-  }, [navigate]);
+  };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background">
       <div className="w-full max-w-md space-y-8 px-4">
         <div className="text-center">
-          <h2 className="text-2xl font-bold tracking-tight">Welcome back</h2>
-          <p className="text-sm text-muted-foreground">
-            Sign in to your account
-          </p>
+          <h2 className="text-2xl font-bold">Welcome</h2>
+          <p className="text-muted-foreground mt-2">Sign in to your account</p>
         </div>
-        
-        <div className="rounded-lg border bg-card p-8">
+        <div className="bg-card rounded-lg border p-6 shadow-sm">
           <SupabaseAuth
             supabaseClient={supabase}
-            theme="default"
-            appearance={{
-              theme: ThemeSupa,
-              variables: {
-                default: {
-                  colors: {
-                    brand: 'rgb(22 163 74)',
-                    brandAccent: 'rgb(21 128 61)'
-                  }
-                }
-              }
-            }}
-            providers={[]}
-            redirectTo="https://budget-app-official.lovable.app/auth/callback"
+            appearance={{ theme: ThemeSupa }}
+            providers={['google']}
+            onError={handleError}
           />
         </div>
       </div>
     </div>
   );
 }
+
+export default Auth;

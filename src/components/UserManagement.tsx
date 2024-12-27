@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { InviteUserDialog } from "./InviteUserDialog";
-import { UserRolesTable } from "./UserRolesTable";
+import { InviteUserDialog } from "./settings/InviteUserDialog";
+import { UserRolesTable } from "./settings/UserRolesTable";
 import { UserRole } from "@/types/roles";
 
 export function UserManagement() {
@@ -15,7 +15,7 @@ export function UserManagement() {
         .from('user_roles')
         .select('role')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       return data?.role as UserRole;
