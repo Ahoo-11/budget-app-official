@@ -65,14 +65,9 @@ export function Auth() {
             }}
             providers={['google']}
             redirectTo={`${window.location.origin}/auth/callback`}
-            onError={(error) => {
-              console.error('Auth error:', error);
-              toast({
-                variant: "destructive",
-                title: "Authentication Error",
-                description: error.message,
-              });
-            }}
+            view="sign_in"
+            showLinks={false}
+            onlyThirdPartyProviders={true}
           />
         </div>
       </div>
