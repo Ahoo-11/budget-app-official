@@ -89,7 +89,6 @@ export default function AuthPage() {
             }}
             providers={[]}
             redirectTo="https://budget-app-official.lovable.app/auth/callback"
-            magicLink={false}
           />
         </div>
       </div>

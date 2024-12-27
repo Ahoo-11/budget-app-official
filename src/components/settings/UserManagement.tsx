@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { InviteUserDialog } from "./InviteUserDialog";
 import { UserRolesTable } from "./UserRolesTable";
-import { UserRole, UserRoleInfo } from "@/types/roles";
+import { User, UserRole } from "@/types/roles";
 
 export function UserManagement() {
   const { data: currentUserRole } = useQuery({
@@ -15,20 +15,19 @@ export function UserManagement() {
         .from('user_roles')
         .select('role')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       return data?.role as UserRole | null;
     },
-    gcTime: 0,
     staleTime: 0
   });
 
   const { data: users = [], refetch: refetchUsers } = useQuery({
     queryKey: ['users'],
     queryFn: async () => {
-      // Check if current user is controller or super_admin
-      if (currentUserRole !== 'controller' && currentUserRole !== 'super_admin') {
+      // Check if current user is controller
+      if (currentUserRole !== 'controller') {
         throw new Error('Unauthorized access');
       }
 
@@ -56,14 +55,13 @@ export function UserManagement() {
       return profiles.map(profile => ({
         id: profile.id,
         role: roleMap[profile.id]
-      })) as UserRoleInfo[];
+      })) as User[];
     },
-    enabled: !!currentUserRole && (currentUserRole === 'controller' || currentUserRole === 'super_admin'),
-    gcTime: 0,
+    enabled: !!currentUserRole && currentUserRole === 'controller',
     staleTime: 0
   });
 
-  if (currentUserRole !== 'controller' && currentUserRole !== 'super_admin') {
+  if (currentUserRole !== 'controller') {
     return null;
   }
 
