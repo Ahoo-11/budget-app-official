@@ -18,6 +18,7 @@ export const QuickItemForm = ({ sourceId, onSuccess }: QuickItemFormProps) => {
   const [type, setType] = useState<"product" | "inventory">("product");
   const [quantity, setQuantity] = useState("1");
   const [purchaseCost, setPurchaseCost] = useState("");
+  const [price, setPrice] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
@@ -33,6 +34,7 @@ export const QuickItemForm = ({ sourceId, onSuccess }: QuickItemFormProps) => {
           name,
           current_stock: parseFloat(quantity),
           purchase_cost: parseFloat(purchaseCost),
+          price: type === "product" ? parseFloat(price) : parseFloat(purchaseCost), // For inventory items, price = purchase cost
           category: type === "product" ? "Product" : "Inventory",
         })
         .select()
@@ -111,6 +113,20 @@ export const QuickItemForm = ({ sourceId, onSuccess }: QuickItemFormProps) => {
           required
         />
       </div>
+
+      {type === "product" && (
+        <div>
+          <Label>Selling Price</Label>
+          <Input
+            type="number"
+            min="0"
+            step="0.01"
+            value={price}
+            onChange={(e) => setPrice(e.target.value)}
+            required
+          />
+        </div>
+      )}
 
       <Button type="submit" disabled={isSubmitting} className="w-full">
         {isSubmitting ? (
