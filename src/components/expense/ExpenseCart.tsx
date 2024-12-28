@@ -1,26 +1,10 @@
 import { useState } from "react";
 import { Product } from "@/types/product";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Calendar } from "@/components/ui/calendar";
-import { format } from "date-fns";
-import { CalendarIcon, Loader2 } from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { CartHeader } from "./CartHeader";
+import { CartFooter } from "./CartFooter";
 
 interface ExpenseCartProps {
   products: (Product & { quantity: number; purchase_price: number })[];
@@ -162,78 +146,22 @@ export const ExpenseCart = ({
     <div className="border rounded-lg p-4 space-y-4">
       <h3 className="font-medium">Purchase Details</h3>
 
-      <div className="space-y-4">
-        <div>
-          <Label>Date</Label>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className="w-full justify-start text-left font-normal"
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {format(date, "PPP")}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0">
-              <Calendar
-                mode="single"
-                selected={date}
-                onSelect={(date) => date && setDate(date)}
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
-        </div>
-
-        <div>
-          <Label>Supplier</Label>
-          <Select value={supplierId} onValueChange={setSupplierId}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select supplier" />
-            </SelectTrigger>
-            <SelectContent>
-              {suppliers.map((supplier) => (
-                <SelectItem key={supplier.id} value={supplier.id}>
-                  {supplier.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div>
-          <Label>Invoice NO#</Label>
-          <Input
-            value={invoiceNo}
-            onChange={(e) => setInvoiceNo(e.target.value)}
-            placeholder="Enter invoice number"
-          />
-        </div>
-      </div>
+      <CartHeader
+        date={date}
+        setDate={setDate}
+        supplierId={supplierId}
+        setSupplierId={setSupplierId}
+        invoiceNo={invoiceNo}
+        setInvoiceNo={setInvoiceNo}
+        suppliers={suppliers}
+      />
 
       {products.length > 0 && (
-        <div className="pt-4 border-t">
-          <div className="flex justify-between items-center font-medium text-lg">
-            <span>Invoice Total</span>
-            <span>${total.toFixed(2)}</span>
-          </div>
-
-          <Button
-            className="w-full mt-4 bg-black text-white hover:bg-black/90"
-            onClick={handleSubmit}
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Recording Purchase...
-              </>
-            ) : (
-              "ADD TRANSACTION"
-            )}
-          </Button>
-        </div>
+        <CartFooter
+          total={total}
+          isSubmitting={isSubmitting}
+          onSubmit={handleSubmit}
+        />
       )}
     </div>
   );

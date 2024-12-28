@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Plus, Search } from "lucide-react";
 import { ExpenseCart } from "./ExpenseCart";
-import { ProductCard } from "../products/ProductCard";
 
 interface ExpenseInterfaceProps {
   sourceId: string;
@@ -54,6 +53,20 @@ export const ExpenseInterface = ({ sourceId }: ExpenseInterfaceProps) => {
     setSearchQuery("");
   };
 
+  const handleQuantityChange = (productId: string, value: string) => {
+    const quantity = parseFloat(value) || 0;
+    setSelectedProducts(prev =>
+      prev.map(p => p.id === productId ? { ...p, quantity } : p)
+    );
+  };
+
+  const handlePriceChange = (productId: string, value: string) => {
+    const price = parseFloat(value) || 0;
+    setSelectedProducts(prev =>
+      prev.map(p => p.id === productId ? { ...p, purchase_price: price } : p)
+    );
+  };
+
   return (
     <div className="grid grid-cols-12 gap-6">
       <div className="col-span-8">
@@ -95,7 +108,7 @@ export const ExpenseInterface = ({ sourceId }: ExpenseInterfaceProps) => {
           </div>
         )}
 
-        {selectedProducts.length > 0 && (
+        {selectedProducts.length > 0 ? (
           <div className="mt-6">
             <div className="bg-accent/50 p-4 rounded-lg mb-4">
               <table className="w-full">
@@ -113,14 +126,36 @@ export const ExpenseInterface = ({ sourceId }: ExpenseInterfaceProps) => {
                     <tr key={product.id} className="border-t">
                       <td className="py-2">{product.name}</td>
                       <td>Product</td>
-                      <td className="text-right">${product.purchase_price.toFixed(2)}</td>
-                      <td className="text-right">{product.quantity}</td>
+                      <td className="text-right">
+                        <Input
+                          type="number"
+                          value={product.purchase_price}
+                          onChange={(e) => handlePriceChange(product.id, e.target.value)}
+                          className="w-24 text-right"
+                          min="0"
+                          step="0.01"
+                        />
+                      </td>
+                      <td className="text-right">
+                        <Input
+                          type="number"
+                          value={product.quantity}
+                          onChange={(e) => handleQuantityChange(product.id, e.target.value)}
+                          className="w-20 text-right"
+                          min="0"
+                        />
+                      </td>
                       <td className="text-right">${(product.purchase_price * product.quantity).toFixed(2)}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
+          </div>
+        ) : (
+          <div className="mt-6 bg-accent/20 p-8 rounded-lg text-center text-muted-foreground">
+            <p>No items added to the purchase yet.</p>
+            <p className="text-sm">Search and select products to add them to your purchase.</p>
           </div>
         )}
       </div>
@@ -129,14 +164,10 @@ export const ExpenseInterface = ({ sourceId }: ExpenseInterfaceProps) => {
         <ExpenseCart
           products={selectedProducts}
           onUpdateQuantity={(productId, quantity) => {
-            setSelectedProducts(prev =>
-              prev.map(p => (p.id === productId ? { ...p, quantity } : p))
-            );
+            handleQuantityChange(productId, quantity.toString());
           }}
           onUpdatePrice={(productId, price) => {
-            setSelectedProducts(prev =>
-              prev.map(p => (p.id === productId ? { ...p, purchase_price: price } : p))
-            );
+            handlePriceChange(productId, price.toString());
           }}
           onRemove={(productId) => {
             setSelectedProducts(prev => prev.filter(p => p.id !== productId));
