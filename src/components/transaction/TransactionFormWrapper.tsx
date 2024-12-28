@@ -175,6 +175,7 @@ export const TransactionFormWrapper = ({
       <CategorySelector
         selectedCategory={selectedCategory}
         setSelectedCategory={setSelectedCategory}
+        sourceId={source_id || selectedSource}
       />
       <TransactionForm
         description={description}
