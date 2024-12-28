@@ -12,24 +12,24 @@ export const StatsHeader = () => {
       <Tabs value={currentPath} className="w-full">
         <TabsList className="grid w-full grid-cols-3 lg:w-[400px]">
           <TabsTrigger
-            value="/"
-            onClick={() => navigate("/")}
+            value="/stats"
+            onClick={() => navigate("/stats")}
             className="flex items-center gap-2"
           >
             <BarChart2 className="h-4 w-4" />
             Overview
           </TabsTrigger>
           <TabsTrigger
-            value="/types"
-            onClick={() => navigate("/types")}
+            value="/stats/types"
+            onClick={() => navigate("/stats/types")}
             className="flex items-center gap-2"
           >
             <List className="h-4 w-4" />
             Types
           </TabsTrigger>
           <TabsTrigger
-            value="/reports"
-            onClick={() => navigate("/reports")}
+            value="/stats/reports"
+            onClick={() => navigate("/stats/reports")}
             className="flex items-center gap-2"
           >
             <Database className="h-4 w-4" />

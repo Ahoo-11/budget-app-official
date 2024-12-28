@@ -7,6 +7,7 @@ import { addDays } from "date-fns";
 import { useState } from "react";
 import { DateRange } from "react-day-picker";
 import { FiltersCard } from "@/components/stats/FiltersCard";
+import { StatsHeader } from "@/components/stats/StatsHeader";
 
 const Stats = () => {
   const [selectedSource, setSelectedSource] = useState("");
@@ -41,80 +42,84 @@ const Stats = () => {
   }
 
   return (
-    <div className="space-y-8">
-      <header className="text-center space-y-2">
-        <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
-          Financial Statistics
-        </h1>
-        <p className="text-muted-foreground max-w-2xl mx-auto">
-          Detailed overview of your financial performance across all sources.
-        </p>
-      </header>
+    <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">
+      <div className="max-w-7xl mx-auto space-y-8">
+        <header className="text-center space-y-2">
+          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
+            Financial Statistics
+          </h1>
+          <p className="text-muted-foreground max-w-2xl mx-auto">
+            Detailed overview of your financial performance across all sources.
+          </p>
+        </header>
 
-      <FiltersCard
-        date={date}
-        setDate={setDate}
-        selectedSource={selectedSource}
-        setSelectedSource={setSelectedSource}
-      />
+        <StatsHeader />
 
-      <DailyTransactionsChart 
-        transactions={filteredTransactions}
-        dateRange={date}
-      />
+        <FiltersCard
+          date={date}
+          setDate={setDate}
+          selectedSource={selectedSource}
+          setSelectedSource={setSelectedSource}
+        />
 
-      <div className="grid gap-6 sm:grid-cols-3">
-        <motion.div
-          className="p-6 rounded-2xl bg-white shadow-sm border card-hover dark:bg-gray-800"
-          whileHover={{ y: -4 }}
-          transition={{ duration: 0.2 }}
-        >
-          <div className="flex items-center gap-4">
-            <div className="p-3 rounded-xl bg-success/10">
-              <DollarSign className="w-6 h-6 text-success" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Total Balance</p>
-              <p className="text-2xl font-semibold">
-                ${(totalIncome - totalExpenses).toFixed(2)}
-              </p>
-            </div>
-          </div>
-        </motion.div>
+        <DailyTransactionsChart 
+          transactions={filteredTransactions}
+          dateRange={date}
+        />
 
-        <motion.div
-          className="p-6 rounded-2xl bg-white shadow-sm border card-hover dark:bg-gray-800"
-          whileHover={{ y: -4 }}
-          transition={{ duration: 0.2 }}
-        >
-          <div className="flex items-center gap-4">
-            <div className="p-3 rounded-xl bg-danger/10">
-              <CreditCard className="w-6 h-6 text-danger" />
+        <div className="grid gap-6 sm:grid-cols-3">
+          <motion.div
+            className="p-6 rounded-2xl bg-white shadow-sm border card-hover dark:bg-gray-800"
+            whileHover={{ y: -4 }}
+            transition={{ duration: 0.2 }}
+          >
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-xl bg-success/10">
+                <DollarSign className="w-6 h-6 text-success" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Total Balance</p>
+                <p className="text-2xl font-semibold">
+                  ${(totalIncome - totalExpenses).toFixed(2)}
+                </p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Total Expenses</p>
-              <p className="text-2xl font-semibold">
-                ${totalExpenses.toFixed(2)}
-              </p>
-            </div>
-          </div>
-        </motion.div>
+          </motion.div>
 
-        <motion.div
-          className="p-6 rounded-2xl bg-white shadow-sm border card-hover dark:bg-gray-800"
-          whileHover={{ y: -4 }}
-          transition={{ duration: 0.2 }}
-        >
-          <div className="flex items-center gap-4">
-            <div className="p-3 rounded-xl bg-success/10">
-              <TrendingUp className="w-6 h-6 text-success" />
+          <motion.div
+            className="p-6 rounded-2xl bg-white shadow-sm border card-hover dark:bg-gray-800"
+            whileHover={{ y: -4 }}
+            transition={{ duration: 0.2 }}
+          >
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-xl bg-danger/10">
+                <CreditCard className="w-6 h-6 text-danger" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Total Expenses</p>
+                <p className="text-2xl font-semibold">
+                  ${totalExpenses.toFixed(2)}
+                </p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Total Income</p>
-              <p className="text-2xl font-semibold">${totalIncome.toFixed(2)}</p>
+          </motion.div>
+
+          <motion.div
+            className="p-6 rounded-2xl bg-white shadow-sm border card-hover dark:bg-gray-800"
+            whileHover={{ y: -4 }}
+            transition={{ duration: 0.2 }}
+          >
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-xl bg-success/10">
+                <TrendingUp className="w-6 h-6 text-success" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Total Income</p>
+                <p className="text-2xl font-semibold">${totalIncome.toFixed(2)}</p>
+              </div>
             </div>
-          </div>
-        </motion.div>
+          </motion.div>
+        </div>
       </div>
     </div>
   );

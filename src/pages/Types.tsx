@@ -26,15 +26,15 @@ const Types = () => {
     return matchesDateRange && matchesSource;
   });
 
-  const sourceStats = filteredTransactions.reduce((acc: any[], transaction) => {
-    const sourceIndex = acc.findIndex(item => item.name === transaction.source_id);
-    if (sourceIndex === -1) {
+  const categoryStats = filteredTransactions.reduce((acc: any[], transaction) => {
+    const categoryIndex = acc.findIndex(item => item.name === (transaction.category || 'Uncategorized'));
+    if (categoryIndex === -1) {
       acc.push({
-        name: transaction.source_id,
+        name: transaction.category || 'Uncategorized',
         value: Number(transaction.amount)
       });
     } else {
-      acc[sourceIndex].value += Number(transaction.amount);
+      acc[categoryIndex].value += Number(transaction.amount);
     }
     return acc;
   }, []);
@@ -50,12 +50,12 @@ const Types = () => {
           setSelectedSource={setSelectedSource}
         />
         <Card className="p-6">
-          <h3 className="text-lg font-semibold mb-6">Source Distribution</h3>
+          <h3 className="text-lg font-semibold mb-6">Category Distribution</h3>
           <div className="h-[400px]">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={sourceStats}
+                  data={categoryStats}
                   cx="50%"
                   cy="50%"
                   labelLine={false}
@@ -63,7 +63,7 @@ const Types = () => {
                   fill="#8884d8"
                   dataKey="value"
                 >
-                  {sourceStats.map((entry, index) => (
+                  {categoryStats.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
