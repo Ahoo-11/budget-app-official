@@ -5,10 +5,7 @@ import { DateRange } from "react-day-picker";
 import { TransactionList } from "@/components/TransactionList";
 import { useTransactions } from "@/hooks/useTransactions";
 import { Card } from "@/components/ui/card";
-import { DailyTransactionsChart } from "@/components/DailyTransactionsChart";
-import { StatsHeader } from "@/components/stats/StatsHeader";
 import { FiltersCard } from "@/components/stats/FiltersCard";
-import { DollarSign, CreditCard, TrendingUp } from "lucide-react";
 
 const Index = () => {
   const [selectedSource, setSelectedSource] = useState("");
@@ -27,16 +24,6 @@ const Index = () => {
     
     return matchesDateRange && matchesSource;
   });
-
-  const totalExpenses = filteredTransactions.reduce(
-    (sum, t) => (t.type === "expense" ? sum + Number(t.amount) : sum),
-    0
-  );
-
-  const totalIncome = filteredTransactions.reduce(
-    (sum, t) => (t.type === "income" ? sum + Number(t.amount) : sum),
-    0
-  );
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -60,16 +47,14 @@ const Index = () => {
             </span>
           </motion.div>
           <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
-            Financial Overview
+            Recent Transactions
           </h1>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Keep track of your expenses and income with our beautiful and intuitive
+            Keep track of your recent expenses and income with our beautiful and intuitive
             interface.
           </p>
         </header>
 
-        <StatsHeader />
-        
         <FiltersCard
           date={date}
           setDate={setDate}
@@ -77,70 +62,7 @@ const Index = () => {
           setSelectedSource={setSelectedSource}
         />
 
-        <DailyTransactionsChart 
-          transactions={filteredTransactions}
-          dateRange={date}
-        />
-
         <Card className="p-6">
-          <div className="grid gap-6 sm:grid-cols-3 mb-8">
-            <motion.div
-              className="p-6 rounded-2xl bg-white shadow-sm border card-hover dark:bg-gray-800"
-              whileHover={{ y: -4 }}
-              transition={{ duration: 0.2 }}
-            >
-              <div className="flex items-center gap-4">
-                <div className="p-3 rounded-xl bg-success/10">
-                  <DollarSign className="w-6 h-6 text-success" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Total Balance</p>
-                  <p className="text-2xl font-semibold">
-                    ${(totalIncome - totalExpenses).toFixed(2)}
-                  </p>
-                </div>
-              </div>
-            </motion.div>
-
-            <motion.div
-              className="p-6 rounded-2xl bg-white shadow-sm border card-hover dark:bg-gray-800"
-              whileHover={{ y: -4 }}
-              transition={{ duration: 0.2 }}
-            >
-              <div className="flex items-center gap-4">
-                <div className="p-3 rounded-xl bg-danger/10">
-                  <CreditCard className="w-6 h-6 text-danger" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Total Expenses</p>
-                  <p className="text-2xl font-semibold">
-                    ${totalExpenses.toFixed(2)}
-                  </p>
-                </div>
-              </div>
-            </motion.div>
-
-            <motion.div
-              className="p-6 rounded-2xl bg-white shadow-sm border card-hover dark:bg-gray-800"
-              whileHover={{ y: -4 }}
-              transition={{ duration: 0.2 }}
-            >
-              <div className="flex items-center gap-4">
-                <div className="p-3 rounded-xl bg-success/10">
-                  <TrendingUp className="w-6 h-6 text-success" />
-                </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Total Income</p>
-                  <p className="text-2xl font-semibold">${totalIncome.toFixed(2)}</p>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-semibold">Recent Transactions</h2>
-          </div>
-
           <TransactionList 
             transactions={filteredTransactions}
           />

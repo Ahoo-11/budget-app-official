@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Home, Menu, Plus, Settings2, LogOut } from "lucide-react";
+import { Home, Menu, Plus, Settings2, LogOut, BarChart } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -160,6 +160,12 @@ export function AppSidebar() {
                   <SourceActions sourceId={source.id} sourceName={source.name} />
                 </div>
               ))}
+              <Link to="/stats" onClick={() => setIsMobileMenuOpen(false)}>
+                <Button variant="ghost" className="w-full justify-start">
+                  <BarChart className="mr-2 h-4 w-4" />
+                  Stats
+                </Button>
+              </Link>
               <Button 
                 variant="ghost" 
                 className="w-full justify-start"

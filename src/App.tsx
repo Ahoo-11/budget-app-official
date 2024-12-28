@@ -9,6 +9,7 @@ import Index from "./pages/Index";
 import Types from "./pages/Types";
 import Reports from "./pages/Reports";
 import Source from "./pages/Source";
+import Stats from "./pages/Stats";
 import { AccountSettings } from "./components/AccountSettings";
 import AuthPage from "./pages/Auth";
 import { useEffect, useState } from "react";
@@ -83,27 +84,30 @@ export default function App() {
             <BrowserRouter>
               <Routes>
                 <Route path="/auth" element={<AuthPage />} />
-                <Route
-                  path="/*"
-                  element={
-                    <ProtectedRoute>
-                      <SidebarProvider>
-                        <div className="flex min-h-screen w-full">
-                          <AppSidebar />
-                          <main className="flex-1 p-4 md:p-6 w-full md:ml-[200px]">
-                            <Routes>
-                              <Route path="/" element={<Index />} />
-                              <Route path="/types" element={<Types />} />
-                              <Route path="/reports" element={<Reports />} />
-                              <Route path="/source/:sourceId" element={<Source />} />
-                              <Route path="/settings" element={<AccountSettings />} />
-                            </Routes>
-                          </main>
-                        </div>
-                      </SidebarProvider>
-                    </ProtectedRoute>
-                  }
-                />
+
+<Route
+  path="/*"
+  element={
+    <ProtectedRoute>
+      <SidebarProvider>
+        <div className="flex min-h-screen w-full">
+          <AppSidebar />
+          <main className="flex-1 p-4 md:p-6 w-full md:ml-[200px]">
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/types" element={<Types />} />
+              <Route path="/reports" element={<Reports />} />
+              <Route path="/source/:sourceId" element={<Source />} />
+              <Route path="/stats" element={<Stats />} />
+              <Route path="/settings" element={<AccountSettings />} />
+            </Routes>
+          </main>
+        </div>
+      </SidebarProvider>
+    </ProtectedRoute>
+  }
+/>
+
               </Routes>
             </BrowserRouter>
           </TooltipProvider>
