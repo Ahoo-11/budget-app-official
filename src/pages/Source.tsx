@@ -5,6 +5,8 @@ import { Source as SourceType } from "@/types/source";
 import { ProductGrid } from "@/components/products/ProductGrid";
 import { OrderInterface } from "@/components/pos/OrderInterface";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CategoryManager } from "@/components/source/CategoryManager";
+import { SupplierManager } from "@/components/source/SupplierManager";
 
 const Source = () => {
   const { sourceId } = useParams();
@@ -34,6 +36,8 @@ const Source = () => {
           <TabsTrigger value="income">Income</TabsTrigger>
           <TabsTrigger value="expense">Expense</TabsTrigger>
           <TabsTrigger value="products">Products</TabsTrigger>
+          <TabsTrigger value="categories">Categories</TabsTrigger>
+          <TabsTrigger value="suppliers">Suppliers</TabsTrigger>
         </TabsList>
 
         <TabsContent value="income" className="m-0">
@@ -46,6 +50,14 @@ const Source = () => {
 
         <TabsContent value="products" className="m-0">
           <ProductGrid sourceId={sourceId!} />
+        </TabsContent>
+
+        <TabsContent value="categories" className="m-0">
+          <CategoryManager sourceId={sourceId!} />
+        </TabsContent>
+
+        <TabsContent value="suppliers" className="m-0">
+          <SupplierManager sourceId={sourceId!} />
         </TabsContent>
       </Tabs>
     </div>
