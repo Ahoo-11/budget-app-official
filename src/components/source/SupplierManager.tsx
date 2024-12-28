@@ -61,7 +61,7 @@ export const SupplierManager = ({ sourceId }: SupplierManagerProps) => {
           name: supplierData.name,
           contact_info: supplierData.contact_info ? JSON.parse(supplierData.contact_info) : null,
           address: supplierData.address,
-          source_id: sourceId // Explicitly set the source_id
+          source_id: sourceId
         }])
         .select()
         .single();
