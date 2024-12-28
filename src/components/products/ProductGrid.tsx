@@ -65,7 +65,7 @@ export const ProductGrid = ({ sourceId, onProductClick }: ProductGridProps) => {
         open={isAddingProduct} 
         onOpenChange={setIsAddingProduct}
       >
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="max-h-[90vh] overflow-y-auto w-[90vw] max-w-[450px] p-4">
           <DialogHeader>
             <DialogTitle>Add New Product</DialogTitle>
           </DialogHeader>
@@ -80,7 +80,7 @@ export const ProductGrid = ({ sourceId, onProductClick }: ProductGridProps) => {
         open={!!editingProduct} 
         onOpenChange={(open) => !open && setEditingProduct(null)}
       >
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="max-h-[90vh] overflow-y-auto w-[90vw] max-w-[450px] p-4">
           <DialogHeader>
             <DialogTitle>Edit Product</DialogTitle>
           </DialogHeader>
