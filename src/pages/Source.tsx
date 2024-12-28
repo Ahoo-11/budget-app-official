@@ -7,6 +7,8 @@ import { OrderInterface } from "@/components/pos/OrderInterface";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CategoryManager } from "@/components/source/CategoryManager";
 import { SupplierManager } from "@/components/source/SupplierManager";
+import { ExpenseInterface } from "@/components/expense/ExpenseInterface";
+import { InventoryManager } from "@/components/inventory/InventoryManager";
 
 const Source = () => {
   const { sourceId } = useParams();
@@ -35,6 +37,7 @@ const Source = () => {
         <TabsList className="border-b w-full justify-start">
           <TabsTrigger value="income">Income</TabsTrigger>
           <TabsTrigger value="expense">Expense</TabsTrigger>
+          <TabsTrigger value="inventory">Inventory</TabsTrigger>
           <TabsTrigger value="products">Products</TabsTrigger>
           <TabsTrigger value="categories">Categories</TabsTrigger>
           <TabsTrigger value="suppliers">Suppliers</TabsTrigger>
@@ -45,7 +48,11 @@ const Source = () => {
         </TabsContent>
 
         <TabsContent value="expense" className="m-0">
-          <OrderInterface sourceId={sourceId!} type="expense" />
+          <ExpenseInterface sourceId={sourceId!} />
+        </TabsContent>
+
+        <TabsContent value="inventory" className="m-0">
+          <InventoryManager sourceId={sourceId!} />
         </TabsContent>
 
         <TabsContent value="products" className="m-0">
