@@ -84,13 +84,17 @@ export const ExpenseCart = ({
     setIsSubmitting(true);
 
     try {
+      // Get user ID first
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("User not authenticated");
+
       // Create stock movements for each product
       const stockMovements = products.map(product => ({
         product_id: product.id,
         movement_type: 'purchase',
         quantity: product.quantity,
         unit_cost: product.purchase_price,
-        created_by: (await supabase.auth.getUser()).data.user?.id,
+        created_by: user.id,
       }));
 
       const { error: stockError } = await supabase
@@ -121,7 +125,7 @@ export const ExpenseCart = ({
           amount: total,
           description: `Purchase from ${suppliers.find(s => s.id === supplierId)?.name}`,
           date: date.toISOString(),
-          user_id: (await supabase.auth.getUser()).data.user?.id,
+          user_id: user.id,
         });
 
       if (transactionError) throw transactionError;

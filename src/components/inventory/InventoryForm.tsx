@@ -28,7 +28,8 @@ export const InventoryForm = ({ sourceId, onSuccess }: InventoryFormProps) => {
         subcategory: formData.get('subcategory') as string,
         storage_location: formData.get('location') as string,
         purchase_cost: parseFloat(formData.get('purchase_cost') as string),
-        current_stock: 1, // Inventory items typically have quantity of 1
+        current_stock: 1,
+        price: 0, // Required field but not relevant for inventory items
       };
 
       const { data, error } = await supabase
