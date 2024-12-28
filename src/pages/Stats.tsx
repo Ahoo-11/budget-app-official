@@ -1,60 +1,27 @@
+import { useState } from "react";
+import { addDays } from "date-fns";
+import { DateRange } from "react-day-picker";
+import { StatsHeader } from "@/components/stats/StatsHeader";
+import { FiltersCard } from "@/components/stats/FiltersCard";
 import { DailyTransactionsChart } from "@/components/DailyTransactionsChart";
 import { Card } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useTransactions } from "@/hooks/useTransactions";
-import { motion } from "framer-motion";
-import { DollarSign, CreditCard, TrendingUp } from "lucide-react";
-import { addDays } from "date-fns";
-import { useState } from "react";
-import { DateRange } from "react-day-picker";
-import { FiltersCard } from "@/components/stats/FiltersCard";
-import { StatsHeader } from "@/components/stats/StatsHeader";
+import { TransactionTypeDistribution } from "@/components/stats/TransactionTypeDistribution";
+import { TransactionReports } from "@/components/stats/TransactionReports";
 
 const Stats = () => {
-  const [selectedSource, setSelectedSource] = useState("");
   const [date, setDate] = useState<DateRange>({
     from: addDays(new Date(), -30),
     to: new Date(),
   });
-
-  const { transactions, isLoading } = useTransactions();
-
-  const filteredTransactions = transactions.filter((transaction) => {
-    const transactionDate = new Date(transaction.date);
-    const matchesDateRange = (!date.from || transactionDate >= date.from) && 
-                            (!date.to || transactionDate <= date.to);
-    const matchesSource = !selectedSource || transaction.source_id === selectedSource;
-    
-    return matchesDateRange && matchesSource;
-  });
-
-  const totalExpenses = filteredTransactions.reduce(
-    (sum, t) => (t.type === "expense" ? sum + Number(t.amount) : sum),
-    0
-  );
-
-  const totalIncome = filteredTransactions.reduce(
-    (sum, t) => (t.type === "income" ? sum + Number(t.amount) : sum),
-    0
-  );
-
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
+  const [selectedSource, setSelectedSource] = useState("");
+  const { transactions } = useTransactions(selectedSource);
 
   return (
     <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto space-y-8">
-        <header className="text-center space-y-2">
-          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
-            Financial Statistics
-          </h1>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
-            Detailed overview of your financial performance across all sources.
-          </p>
-        </header>
-
         <StatsHeader />
-
         <FiltersCard
           date={date}
           setDate={setDate}
@@ -62,64 +29,76 @@ const Stats = () => {
           setSelectedSource={setSelectedSource}
         />
 
-        <DailyTransactionsChart 
-          transactions={filteredTransactions}
-          dateRange={date}
-        />
+        <Tabs defaultValue="overview" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="types">Types</TabsTrigger>
+            <TabsTrigger value="reports">Reports</TabsTrigger>
+          </TabsList>
 
-        <div className="grid gap-6 sm:grid-cols-3">
-          <motion.div
-            className="p-6 rounded-2xl bg-white shadow-sm border card-hover dark:bg-gray-800"
-            whileHover={{ y: -4 }}
-            transition={{ duration: 0.2 }}
-          >
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-xl bg-success/10">
-                <DollarSign className="w-6 h-6 text-success" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Total Balance</p>
-                <p className="text-2xl font-semibold">
-                  ${(totalIncome - totalExpenses).toFixed(2)}
+          <TabsContent value="overview" className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <Card className="p-6">
+                <h3 className="text-lg font-semibold mb-2">Total Income</h3>
+                <p className="text-2xl text-success">
+                  $
+                  {transactions
+                    .filter((t) => t.type === "income")
+                    .reduce((sum, t) => sum + Number(t.amount), 0)
+                    .toFixed(2)}
                 </p>
-              </div>
-            </div>
-          </motion.div>
-
-          <motion.div
-            className="p-6 rounded-2xl bg-white shadow-sm border card-hover dark:bg-gray-800"
-            whileHover={{ y: -4 }}
-            transition={{ duration: 0.2 }}
-          >
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-xl bg-danger/10">
-                <CreditCard className="w-6 h-6 text-danger" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Total Expenses</p>
-                <p className="text-2xl font-semibold">
-                  ${totalExpenses.toFixed(2)}
+              </Card>
+              <Card className="p-6">
+                <h3 className="text-lg font-semibold mb-2">Total Expenses</h3>
+                <p className="text-2xl text-danger">
+                  $
+                  {transactions
+                    .filter((t) => t.type === "expense")
+                    .reduce((sum, t) => sum + Number(t.amount), 0)
+                    .toFixed(2)}
                 </p>
-              </div>
+              </Card>
+              <Card className="p-6">
+                <h3 className="text-lg font-semibold mb-2">Net Balance</h3>
+                <p className="text-2xl">
+                  $
+                  {transactions
+                    .reduce(
+                      (sum, t) =>
+                        sum +
+                        (t.type === "income"
+                          ? Number(t.amount)
+                          : -Number(t.amount)),
+                      0
+                    )
+                    .toFixed(2)}
+                </p>
+              </Card>
+              <Card className="p-6">
+                <h3 className="text-lg font-semibold mb-2">Total Transactions</h3>
+                <p className="text-2xl">{transactions.length}</p>
+              </Card>
             </div>
-          </motion.div>
+            <DailyTransactionsChart
+              transactions={transactions}
+              dateRange={date}
+            />
+          </TabsContent>
 
-          <motion.div
-            className="p-6 rounded-2xl bg-white shadow-sm border card-hover dark:bg-gray-800"
-            whileHover={{ y: -4 }}
-            transition={{ duration: 0.2 }}
-          >
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-xl bg-success/10">
-                <TrendingUp className="w-6 h-6 text-success" />
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Total Income</p>
-                <p className="text-2xl font-semibold">${totalIncome.toFixed(2)}</p>
-              </div>
-            </div>
-          </motion.div>
-        </div>
+          <TabsContent value="types">
+            <TransactionTypeDistribution
+              transactions={transactions}
+              dateRange={date}
+            />
+          </TabsContent>
+
+          <TabsContent value="reports">
+            <TransactionReports
+              transactions={transactions}
+              dateRange={date}
+            />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
