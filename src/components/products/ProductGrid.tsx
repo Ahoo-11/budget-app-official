@@ -20,6 +20,7 @@ interface ProductGridProps {
 
 export const ProductGrid = ({ sourceId, onProductClick }: ProductGridProps) => {
   const [isAddingProduct, setIsAddingProduct] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   
   const { data: products, isLoading } = useQuery({
     queryKey: ['products', sourceId],
@@ -51,17 +52,19 @@ export const ProductGrid = ({ sourceId, onProductClick }: ProductGridProps) => {
 
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3">
         {products?.map((product) => (
-          <div
+          <ProductCard
             key={product.id}
-            className={onProductClick ? "cursor-pointer" : undefined}
-            onClick={() => onProductClick?.(product)}
-          >
-            <ProductCard product={product} />
-          </div>
+            product={product}
+            onClick={onProductClick ? () => onProductClick(product) : undefined}
+            onEdit={onProductClick ? undefined : () => setEditingProduct(product)}
+          />
         ))}
       </div>
 
-      <Dialog open={isAddingProduct} onOpenChange={setIsAddingProduct}>
+      <Dialog 
+        open={isAddingProduct} 
+        onOpenChange={setIsAddingProduct}
+      >
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>Add New Product</DialogTitle>
@@ -70,6 +73,24 @@ export const ProductGrid = ({ sourceId, onProductClick }: ProductGridProps) => {
             sourceId={sourceId}
             onSuccess={() => setIsAddingProduct(false)}
           />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog 
+        open={!!editingProduct} 
+        onOpenChange={(open) => !open && setEditingProduct(null)}
+      >
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Edit Product</DialogTitle>
+          </DialogHeader>
+          {editingProduct && (
+            <ProductForm
+              sourceId={sourceId}
+              product={editingProduct}
+              onSuccess={() => setEditingProduct(null)}
+            />
+          )}
         </DialogContent>
       </Dialog>
     </div>

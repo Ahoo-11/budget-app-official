@@ -14,13 +14,15 @@ interface OrderCartProps {
   onRemove: (productId: string) => void;
   onUpdateQuantity: (productId: string, quantity: number) => void;
   sourceId: string;
+  type: "income" | "expense";
 }
 
 export const OrderCart = ({ 
   products, 
   onRemove, 
   onUpdateQuantity,
-  sourceId 
+  sourceId,
+  type
 }: OrderCartProps) => {
   const session = useSession();
   const { toast } = useToast();
@@ -47,9 +49,9 @@ export const OrderCart = ({
         .insert([{
           user_id: session.user.id,
           source_id: sourceId,
-          description: `POS Sale - ${customerName || 'Walk-in Customer'}`,
+          description: `${type === 'income' ? 'Sale' : 'Purchase'} - ${customerName || 'Walk-in Customer'}`,
           amount: total,
-          type: 'income',
+          type: type,
           category: 'Sales',
           created_by_name: profile?.display_name || 'Unknown User'
         }])

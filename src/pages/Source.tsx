@@ -1,5 +1,4 @@
 import { useParams } from "react-router-dom";
-import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Source as SourceType } from "@/types/source";
@@ -30,16 +29,21 @@ const Source = () => {
         <h2 className="text-2xl font-semibold">{source?.name || 'Loading...'}</h2>
       </div>
       
-      <Tabs defaultValue="pos" className="space-y-4">
+      <Tabs defaultValue="income" className="space-y-4">
         <div className="border-b">
           <TabsList>
-            <TabsTrigger value="pos">POS</TabsTrigger>
+            <TabsTrigger value="income">Income</TabsTrigger>
+            <TabsTrigger value="expense">Expense</TabsTrigger>
             <TabsTrigger value="products">Products</TabsTrigger>
           </TabsList>
         </div>
 
-        <TabsContent value="pos" className="m-0">
-          <OrderInterface sourceId={sourceId!} />
+        <TabsContent value="income" className="m-0">
+          <OrderInterface sourceId={sourceId!} type="income" />
+        </TabsContent>
+
+        <TabsContent value="expense" className="m-0">
+          <OrderInterface sourceId={sourceId!} type="expense" />
         </TabsContent>
 
         <TabsContent value="products" className="m-0">

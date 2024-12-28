@@ -1,15 +1,14 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { Product } from "@/types/product";
 import { ProductGrid } from "../products/ProductGrid";
 import { OrderCart } from "./OrderCart";
 
 interface OrderInterfaceProps {
   sourceId: string;
+  type: "income" | "expense";
 }
 
-export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
+export const OrderInterface = ({ sourceId, type }: OrderInterfaceProps) => {
   const [selectedProducts, setSelectedProducts] = useState<(Product & { quantity: number })[]>([]);
 
   const addToCart = (product: Product) => {
@@ -48,6 +47,7 @@ export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
           onRemove={removeFromCart}
           onUpdateQuantity={updateQuantity}
           sourceId={sourceId}
+          type={type}
         />
       </div>
     </div>
