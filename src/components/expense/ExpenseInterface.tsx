@@ -2,26 +2,19 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Product } from "@/types/product";
-import { ProductSearch } from "./ProductSearch";
-import { ExpenseCart } from "./ExpenseCart";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { ProductForm } from "../products/ProductForm";
+import { Plus, Search } from "lucide-react";
+import { ExpenseCart } from "./ExpenseCart";
+import { ProductCard } from "../products/ProductCard";
 
 interface ExpenseInterfaceProps {
   sourceId: string;
 }
 
 export const ExpenseInterface = ({ sourceId }: ExpenseInterfaceProps) => {
-  const [selectedProducts, setSelectedProducts] = useState<(Product & { quantity: number, purchase_price: number })[]>([]);
-  const [isAddingProduct, setIsAddingProduct] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedProducts, setSelectedProducts] = useState<(Product & { quantity: number; purchase_price: number })[]>([]);
 
   const { data: products = [] } = useQuery({
     queryKey: ['products', sourceId],
@@ -36,6 +29,11 @@ export const ExpenseInterface = ({ sourceId }: ExpenseInterfaceProps) => {
       return data as Product[];
     }
   });
+
+  const filteredProducts = products.filter(product =>
+    product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    product.category?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const handleProductSelect = (product: Product) => {
     setSelectedProducts(prev => {
@@ -53,56 +51,78 @@ export const ExpenseInterface = ({ sourceId }: ExpenseInterfaceProps) => {
         purchase_price: product.purchase_cost || 0
       }];
     });
-  };
-
-  const handleProductAdd = () => {
-    setIsAddingProduct(false);
-    // The products query will automatically refetch
+    setSearchQuery("");
   };
 
   return (
-    <div className="grid grid-cols-12 gap-4">
-      <div className="col-span-8 space-y-4">
-        <div className="flex justify-between items-center">
-          <ProductSearch 
-            products={products} 
-            onSelect={handleProductSelect}
+    <div className="grid grid-cols-12 gap-6">
+      <div className="col-span-8">
+        <div className="relative mb-6">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="text"
+            placeholder="Add Items"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9 pr-4"
           />
-          <Dialog open={isAddingProduct} onOpenChange={setIsAddingProduct}>
-            <DialogTrigger asChild>
-              <Button variant="outline" size="icon">
-                <Plus className="h-4 w-4" />
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-4xl">
-              <DialogHeader>
-                <DialogTitle>Add New Product</DialogTitle>
-              </DialogHeader>
-              <ProductForm 
-                sourceId={sourceId} 
-                onSuccess={handleProductAdd}
-              />
-            </DialogContent>
-          </Dialog>
+          <Button 
+            variant="ghost" 
+            size="icon"
+            className="absolute right-2 top-1/2 transform -translate-y-1/2"
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          {products.map(product => (
-            <button
-              key={product.id}
-              onClick={() => handleProductSelect(product)}
-              className="p-4 border rounded-lg hover:bg-accent transition-colors text-left space-y-2"
-            >
-              <div className="font-medium">{product.name}</div>
-              <div className="text-sm text-muted-foreground">
-                Current Stock: {product.current_stock} {product.unit_of_measurement}
-              </div>
-              <div className="text-sm text-muted-foreground">
-                Last Purchase: ${product.purchase_cost}
-              </div>
-            </button>
-          ))}
-        </div>
+        {searchQuery && (
+          <div className="border rounded-lg divide-y">
+            {filteredProducts.map(product => (
+              <button
+                key={product.id}
+                onClick={() => handleProductSelect(product)}
+                className="w-full p-4 text-left hover:bg-accent transition-colors"
+              >
+                <div className="font-medium">{product.name}</div>
+                <div className="text-sm text-muted-foreground">
+                  Current Stock: {product.current_stock} {product.unit_of_measurement}
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  Last Purchase: ${product.purchase_cost?.toFixed(2) || '0.00'}
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {selectedProducts.length > 0 && (
+          <div className="mt-6">
+            <div className="bg-accent/50 p-4 rounded-lg mb-4">
+              <table className="w-full">
+                <thead>
+                  <tr className="text-left">
+                    <th className="font-medium">Item</th>
+                    <th className="font-medium">Type</th>
+                    <th className="font-medium text-right">Amount</th>
+                    <th className="font-medium text-right">Qty</th>
+                    <th className="font-medium text-right">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {selectedProducts.map(product => (
+                    <tr key={product.id} className="border-t">
+                      <td className="py-2">{product.name}</td>
+                      <td>Product</td>
+                      <td className="text-right">${product.purchase_price.toFixed(2)}</td>
+                      <td className="text-right">{product.quantity}</td>
+                      <td className="text-right">${(product.purchase_price * product.quantity).toFixed(2)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="col-span-4">

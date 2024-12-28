@@ -1,13 +1,26 @@
 import { useState } from "react";
 import { Product } from "@/types/product";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
-import { useQueryClient } from "@tanstack/react-query";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { CalendarIcon, Loader2 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import { DateSelector } from "./DateSelector";
-import { SupplierSelector } from "./SupplierSelector";
-import { CartItem } from "./CartItem";
 
 interface ExpenseCartProps {
   products: (Product & { quantity: number; purchase_price: number })[];
@@ -26,9 +39,24 @@ export const ExpenseCart = ({
 }: ExpenseCartProps) => {
   const [date, setDate] = useState<Date>(new Date());
   const [supplierId, setSupplierId] = useState<string>("");
+  const [invoiceNo, setInvoiceNo] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  const { data: suppliers = [] } = useQuery({
+    queryKey: ['suppliers', sourceId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('suppliers')
+        .select('*')
+        .eq('source_id', sourceId)
+        .order('name');
+      
+      if (error) throw error;
+      return data;
+    }
+  });
 
   const total = products.reduce(
     (sum, product) => sum + product.quantity * product.purchase_price,
@@ -57,7 +85,6 @@ export const ExpenseCart = ({
     setIsSubmitting(true);
 
     try {
-      // Get user ID first
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("User not authenticated");
 
@@ -68,6 +95,7 @@ export const ExpenseCart = ({
         quantity: product.quantity,
         unit_cost: product.purchase_price,
         created_by: user.id,
+        notes: `Invoice: ${invoiceNo}`,
       }));
 
       const { error: stockError } = await supabase
@@ -96,7 +124,7 @@ export const ExpenseCart = ({
           source_id: sourceId,
           type: 'expense',
           amount: total,
-          description: `Purchase from supplier`,
+          description: `Purchase from ${suppliers.find(s => s.id === supplierId)?.name}${invoiceNo ? ` (Invoice: ${invoiceNo})` : ''}`,
           date: date.toISOString(),
           user_id: user.id,
         });
@@ -111,6 +139,7 @@ export const ExpenseCart = ({
       // Reset the cart
       products.forEach(product => onRemove(product.id));
       setSupplierId("");
+      setInvoiceNo("");
 
       // Refresh relevant queries
       queryClient.invalidateQueries({ queryKey: ['products'] });
@@ -134,35 +163,64 @@ export const ExpenseCart = ({
       <h3 className="font-medium">Purchase Details</h3>
 
       <div className="space-y-4">
-        <DateSelector date={date} onDateChange={setDate} />
-        <SupplierSelector
-          sourceId={sourceId}
-          supplierId={supplierId}
-          onSupplierChange={setSupplierId}
-        />
-      </div>
+        <div>
+          <Label>Date</Label>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className="w-full justify-start text-left font-normal"
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {format(date, "PPP")}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0">
+              <Calendar
+                mode="single"
+                selected={date}
+                onSelect={(date) => date && setDate(date)}
+                initialFocus
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
 
-      <div className="divide-y">
-        {products.map((product) => (
-          <CartItem
-            key={product.id}
-            product={product}
-            onUpdateQuantity={onUpdateQuantity}
-            onUpdatePrice={onUpdatePrice}
-            onRemove={onRemove}
+        <div>
+          <Label>Supplier</Label>
+          <Select value={supplierId} onValueChange={setSupplierId}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select supplier" />
+            </SelectTrigger>
+            <SelectContent>
+              {suppliers.map((supplier) => (
+                <SelectItem key={supplier.id} value={supplier.id}>
+                  {supplier.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div>
+          <Label>Invoice NO#</Label>
+          <Input
+            value={invoiceNo}
+            onChange={(e) => setInvoiceNo(e.target.value)}
+            placeholder="Enter invoice number"
           />
-        ))}
+        </div>
       </div>
 
       {products.length > 0 && (
         <div className="pt-4 border-t">
-          <div className="flex justify-between items-center font-medium">
-            <span>Total</span>
+          <div className="flex justify-between items-center font-medium text-lg">
+            <span>Invoice Total</span>
             <span>${total.toFixed(2)}</span>
           </div>
 
           <Button
-            className="w-full mt-4"
+            className="w-full mt-4 bg-black text-white hover:bg-black/90"
             onClick={handleSubmit}
             disabled={isSubmitting}
           >
@@ -172,7 +230,7 @@ export const ExpenseCart = ({
                 Recording Purchase...
               </>
             ) : (
-              "Record Purchase"
+              "ADD TRANSACTION"
             )}
           </Button>
         </div>
