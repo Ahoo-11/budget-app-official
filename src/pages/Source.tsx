@@ -30,13 +30,11 @@ const Source = () => {
       </div>
       
       <Tabs defaultValue="income" className="space-y-4">
-        <div className="border-b">
-          <TabsList>
-            <TabsTrigger value="income">Income</TabsTrigger>
-            <TabsTrigger value="expense">Expense</TabsTrigger>
-            <TabsTrigger value="products">Products</TabsTrigger>
-          </TabsList>
-        </div>
+        <TabsList className="border-b w-full justify-start">
+          <TabsTrigger value="income">Income</TabsTrigger>
+          <TabsTrigger value="expense">Expense</TabsTrigger>
+          <TabsTrigger value="products">Products</TabsTrigger>
+        </TabsList>
 
         <TabsContent value="income" className="m-0">
           <OrderInterface sourceId={sourceId!} type="income" />
