@@ -10,6 +10,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 
@@ -30,12 +31,12 @@ export const SupplierManager = ({ sourceId }: SupplierManagerProps) => {
   const [newSupplier, setNewSupplier] = useState({
     name: "",
     contact_info: "",
-    address: ""
+    address: "",
   });
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: suppliers = [] } = useQuery({
+  const { data: suppliers = [], isError } = useQuery({
     queryKey: ['suppliers', sourceId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -44,7 +45,10 @@ export const SupplierManager = ({ sourceId }: SupplierManagerProps) => {
         .eq('source_id', sourceId)
         .order('name');
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching suppliers:', error);
+        throw error;
+      }
       return data as Supplier[];
     }
   });
@@ -57,7 +61,7 @@ export const SupplierManager = ({ sourceId }: SupplierManagerProps) => {
           name: supplierData.name,
           contact_info: supplierData.contact_info ? JSON.parse(supplierData.contact_info) : null,
           address: supplierData.address,
-          source_id: sourceId
+          source_id: sourceId // Explicitly set the source_id
         }])
         .select()
         .single();
@@ -74,7 +78,8 @@ export const SupplierManager = ({ sourceId }: SupplierManagerProps) => {
         description: "Supplier added successfully",
       });
     },
-    onError: (error) => {
+    onError: (error: Error) => {
+      console.error('Error adding supplier:', error);
       toast({
         title: "Error",
         description: error.message,
@@ -87,8 +92,24 @@ export const SupplierManager = ({ sourceId }: SupplierManagerProps) => {
     e.preventDefault();
     if (!newSupplier.name.trim()) return;
     
-    addSupplierMutation.mutate(newSupplier);
+    try {
+      // Validate JSON if contact_info is provided
+      if (newSupplier.contact_info) {
+        JSON.parse(newSupplier.contact_info);
+      }
+      addSupplierMutation.mutate(newSupplier);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Invalid JSON format in contact information",
+        variant: "destructive",
+      });
+    }
   };
+
+  if (isError) {
+    return <div>Error loading suppliers</div>;
+  }
 
   return (
     <div className="space-y-4">
@@ -118,6 +139,9 @@ export const SupplierManager = ({ sourceId }: SupplierManagerProps) => {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Add Supplier</DialogTitle>
+            <DialogDescription>
+              Add a new supplier to your source. Contact information should be in JSON format.
+            </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
