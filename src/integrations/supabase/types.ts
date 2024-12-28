@@ -75,38 +75,103 @@ export type Database = {
         }
         Relationships: []
       }
+      product_batches: {
+        Row: {
+          batch_number: string
+          created_at: string
+          expiry_date: string | null
+          id: string
+          product_id: string
+          purchase_date: string
+          quantity: number
+          unit_cost: number
+          updated_at: string
+        }
+        Insert: {
+          batch_number: string
+          created_at?: string
+          expiry_date?: string | null
+          id?: string
+          product_id: string
+          purchase_date: string
+          quantity?: number
+          unit_cost: number
+          updated_at?: string
+        }
+        Update: {
+          batch_number?: string
+          created_at?: string
+          expiry_date?: string | null
+          id?: string
+          product_id?: string
+          purchase_date?: string
+          quantity?: number
+          unit_cost?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_batches_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           category: string | null
           created_at: string
+          current_stock: number | null
           description: string | null
           id: string
           image_url: string | null
+          minimum_stock_level: number | null
           name: string
           price: number
+          purchase_cost: number | null
           source_id: string
+          storage_location: string | null
+          subcategory: string | null
+          supplier_id: string | null
+          unit_of_measurement: string | null
           updated_at: string
         }
         Insert: {
           category?: string | null
           created_at?: string
+          current_stock?: number | null
           description?: string | null
           id?: string
           image_url?: string | null
+          minimum_stock_level?: number | null
           name: string
           price: number
+          purchase_cost?: number | null
           source_id: string
+          storage_location?: string | null
+          subcategory?: string | null
+          supplier_id?: string | null
+          unit_of_measurement?: string | null
           updated_at?: string
         }
         Update: {
           category?: string | null
           created_at?: string
+          current_stock?: number | null
           description?: string | null
           id?: string
           image_url?: string | null
+          minimum_stock_level?: number | null
           name?: string
           price?: number
+          purchase_cost?: number | null
           source_id?: string
+          storage_location?: string | null
+          subcategory?: string | null
+          supplier_id?: string | null
+          unit_of_measurement?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -115,6 +180,13 @@ export type Database = {
             columns: ["source_id"]
             isOneToOne: false
             referencedRelation: "sources"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
             referencedColumns: ["id"]
           },
         ]
@@ -249,6 +321,91 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      stock_movements: {
+        Row: {
+          batch_number: string | null
+          created_at: string
+          created_by: string
+          expiry_date: string | null
+          id: string
+          movement_type: string
+          notes: string | null
+          product_id: string
+          quantity: number
+          unit_cost: number | null
+        }
+        Insert: {
+          batch_number?: string | null
+          created_at?: string
+          created_by: string
+          expiry_date?: string | null
+          id?: string
+          movement_type: string
+          notes?: string | null
+          product_id: string
+          quantity: number
+          unit_cost?: number | null
+        }
+        Update: {
+          batch_number?: string | null
+          created_at?: string
+          created_by?: string
+          expiry_date?: string | null
+          id?: string
+          movement_type?: string
+          notes?: string | null
+          product_id?: string
+          quantity?: number
+          unit_cost?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_movements_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      suppliers: {
+        Row: {
+          address: string | null
+          contact_info: Json | null
+          created_at: string
+          id: string
+          name: string
+          source_id: string
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          contact_info?: Json | null
+          created_at?: string
+          id?: string
+          name: string
+          source_id: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          contact_info?: Json | null
+          created_at?: string
+          id?: string
+          name?: string
+          source_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "suppliers_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "sources"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       templates: {
         Row: {

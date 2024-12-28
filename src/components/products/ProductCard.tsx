@@ -15,6 +15,10 @@ export const ProductCard = ({ product, onClick, onEdit }: ProductCardProps) => {
     onEdit?.();
   };
 
+  const profitMargin = product.purchase_cost 
+    ? ((product.price - product.purchase_cost) / product.price * 100).toFixed(1)
+    : null;
+
   return (
     <Card 
       className={`overflow-hidden h-full hover:shadow-md transition-shadow relative group ${onClick ? 'cursor-pointer' : ''}`}
@@ -42,12 +46,35 @@ export const ProductCard = ({ product, onClick, onEdit }: ProductCardProps) => {
             <Edit className="h-4 w-4" />
           </Button>
         )}
+        {product.current_stock !== undefined && product.minimum_stock_level !== undefined && 
+          product.current_stock <= product.minimum_stock_level && (
+          <div className="absolute bottom-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded">
+            Low Stock
+          </div>
+        )}
       </div>
       <CardContent className="p-3">
         <h3 className="font-medium text-sm truncate">{product.name}</h3>
         <div className="flex justify-between items-center mt-1">
-          <p className="text-sm text-muted-foreground truncate">{product.category}</p>
-          <p className="font-semibold text-sm">${product.price.toFixed(2)}</p>
+          <div className="space-y-1">
+            <p className="text-sm text-muted-foreground truncate">
+              {product.category}
+              {product.subcategory && ` › ${product.subcategory}`}
+            </p>
+            {product.current_stock !== undefined && (
+              <p className="text-xs text-muted-foreground">
+                Stock: {product.current_stock} {product.unit_of_measurement || 'units'}
+              </p>
+            )}
+          </div>
+          <div className="text-right">
+            <p className="font-semibold text-sm">${product.price.toFixed(2)}</p>
+            {profitMargin && (
+              <p className="text-xs text-muted-foreground">
+                Margin: {profitMargin}%
+              </p>
+            )}
+          </div>
         </div>
       </CardContent>
     </Card>
