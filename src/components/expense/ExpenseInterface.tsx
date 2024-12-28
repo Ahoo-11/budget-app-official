@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Plus, Search } from "lucide-react";
 import { ExpenseCart } from "./ExpenseCart";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface ExpenseInterfaceProps {
   sourceId: string;
@@ -13,7 +14,7 @@ interface ExpenseInterfaceProps {
 
 export const ExpenseInterface = ({ sourceId }: ExpenseInterfaceProps) => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedProducts, setSelectedProducts] = useState<(Product & { quantity: number; purchase_price: number })[]>([]);
+  const [selectedProducts, setSelectedProducts] = useState<(Product & { quantity: number; purchase_price: number; type?: string })[]>([]);
 
   const { data: products = [] } = useQuery({
     queryKey: ['products', sourceId],
@@ -47,7 +48,8 @@ export const ExpenseInterface = ({ sourceId }: ExpenseInterfaceProps) => {
       return [...prev, { 
         ...product, 
         quantity: 1,
-        purchase_price: product.purchase_cost || 0
+        purchase_price: product.purchase_cost || 0,
+        type: 'Product'
       }];
     });
     setSearchQuery("");
@@ -64,6 +66,12 @@ export const ExpenseInterface = ({ sourceId }: ExpenseInterfaceProps) => {
     const price = parseFloat(value) || 0;
     setSelectedProducts(prev =>
       prev.map(p => p.id === productId ? { ...p, purchase_price: price } : p)
+    );
+  };
+
+  const handleTypeChange = (productId: string, value: string) => {
+    setSelectedProducts(prev =>
+      prev.map(p => p.id === productId ? { ...p, type: value } : p)
     );
   };
 
@@ -111,41 +119,56 @@ export const ExpenseInterface = ({ sourceId }: ExpenseInterfaceProps) => {
         {selectedProducts.length > 0 ? (
           <div className="mt-6">
             <div className="bg-accent/50 p-4 rounded-lg mb-4">
-              <table className="w-full">
+              <table className="w-full border-collapse">
                 <thead>
-                  <tr className="text-left">
-                    <th className="font-medium">Item</th>
-                    <th className="font-medium">Type</th>
-                    <th className="font-medium text-right">Amount</th>
-                    <th className="font-medium text-right">Qty</th>
-                    <th className="font-medium text-right">Total</th>
+                  <tr className="border-b">
+                    <th className="py-2 px-4 text-left font-medium w-[30%]">Item</th>
+                    <th className="py-2 px-4 text-left font-medium w-[20%]">Type</th>
+                    <th className="py-2 px-4 text-right font-medium w-[20%]">Amount</th>
+                    <th className="py-2 px-4 text-right font-medium w-[15%]">Qty</th>
+                    <th className="py-2 px-4 text-right font-medium w-[15%]">Total</th>
                   </tr>
                 </thead>
                 <tbody>
                   {selectedProducts.map(product => (
                     <tr key={product.id} className="border-t">
-                      <td className="py-2">{product.name}</td>
-                      <td>Product</td>
-                      <td className="text-right">
+                      <td className="py-2 px-4">{product.name}</td>
+                      <td className="py-2 px-4">
+                        <Select
+                          value={product.type || 'Product'}
+                          onValueChange={(value) => handleTypeChange(product.id, value)}
+                        >
+                          <SelectTrigger className="h-8">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Product">Product</SelectItem>
+                            <SelectItem value="Inventory">Inventory</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </td>
+                      <td className="py-2 px-4">
                         <Input
                           type="number"
                           value={product.purchase_price}
                           onChange={(e) => handlePriceChange(product.id, e.target.value)}
-                          className="w-24 text-right"
+                          className="text-right h-8"
                           min="0"
                           step="0.01"
                         />
                       </td>
-                      <td className="text-right">
+                      <td className="py-2 px-4">
                         <Input
                           type="number"
                           value={product.quantity}
                           onChange={(e) => handleQuantityChange(product.id, e.target.value)}
-                          className="w-20 text-right"
+                          className="text-right h-8"
                           min="0"
                         />
                       </td>
-                      <td className="text-right">${(product.purchase_price * product.quantity).toFixed(2)}</td>
+                      <td className="py-2 px-4 text-right">
+                        ${(product.purchase_price * product.quantity).toFixed(2)}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
