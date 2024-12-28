@@ -34,7 +34,7 @@ export const InventoryForm = ({ sourceId, onSuccess }: InventoryFormProps) => {
 
       const { data, error } = await supabase
         .from('products')
-        .insert([itemData])
+        .insert(itemData)
         .select()
         .single();
 

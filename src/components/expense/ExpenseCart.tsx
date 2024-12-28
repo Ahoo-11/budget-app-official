@@ -1,26 +1,13 @@
 import { useState } from "react";
 import { Product } from "@/types/product";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Calendar } from "@/components/ui/calendar";
-import { format } from "date-fns";
-import { CalendarIcon, Loader2, Trash2 } from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Loader2 } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+import { DateSelector } from "./DateSelector";
+import { SupplierSelector } from "./SupplierSelector";
+import { CartItem } from "./CartItem";
 
 interface ExpenseCartProps {
   products: (Product & { quantity: number; purchase_price: number })[];
@@ -42,20 +29,6 @@ export const ExpenseCart = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
-
-  const { data: suppliers = [] } = useQuery({
-    queryKey: ['suppliers', sourceId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('suppliers')
-        .select('*')
-        .eq('source_id', sourceId)
-        .order('name');
-      
-      if (error) throw error;
-      return data;
-    }
-  });
 
   const total = products.reduce(
     (sum, product) => sum + product.quantity * product.purchase_price,
@@ -123,7 +96,7 @@ export const ExpenseCart = ({
           source_id: sourceId,
           type: 'expense',
           amount: total,
-          description: `Purchase from ${suppliers.find(s => s.id === supplierId)?.name}`,
+          description: `Purchase from supplier`,
           date: date.toISOString(),
           user_id: user.id,
         });
@@ -161,91 +134,23 @@ export const ExpenseCart = ({
       <h3 className="font-medium">Purchase Details</h3>
 
       <div className="space-y-4">
-        <div>
-          <Label>Date</Label>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className="w-full justify-start text-left font-normal"
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {format(date, "PPP")}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0">
-              <Calendar
-                mode="single"
-                selected={date}
-                onSelect={(date) => date && setDate(date)}
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
-        </div>
-
-        <div>
-          <Label>Supplier</Label>
-          <Select value={supplierId} onValueChange={setSupplierId}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select supplier" />
-            </SelectTrigger>
-            <SelectContent>
-              {suppliers.map((supplier) => (
-                <SelectItem key={supplier.id} value={supplier.id}>
-                  {supplier.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <DateSelector date={date} onDateChange={setDate} />
+        <SupplierSelector
+          sourceId={sourceId}
+          supplierId={supplierId}
+          onSupplierChange={setSupplierId}
+        />
       </div>
 
       <div className="divide-y">
         {products.map((product) => (
-          <div key={product.id} className="py-4 space-y-2">
-            <div className="flex justify-between items-start">
-              <div>
-                <div className="font-medium">{product.name}</div>
-                <div className="text-sm text-muted-foreground">
-                  Current Stock: {product.current_stock} {product.unit_of_measurement}
-                </div>
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => onRemove(product.id)}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <Label>Quantity</Label>
-                <Input
-                  type="number"
-                  min="1"
-                  value={product.quantity}
-                  onChange={(e) => onUpdateQuantity(product.id, parseInt(e.target.value) || 0)}
-                />
-              </div>
-              <div>
-                <Label>Price</Label>
-                <Input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={product.purchase_price}
-                  onChange={(e) => onUpdatePrice(product.id, parseFloat(e.target.value) || 0)}
-                />
-              </div>
-            </div>
-
-            <div className="text-right text-sm">
-              Subtotal: ${(product.quantity * product.purchase_price).toFixed(2)}
-            </div>
-          </div>
+          <CartItem
+            key={product.id}
+            product={product}
+            onUpdateQuantity={onUpdateQuantity}
+            onUpdatePrice={onUpdatePrice}
+            onRemove={onRemove}
+          />
         ))}
       </div>
 
