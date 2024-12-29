@@ -5,6 +5,7 @@ import { PayerManager } from "./settings/PayerManager";
 import { DisplayNameManager } from "./settings/DisplayNameManager";
 import { ThemeSelector } from "./settings/ThemeSelector";
 import { TemplateManager } from "./settings/templates/TemplateManager";
+import { SupplierManager } from "./settings/suppliers/SupplierManager";
 
 export function AccountSettings() {
   return (
@@ -14,6 +15,7 @@ export function AccountSettings() {
           <TabsTrigger value="users">Users</TabsTrigger>
           <TabsTrigger value="categories">Categories</TabsTrigger>
           <TabsTrigger value="payers">Payers</TabsTrigger>
+          <TabsTrigger value="suppliers">Suppliers</TabsTrigger>
           <TabsTrigger value="templates">Templates</TabsTrigger>
           <TabsTrigger value="preferences">Preferences</TabsTrigger>
         </TabsList>
@@ -28,6 +30,10 @@ export function AccountSettings() {
 
         <TabsContent value="payers" className="space-y-6">
           <PayerManager />
+        </TabsContent>
+
+        <TabsContent value="suppliers" className="space-y-6">
+          <SupplierManager />
         </TabsContent>
 
         <TabsContent value="templates" className="space-y-6">
