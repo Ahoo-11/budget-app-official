@@ -5,6 +5,7 @@ import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import "handsontable/dist/handsontable.full.min.css";
+import type { CellChange } from 'handsontable/common';
 
 registerAllModules();
 
@@ -18,13 +19,14 @@ export const InventorySheet = ({ items, sourceId }: InventorySheetProps) => {
   const queryClient = useQueryClient();
 
   const updateProduct = useMutation({
-    mutationFn: async (changes: [number, string, any, any][]) => {
+    mutationFn: async (changes: CellChange[]) => {
       const [row, prop, , newValue] = changes[0];
-      const product = items[row];
+      const product = items[row as number];
+      const propertyName = prop as keyof Product;
       
       const { error } = await supabase
         .from('products')
-        .update({ [prop]: newValue })
+        .update({ [propertyName]: newValue })
         .eq('id', product.id);
 
       if (error) throw error;
@@ -86,7 +88,7 @@ export const InventorySheet = ({ items, sourceId }: InventorySheetProps) => {
         licenseKey="non-commercial-and-evaluation"
         afterChange={(changes) => {
           if (changes) {
-            updateProduct.mutate(changes);
+            updateProduct.mutate(changes as CellChange[]);
           }
         }}
         stretchH="all"
