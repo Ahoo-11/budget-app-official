@@ -81,7 +81,7 @@ export const ExpenseInterface = ({ sourceId }: ExpenseInterfaceProps) => {
 
   return (
     <div className="grid grid-cols-12 gap-6">
-      <div className="col-span-8">
+      <div className="col-span-7">
         <ItemSearch
           products={products}
           onSelect={handleProductSelect}
@@ -95,10 +95,10 @@ export const ExpenseInterface = ({ sourceId }: ExpenseInterfaceProps) => {
                 data={spreadsheetData}
                 colHeaders={['Item', 'Price', 'Quantity', 'Total']}
                 columns={[
-                  { data: 0, type: 'text', readOnly: true }, // Item name
-                  { data: 1, type: 'numeric', numericFormat: { pattern: '0.00' } }, // Price
-                  { data: 2, type: 'numeric', numericFormat: { pattern: '0' } }, // Quantity
-                  { data: 3, type: 'numeric', readOnly: true, numericFormat: { pattern: '0.00' } }, // Total
+                  { data: 0, type: 'text', readOnly: true },
+                  { data: 1, type: 'numeric', numericFormat: { pattern: '0.00' } },
+                  { data: 2, type: 'numeric', numericFormat: { pattern: '0' } },
+                  { data: 3, type: 'numeric', readOnly: true, numericFormat: { pattern: '0.00' } },
                 ]}
                 stretchH="all"
                 height={Math.min(400, 100 + selectedProducts.length * 30)}
@@ -111,7 +111,7 @@ export const ExpenseInterface = ({ sourceId }: ExpenseInterfaceProps) => {
         )}
       </div>
 
-      <div className="col-span-4">
+      <div className="col-span-5">
         <ExpenseCart
           products={selectedProducts}
           onUpdateQuantity={(productId, quantity) => {
