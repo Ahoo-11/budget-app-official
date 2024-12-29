@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 
 interface SupplierFormProps {
   onSuccess: () => void;
@@ -13,6 +15,7 @@ interface SupplierFormProps {
 export const SupplierForm = ({ onSuccess, onCancel }: SupplierFormProps) => {
   const session = useSession();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
   const [supplier, setSupplier] = useState({
     name: "",
     contact_info: "",
@@ -36,6 +39,10 @@ export const SupplierForm = ({ onSuccess, onCancel }: SupplierFormProps) => {
 
       if (error) throw error;
       onSuccess();
+      toast({
+        title: "Success",
+        description: "Supplier added successfully",
+      });
     } catch (error) {
       console.error('Error adding supplier:', error);
       toast({

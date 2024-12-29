@@ -13,20 +13,19 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import { useSession } from "@supabase/auth-helpers-react";
 
 interface Supplier {
   id: string;
+  user_id: string;
   name: string;
   contact_info: any;
   address: string;
-  source_id: string;
+  created_at: string;
+  updated_at: string;
 }
 
-interface SupplierManagerProps {
-  sourceId: string;
-}
-
-export const SupplierManager = ({ sourceId }: SupplierManagerProps) => {
+export const SupplierManager = () => {
   const [isAddingSupplier, setIsAddingSupplier] = useState(false);
   const [newSupplier, setNewSupplier] = useState({
     name: "",
@@ -35,14 +34,14 @@ export const SupplierManager = ({ sourceId }: SupplierManagerProps) => {
   });
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const session = useSession();
 
   const { data: suppliers = [], isError } = useQuery({
-    queryKey: ['suppliers', sourceId],
+    queryKey: ['suppliers'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('suppliers')
         .select('*')
-        .eq('source_id', sourceId)
         .order('name');
       
       if (error) {
@@ -55,13 +54,15 @@ export const SupplierManager = ({ sourceId }: SupplierManagerProps) => {
 
   const addSupplierMutation = useMutation({
     mutationFn: async (supplierData: typeof newSupplier) => {
+      if (!session?.user?.id) throw new Error('No user session');
+      
       const { data, error } = await supabase
         .from('suppliers')
         .insert([{
           name: supplierData.name,
           contact_info: supplierData.contact_info ? JSON.parse(supplierData.contact_info) : null,
           address: supplierData.address,
-          source_id: sourceId
+          user_id: session.user.id
         }])
         .select()
         .single();
@@ -70,7 +71,7 @@ export const SupplierManager = ({ sourceId }: SupplierManagerProps) => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['suppliers', sourceId] });
+      queryClient.invalidateQueries({ queryKey: ['suppliers'] });
       setIsAddingSupplier(false);
       setNewSupplier({ name: "", contact_info: "", address: "" });
       toast({
@@ -140,7 +141,7 @@ export const SupplierManager = ({ sourceId }: SupplierManagerProps) => {
           <DialogHeader>
             <DialogTitle>Add Supplier</DialogTitle>
             <DialogDescription>
-              Add a new supplier to your source. Contact information should be in JSON format.
+              Add a new supplier. Contact information should be in JSON format.
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
