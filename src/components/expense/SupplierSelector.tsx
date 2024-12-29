@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/select";
 
 interface SupplierSelectorProps {
-  sourceId: string;
   supplierId: string;
   onSupplierChange: (id: string) => void;
 }
