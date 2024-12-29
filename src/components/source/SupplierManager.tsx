@@ -6,7 +6,7 @@ export const SupplierManager = () => {
   const { sourceId } = useParams();
 
   const { data: suppliers = [], isLoading } = useQuery({
-    queryKey: ['suppliers', sourceId],
+    queryKey: ['suppliers-with-transactions', sourceId],
     queryFn: async () => {
       // First get all transactions with suppliers for this source
       const { data: transactions, error: transactionError } = await supabase
