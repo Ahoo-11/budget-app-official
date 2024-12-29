@@ -11,7 +11,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { InventoryForm } from "./InventoryForm";
-import { InventoryList } from "./InventoryList";
+import { InventorySheet } from "./InventorySheet";
 
 interface InventoryManagerProps {
   sourceId: string;
@@ -58,7 +58,7 @@ export const InventoryManager = ({ sourceId }: InventoryManagerProps) => {
         </Dialog>
       </div>
 
-      <InventoryList items={inventory} sourceId={sourceId} />
+      <InventorySheet items={inventory} sourceId={sourceId} />
     </div>
   );
 };

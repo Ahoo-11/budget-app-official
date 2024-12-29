@@ -68,7 +68,7 @@ export const ProductCard = ({ product, onClick, onEdit }: ProductCardProps) => {
             )}
           </div>
           <div className="text-right">
-            <p className="font-semibold text-sm">${product.price.toFixed(2)}</p>
+            <p className="font-semibold text-sm">MVR {product.price.toFixed(2)}</p>
             {profitMargin && (
               <p className="text-xs text-muted-foreground">
                 Margin: {profitMargin}%
