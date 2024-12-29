@@ -9,23 +9,66 @@ import { CategoryManager } from "@/components/source/CategoryManager";
 import { SupplierManager } from "@/components/source/SupplierManager";
 import { ExpenseInterface } from "@/components/expense/ExpenseInterface";
 import { InventoryManager } from "@/components/inventory/InventoryManager";
+import { useToast } from "@/components/ui/use-toast";
 
 const Source = () => {
   const { sourceId } = useParams();
+  const { toast } = useToast();
 
-  const { data: source } = useQuery({
+  const { data: source, isLoading, error } = useQuery({
     queryKey: ['source', sourceId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('sources')
         .select('*')
         .eq('id', sourceId)
-        .single();
+        .maybeSingle();
       
-      if (error) throw error;
+      if (error) {
+        toast({
+          variant: "destructive",
+          title: "Error loading source",
+          description: error.message,
+        });
+        throw error;
+      }
+
+      if (!data) {
+        toast({
+          variant: "destructive",
+          title: "Source not found",
+          description: "The requested source could not be found.",
+        });
+        throw new Error("Source not found");
+      }
+
       return data as SourceType;
-    }
+    },
+    retry: 1
   });
+
+  if (isLoading) {
+    return (
+      <div className="container max-w-full mx-auto py-4 px-4">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
+          <div className="h-12 bg-gray-200 rounded mb-4"></div>
+          <div className="h-64 bg-gray-200 rounded"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container max-w-full mx-auto py-4 px-4">
+        <div className="text-center">
+          <h2 className="text-2xl font-semibold text-red-600">Error Loading Source</h2>
+          <p className="text-gray-600 mt-2">Please try refreshing the page.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container max-w-full mx-auto py-4 px-4">
