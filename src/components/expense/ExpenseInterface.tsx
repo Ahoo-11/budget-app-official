@@ -5,7 +5,11 @@ import { Product } from "@/types/product";
 import { ExpenseCart } from "./ExpenseCart";
 import { ItemSearch } from "./ItemSearch";
 import { HotTable } from "@handsontable/react";
+import { registerAllModules } from 'handsontable/registry';
 import "handsontable/dist/handsontable.full.min.css";
+
+// Register all Handsontable modules
+registerAllModules();
 
 interface ExpenseInterfaceProps {
   sourceId: string;
@@ -91,10 +95,10 @@ export const ExpenseInterface = ({ sourceId }: ExpenseInterfaceProps) => {
                 data={spreadsheetData}
                 colHeaders={['Item', 'Price', 'Quantity', 'Total']}
                 columns={[
-                  { type: 'text', readOnly: true }, // Item name
-                  { type: 'numeric', numericFormat: { pattern: '0.00' } }, // Price
-                  { type: 'numeric' }, // Quantity
-                  { type: 'numeric', readOnly: true, numericFormat: { pattern: '0.00' } }, // Total
+                  { data: 0, type: 'text', readOnly: true }, // Item name
+                  { data: 1, type: 'numeric', numericFormat: { pattern: '0.00' } }, // Price
+                  { data: 2, type: 'numeric', numericFormat: { pattern: '0' } }, // Quantity
+                  { data: 3, type: 'numeric', readOnly: true, numericFormat: { pattern: '0.00' } }, // Total
                 ]}
                 stretchH="all"
                 height={Math.min(400, 100 + selectedProducts.length * 30)}
