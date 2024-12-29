@@ -64,7 +64,7 @@ const Source = () => {
         </TabsContent>
 
         <TabsContent value="suppliers" className="m-0">
-          <SupplierManager sourceId={sourceId!} />
+          <SupplierManager />
         </TabsContent>
       </Tabs>
     </div>
