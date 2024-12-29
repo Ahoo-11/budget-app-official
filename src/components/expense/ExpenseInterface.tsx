@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Product } from "@/types/product";
 import { ExpenseCart } from "./ExpenseCart";
 import { ItemSearch } from "./ItemSearch";
+import { HotTable } from "@handsontable/react";
+import "handsontable/dist/handsontable.full.min.css";
 
 interface ExpenseInterfaceProps {
   sourceId: string;
@@ -44,6 +46,35 @@ export const ExpenseInterface = ({ sourceId }: ExpenseInterfaceProps) => {
     });
   };
 
+  const spreadsheetData = selectedProducts.map(product => [
+    product.name,
+    product.purchase_price,
+    product.quantity,
+    (product.purchase_price * product.quantity).toFixed(2)
+  ]);
+
+  const handleSpreadsheetChange = (changes: any[]) => {
+    if (!changes) return;
+
+    changes.forEach(([row, prop, , newValue]) => {
+      const product = selectedProducts[row];
+      if (!product) return;
+
+      setSelectedProducts(prev => prev.map((p, index) => {
+        if (index !== row) return p;
+
+        switch(prop) {
+          case 1: // Price column
+            return { ...p, purchase_price: parseFloat(newValue) || 0 };
+          case 2: // Quantity column
+            return { ...p, quantity: parseFloat(newValue) || 0 };
+          default:
+            return p;
+        }
+      }));
+    });
+  };
+
   return (
     <div className="grid grid-cols-12 gap-6">
       <div className="col-span-8">
@@ -56,32 +87,21 @@ export const ExpenseInterface = ({ sourceId }: ExpenseInterfaceProps) => {
         {selectedProducts.length > 0 && (
           <div className="mt-6">
             <div className="bg-accent/50 p-4 rounded-lg mb-4">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className="border-b">
-                    <th className="py-2 px-4 text-left font-medium">Item</th>
-                    <th className="py-2 px-4 text-right font-medium">Amount</th>
-                    <th className="py-2 px-4 text-right font-medium">Qty</th>
-                    <th className="py-2 px-4 text-right font-medium">Total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {selectedProducts.map(product => (
-                    <tr key={product.id} className="border-t">
-                      <td className="py-2 px-4">{product.name}</td>
-                      <td className="py-2 px-4 text-right">
-                        ${product.purchase_price.toFixed(2)}
-                      </td>
-                      <td className="py-2 px-4 text-right">
-                        {product.quantity}
-                      </td>
-                      <td className="py-2 px-4 text-right">
-                        ${(product.purchase_price * product.quantity).toFixed(2)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <HotTable
+                data={spreadsheetData}
+                colHeaders={['Item', 'Price', 'Quantity', 'Total']}
+                columns={[
+                  { type: 'text', readOnly: true }, // Item name
+                  { type: 'numeric', numericFormat: { pattern: '0.00' } }, // Price
+                  { type: 'numeric' }, // Quantity
+                  { type: 'numeric', readOnly: true, numericFormat: { pattern: '0.00' } }, // Total
+                ]}
+                stretchH="all"
+                height={Math.min(400, 100 + selectedProducts.length * 30)}
+                licenseKey="non-commercial-and-evaluation"
+                afterChange={handleSpreadsheetChange}
+                className="font-sans"
+              />
             </div>
           </div>
         )}
