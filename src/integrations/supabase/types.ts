@@ -397,8 +397,8 @@ export type Database = {
           created_at: string
           id: string
           name: string
-          source_id: string
           updated_at: string
+          user_id: string
         }
         Insert: {
           address?: string | null
@@ -406,8 +406,8 @@ export type Database = {
           created_at?: string
           id?: string
           name: string
-          source_id: string
           updated_at?: string
+          user_id: string
         }
         Update: {
           address?: string | null
@@ -415,18 +415,10 @@ export type Database = {
           created_at?: string
           id?: string
           name?: string
-          source_id?: string
           updated_at?: string
+          user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "suppliers_source_id_fkey"
-            columns: ["source_id"]
-            isOneToOne: false
-            referencedRelation: "sources"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       templates: {
         Row: {

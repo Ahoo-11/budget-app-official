@@ -1,13 +1,15 @@
 import { useState } from "react";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useQueryClient, useQuery } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { Product } from "@/types/product";
-import { Image, Loader2 } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Loader2 } from "lucide-react";
+import { ProductImageUpload } from "./form/ProductImageUpload";
+import { ProductBasicInfo } from "./form/ProductBasicInfo";
+import { ProductCategories } from "./form/ProductCategories";
+import { ProductInventory } from "./form/ProductInventory";
+import { ProductSupplier } from "./form/ProductSupplier";
 
 interface ProductFormProps {
   sourceId: string;
@@ -21,21 +23,6 @@ export const ProductForm = ({ sourceId, onSuccess, product }: ProductFormProps) 
   const [previewUrl, setPreviewUrl] = useState<string>(product?.image_url || "");
   const { toast } = useToast();
   const queryClient = useQueryClient();
-
-  // Fetch suppliers for the source
-  const { data: suppliers = [] } = useQuery({
-    queryKey: ['suppliers', sourceId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('suppliers')
-        .select('*')
-        .eq('source_id', sourceId)
-        .order('name');
-      
-      if (error) throw error;
-      return data;
-    }
-  });
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -122,158 +109,32 @@ export const ProductForm = ({ sourceId, onSuccess, product }: ProductFormProps) 
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="flex flex-col items-center gap-4">
-        <div className="relative w-full aspect-[4/3] bg-muted rounded-lg overflow-hidden">
-          {previewUrl ? (
-            <img
-              src={previewUrl}
-              alt="Product preview"
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <Image className="w-8 h-8 text-muted-foreground" />
-            </div>
-          )}
-        </div>
-        <Input
-          type="file"
-          accept="image/*"
-          onChange={handleImageChange}
-          className="w-full"
-        />
-      </div>
+      <ProductImageUpload
+        previewUrl={previewUrl}
+        onImageChange={handleImageChange}
+        isSubmitting={isSubmitting}
+      />
 
       <div className="grid grid-cols-2 gap-4">
-        <div className="col-span-2">
-          <label className="block text-sm font-medium mb-2">Name</label>
-          <Input
-            name="name"
-            required
-            placeholder="Product name"
-            defaultValue={product?.name}
-            disabled={isSubmitting}
-          />
-        </div>
+        <ProductBasicInfo
+          defaultValues={product}
+          isSubmitting={isSubmitting}
+        />
 
-        <div>
-          <label className="block text-sm font-medium mb-2">Selling Price</label>
-          <Input
-            name="price"
-            type="number"
-            step="0.01"
-            min="0"
-            required
-            placeholder="0.00"
-            defaultValue={product?.price}
-            disabled={isSubmitting}
-          />
-        </div>
+        <ProductCategories
+          defaultValues={product}
+          isSubmitting={isSubmitting}
+        />
 
-        <div>
-          <label className="block text-sm font-medium mb-2">Purchase Cost</label>
-          <Input
-            name="purchase_cost"
-            type="number"
-            step="0.01"
-            min="0"
-            placeholder="0.00"
-            defaultValue={product?.purchase_cost}
-            disabled={isSubmitting}
-          />
-        </div>
+        <ProductInventory
+          defaultValues={product}
+          isSubmitting={isSubmitting}
+        />
 
-        <div>
-          <label className="block text-sm font-medium mb-2">Category</label>
-          <Input
-            name="category"
-            placeholder="Category"
-            defaultValue={product?.category}
-            disabled={isSubmitting}
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-2">Subcategory</label>
-          <Input
-            name="subcategory"
-            placeholder="Subcategory"
-            defaultValue={product?.subcategory}
-            disabled={isSubmitting}
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-2">Current Stock</label>
-          <Input
-            name="current_stock"
-            type="number"
-            step="1"
-            min="0"
-            placeholder="0"
-            defaultValue={product?.current_stock}
-            disabled={isSubmitting}
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-2">Minimum Stock Level</label>
-          <Input
-            name="minimum_stock_level"
-            type="number"
-            step="1"
-            min="0"
-            placeholder="0"
-            defaultValue={product?.minimum_stock_level}
-            disabled={isSubmitting}
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-2">Unit of Measurement</label>
-          <Input
-            name="unit_of_measurement"
-            placeholder="e.g., pieces, kg, liters"
-            defaultValue={product?.unit_of_measurement}
-            disabled={isSubmitting}
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium mb-2">Storage Location</label>
-          <Input
-            name="storage_location"
-            placeholder="Storage location"
-            defaultValue={product?.storage_location}
-            disabled={isSubmitting}
-          />
-        </div>
-
-        <div className="col-span-2">
-          <label className="block text-sm font-medium mb-2">Supplier</label>
-          <Select name="supplier_id" defaultValue={product?.supplier_id}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select supplier" />
-            </SelectTrigger>
-            <SelectContent>
-              {suppliers.map((supplier) => (
-                <SelectItem key={supplier.id} value={supplier.id}>
-                  {supplier.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="col-span-2">
-          <label className="block text-sm font-medium mb-2">Description</label>
-          <Textarea
-            name="description"
-            placeholder="Product description"
-            defaultValue={product?.description}
-            disabled={isSubmitting}
-          />
-        </div>
+        <ProductSupplier
+          defaultValue={product?.supplier_id}
+          isSubmitting={isSubmitting}
+        />
       </div>
 
       <Button type="submit" disabled={isSubmitting} className="w-full">
