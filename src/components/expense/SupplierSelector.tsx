@@ -16,17 +16,15 @@ interface SupplierSelectorProps {
 }
 
 export const SupplierSelector = ({
-  sourceId,
   supplierId,
   onSupplierChange,
 }: SupplierSelectorProps) => {
   const { data: suppliers = [] } = useQuery({
-    queryKey: ['suppliers', sourceId],
+    queryKey: ['suppliers'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('suppliers')
         .select('*')
-        .eq('source_id', sourceId)
         .order('name');
       
       if (error) throw error;
