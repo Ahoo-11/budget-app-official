@@ -18,7 +18,7 @@ export const SupplierSelector = ({
   supplierId,
   onSupplierChange,
 }: SupplierSelectorProps) => {
-  const { data: suppliers = [] } = useQuery({
+  const { data: suppliers = [], isError } = useQuery({
     queryKey: ['suppliers'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -30,6 +30,10 @@ export const SupplierSelector = ({
       return data;
     }
   });
+
+  if (isError) {
+    return <div>Error loading suppliers</div>;
+  }
 
   return (
     <div>
