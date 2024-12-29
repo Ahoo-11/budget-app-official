@@ -142,8 +142,8 @@ export const ExpenseCart = ({
   };
 
   return (
-    <div className="border rounded-lg p-4 space-y-4">
-      <h3 className="font-medium">Purchase Details</h3>
+    <div className="space-y-4">
+      <h3 className="font-medium text-lg">Purchase Details</h3>
 
       <CartHeader
         date={date}

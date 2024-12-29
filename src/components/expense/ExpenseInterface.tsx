@@ -112,23 +112,25 @@ export const ExpenseInterface = ({ sourceId }: ExpenseInterfaceProps) => {
       </div>
 
       <div className="col-span-5">
-        <ExpenseCart
-          products={selectedProducts}
-          onUpdateQuantity={(productId, quantity) => {
-            setSelectedProducts(prev =>
-              prev.map(p => p.id === productId ? { ...p, quantity } : p)
-            );
-          }}
-          onUpdatePrice={(productId, price) => {
-            setSelectedProducts(prev =>
-              prev.map(p => p.id === productId ? { ...p, purchase_price: price } : p)
-            );
-          }}
-          onRemove={(productId) => {
-            setSelectedProducts(prev => prev.filter(p => p.id !== productId));
-          }}
-          sourceId={sourceId}
-        />
+        <div className="bg-white rounded-lg shadow-lg p-6 border">
+          <ExpenseCart
+            products={selectedProducts}
+            onUpdateQuantity={(productId, quantity) => {
+              setSelectedProducts(prev =>
+                prev.map(p => p.id === productId ? { ...p, quantity } : p)
+              );
+            }}
+            onUpdatePrice={(productId, price) => {
+              setSelectedProducts(prev =>
+                prev.map(p => p.id === productId ? { ...p, purchase_price: price } : p)
+              );
+            }}
+            onRemove={(productId) => {
+              setSelectedProducts(prev => prev.filter(p => p.id !== productId));
+            }}
+            sourceId={sourceId}
+          />
+        </div>
       </div>
     </div>
   );
