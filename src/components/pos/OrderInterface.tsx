@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Product } from "@/types/product";
 import { BillItem } from "@/types/bill";
 import { OrderCart } from "./OrderCart";
-import { ItemSearch } from "./ItemSearch";
+import { ItemSearch } from "../expense/ItemSearch";
 import { HotTable } from "@handsontable/react";
 import { registerAllModules } from 'handsontable/registry';
 import "handsontable/dist/handsontable.full.min.css";
@@ -12,11 +12,11 @@ import "handsontable/dist/handsontable.full.min.css";
 // Register all Handsontable modules
 registerAllModules();
 
-interface ExpenseInterfaceProps {
+interface OrderInterfaceProps {
   sourceId: string;
 }
 
-export const ExpenseInterface = ({ sourceId }: ExpenseInterfaceProps) => {
+export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
   const [selectedProducts, setSelectedProducts] = useState<BillItem[]>([]);
 
   const { data: products = [] } = useQuery({
@@ -115,21 +115,18 @@ export const ExpenseInterface = ({ sourceId }: ExpenseInterfaceProps) => {
       <div className="col-span-5">
         <div className="bg-white rounded-lg shadow-lg p-6 border">
           <OrderCart
-            products={selectedProducts}
+            items={selectedProducts}
             onUpdateQuantity={(productId, quantity) => {
               setSelectedProducts(prev =>
                 prev.map(p => p.id === productId ? { ...p, quantity } : p)
               );
             }}
-            onUpdatePrice={(productId, price) => {
-              setSelectedProducts(prev =>
-                prev.map(p => p.id === productId ? { ...p, purchase_price: price } : p)
-              );
-            }}
             onRemove={(productId) => {
               setSelectedProducts(prev => prev.filter(p => p.id !== productId));
             }}
-            sourceId={sourceId}
+            onCheckout={() => {
+              // Implement checkout logic
+            }}
           />
         </div>
       </div>
