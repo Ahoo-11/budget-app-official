@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { BillActions } from "./BillActions";
 import { ProductGrid } from "./ProductGrid";
 import { useSession } from "@supabase/auth-helpers-react";
-import { BillItem } from "@/types/bill";
+import { BillItem, BillItemJson } from "@/types/bill";
 import { fetchActiveBills, createNewBill, updateBillItems } from "./BillManager";
 
 interface OrderInterfaceProps {
@@ -103,9 +103,19 @@ export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
       if (error) throw error;
 
       setActiveBillId(billId);
-      setSelectedProducts(data.items.map((item: any) => ({
+      const billItems = data.items as BillItemJson[];
+      setSelectedProducts(billItems.map(item => ({
         ...item,
-        quantity: item.quantity || 0
+        quantity: item.quantity || 0,
+        purchase_cost: null,
+        minimum_stock_level: 0,
+        current_stock: 0,
+        supplier_id: null,
+        storage_location: null,
+        unit_of_measurement: null,
+        subcategory: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       })));
     } catch (error) {
       console.error('Error switching bill:', error);

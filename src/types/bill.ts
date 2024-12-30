@@ -2,14 +2,15 @@ import { Product } from "./product";
 
 // Type for bill items that can be serialized to JSON
 export interface BillItemJson {
+  [key: string]: string | number | null;
   id: string;
   name: string;
   price: number;
   quantity: number;
   source_id: string;
-  category?: string | null;
-  image_url?: string | null;
-  description?: string | null;
+  category: string | null;
+  image_url: string | null;
+  description: string | null;
 }
 
 // Type for working with bill items in the application
@@ -23,7 +24,7 @@ export interface Bill {
   user_id: string;
   status: 'active' | 'on-hold' | 'completed';
   customer_id?: string;
-  items: BillItem[];
+  items: BillItemJson[];
   subtotal: number;
   discount: number;
   gst: number;

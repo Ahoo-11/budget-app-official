@@ -14,10 +14,19 @@ export const serializeBillItems = (items: BillItem[]): BillItemJson[] => {
   }));
 };
 
-export const deserializeBillItems = (items: any[]): BillItem[] => {
+export const deserializeBillItems = (items: BillItemJson[]): BillItem[] => {
   return items.map(item => ({
     ...item,
-    quantity: item.quantity || 0
+    quantity: item.quantity || 0,
+    purchase_cost: null,
+    minimum_stock_level: 0,
+    current_stock: 0,
+    supplier_id: null,
+    storage_location: null,
+    unit_of_measurement: null,
+    subcategory: null,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
   }));
 };
 
@@ -33,7 +42,7 @@ export const fetchActiveBills = async (sourceId: string) => {
 
   return (data || []).map(bill => ({
     ...bill,
-    items: deserializeBillItems(bill.items as any[] || [])
+    items: deserializeBillItems(bill.items as BillItemJson[])
   })) as Bill[];
 };
 
