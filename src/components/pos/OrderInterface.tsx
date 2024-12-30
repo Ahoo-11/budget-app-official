@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { BillActions } from "./BillActions";
 import { ProductGrid } from "./ProductGrid";
 import { useSession } from "@supabase/auth-helpers-react";
-import { Bill, BillItem } from "@/types/bill";
+import { Bill, BillItem, BillItemJson } from "@/types/bill";
 
 interface OrderInterfaceProps {
   sourceId: string;
@@ -154,6 +154,20 @@ export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
     }
   };
 
+  // Convert BillItem[] to BillItemJson[] for database storage
+  const serializeBillItems = (items: BillItem[]): BillItemJson[] => {
+    return items.map(item => ({
+      id: item.id,
+      name: item.name,
+      price: item.price,
+      quantity: item.quantity,
+      source_id: item.source_id,
+      category: item.category,
+      image_url: item.image_url,
+      description: item.description,
+    }));
+  };
+
   return (
     <div className="grid grid-cols-12 gap-4 h-full">
       <div className="col-span-7 flex flex-col h-full overflow-hidden">
@@ -203,7 +217,7 @@ export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
               const { error } = await supabase
                 .from('bills')
                 .update({
-                  items: selectedProducts,
+                  items: serializeBillItems(selectedProducts),
                   status: 'completed',
                 })
                 .eq('id', activeBillId);
