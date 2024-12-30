@@ -53,7 +53,15 @@ export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
         console.error('Error fetching bills:', error);
         throw error;
       }
-      return data as Bill[];
+
+      // Transform the data to ensure proper typing
+      return (data || []).map(bill => ({
+        ...bill,
+        items: (bill.items as any[] || []).map(item => ({
+          ...item,
+          quantity: item.quantity || 0
+        }))
+      })) as Bill[];
     }
   });
 
@@ -131,7 +139,11 @@ export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
       if (error) throw error;
 
       setActiveBillId(billId);
-      setSelectedProducts(data.items as BillItem[]);
+      // Transform the items to ensure proper typing
+      setSelectedProducts((data.items as any[] || []).map(item => ({
+        ...item,
+        quantity: item.quantity || 0
+      })));
     } catch (error) {
       console.error('Error switching bill:', error);
       toast({
