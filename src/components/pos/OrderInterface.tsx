@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Product } from "@/types/product";
 import { OrderCart } from "./OrderCart";
 import { ItemSearch } from "../expense/ItemSearch";
+import { CustomerSelector } from "./CustomerSelector";
 
 interface OrderInterfaceProps {
   sourceId: string;
@@ -11,6 +12,7 @@ interface OrderInterfaceProps {
 
 export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
   const [selectedProducts, setSelectedProducts] = useState<(Product & { quantity: number })[]>([]);
+  const [selectedCustomer, setSelectedCustomer] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { data: products = [], isLoading } = useQuery({
@@ -49,7 +51,7 @@ export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
     setIsSubmitting(true);
     try {
       // Implement checkout logic here
-      console.log('Processing checkout:', selectedProducts);
+      console.log('Processing checkout:', { selectedProducts, selectedCustomer });
     } catch (error) {
       console.error('Checkout error:', error);
     } finally {
@@ -61,6 +63,10 @@ export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
     <div className="grid grid-cols-12 gap-6">
       <div className="col-span-7">
         <div className="space-y-4">
+          <CustomerSelector
+            selectedCustomer={selectedCustomer}
+            setSelectedCustomer={setSelectedCustomer}
+          />
           <ItemSearch
             products={products}
             onSelect={handleProductSelect}
