@@ -1,15 +1,15 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Product } from "@/types/product";
 import { Bill, BillItem, BillItemJson } from "@/types/bill";
 import { OrderCart } from "./OrderCart";
-import { ItemSearch } from "../expense/ItemSearch";
-import { ProductGrid } from "./ProductGrid";
+import { OrderContent } from "./OrderContent";
 import { BillActions } from "./BillActions";
 import { OnHoldBills } from "./OnHoldBills";
 import { useToast } from "@/hooks/use-toast";
-import { deserializeBillItems } from "./BillManager";
+import { deserializeBillItems, serializeBillItems } from "./BillManager";
+import { useSession } from "@supabase/auth-helpers-react";
 
 interface OrderInterfaceProps {
   sourceId: string;
@@ -20,6 +20,8 @@ export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
   const [activeBillId, setActiveBillId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const session = useSession();
 
   const { data: products = [] } = useQuery({
     queryKey: ['products', sourceId],
@@ -72,18 +74,22 @@ export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
   };
 
   const handleNewBill = async () => {
+    if (!session?.user?.id) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to create a bill",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       setIsSubmitting(true);
-      const user = await supabase.auth.getUser();
-      if (!user.data.user) {
-        throw new Error("User not authenticated");
-      }
-
       const { data, error } = await supabase
         .from('bills')
         .insert({
           source_id: sourceId,
-          user_id: user.data.user.id,
+          user_id: session.user.id,
           status: 'active',
           items: [],
           subtotal: 0,
@@ -97,6 +103,8 @@ export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
       if (error) throw error;
       setActiveBillId(data.id);
       setSelectedProducts([]);
+      
+      queryClient.invalidateQueries({ queryKey: ['active-bills', sourceId] });
     } catch (error) {
       toast({
         title: "Error",
@@ -118,7 +126,6 @@ export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
 
       if (error) throw error;
       setActiveBillId(billId);
-      // Deserialize the bill items before setting them in state
       const billItems = deserializeBillItems(Array.isArray(data.items) ? data.items as BillItemJson[] : []);
       setSelectedProducts(billItems);
     } catch (error) {
@@ -127,6 +134,88 @@ export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
         description: "Failed to switch bill",
         variant: "destructive",
       });
+    }
+  };
+
+  const handleCheckout = async () => {
+    if (!activeBillId || selectedProducts.length === 0) {
+      toast({
+        title: "Error",
+        description: "No active bill or products selected",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+
+      // Calculate totals
+      const subtotal = selectedProducts.reduce((sum, item) => sum + item.price * item.quantity, 0);
+      const gstRate = 0.08; // 8% GST
+      const gstAmount = subtotal * gstRate;
+      const total = subtotal + gstAmount;
+
+      // Update bill status and totals
+      const { error: billError } = await supabase
+        .from('bills')
+        .update({
+          status: 'completed',
+          items: serializeBillItems(selectedProducts),
+          subtotal,
+          gst: gstAmount,
+          total,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', activeBillId);
+
+      if (billError) throw billError;
+
+      // Update product stock levels
+      for (const item of selectedProducts) {
+        const newStock = (item.current_stock || 0) - item.quantity;
+        const { error: stockError } = await supabase
+          .from('products')
+          .update({ current_stock: newStock })
+          .eq('id', item.id);
+
+        if (stockError) throw stockError;
+
+        // Create stock movement record
+        const { error: movementError } = await supabase
+          .from('stock_movements')
+          .insert({
+            product_id: item.id,
+            movement_type: 'sale',
+            quantity: -item.quantity, // Negative for sales
+            created_by: session?.user?.id,
+            notes: `Sale from bill ${activeBillId}`,
+          });
+
+        if (movementError) throw movementError;
+      }
+
+      // Reset the current bill
+      setActiveBillId(null);
+      setSelectedProducts([]);
+
+      // Refresh queries
+      queryClient.invalidateQueries({ queryKey: ['active-bills', sourceId] });
+      queryClient.invalidateQueries({ queryKey: ['products', sourceId] });
+
+      toast({
+        title: "Success",
+        description: "Bill completed successfully",
+      });
+    } catch (error) {
+      console.error('Checkout error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to complete checkout",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -149,14 +238,11 @@ export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
 
       <div className="grid grid-cols-12 gap-6">
         <div className="col-span-7">
-          <div className="space-y-4">
-            <ItemSearch
-              products={products}
-              onSelect={handleProductSelect}
-              sourceId={sourceId}
-            />
-            <ProductGrid products={products} onSelect={handleProductSelect} />
-          </div>
+          <OrderContent
+            products={products}
+            sourceId={sourceId}
+            onProductSelect={handleProductSelect}
+          />
         </div>
 
         <div className="col-span-5">
@@ -170,9 +256,7 @@ export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
             onRemove={(productId) => {
               setSelectedProducts(prev => prev.filter(p => p.id !== productId));
             }}
-            onCheckout={async () => {
-              // Implement checkout logic
-            }}
+            onCheckout={handleCheckout}
             isSubmitting={isSubmitting}
           />
         </div>
