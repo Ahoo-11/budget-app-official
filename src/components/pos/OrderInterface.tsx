@@ -8,7 +8,8 @@ import { useToast } from "@/hooks/use-toast";
 import { BillActions } from "./BillActions";
 import { ProductGrid } from "./ProductGrid";
 import { useSession } from "@supabase/auth-helpers-react";
-import { Bill, BillItem, BillItemJson } from "@/types/bill";
+import { BillItem } from "@/types/bill";
+import { fetchActiveBills, createNewBill, updateBillItems } from "./BillManager";
 
 interface OrderInterfaceProps {
   sourceId: string;
@@ -41,28 +42,7 @@ export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
 
   const { data: activeBills = [], refetch: refetchBills } = useQuery({
     queryKey: ['active-bills', sourceId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('bills')
-        .select('*')
-        .eq('source_id', sourceId)
-        .in('status', ['active', 'on-hold'])
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Error fetching bills:', error);
-        throw error;
-      }
-
-      // Transform the data to ensure proper typing
-      return (data || []).map(bill => ({
-        ...bill,
-        items: (bill.items as any[] || []).map(item => ({
-          ...item,
-          quantity: item.quantity || 0
-        }))
-      })) as Bill[];
-    }
+    queryFn: () => fetchActiveBills(sourceId)
   });
 
   const handleProductSelect = (product: Product) => {
@@ -91,23 +71,7 @@ export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
 
     try {
       setIsSubmitting(true);
-      const { data, error } = await supabase
-        .from('bills')
-        .insert({
-          source_id: sourceId,
-          user_id: session.user.id,
-          status: 'active',
-          items: [],
-          subtotal: 0,
-          total: 0,
-          gst: 0,
-          discount: 0,
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
+      const data = await createNewBill(sourceId, session.user.id);
       setActiveBillId(data.id);
       setSelectedProducts([]);
       await refetchBills();
@@ -139,8 +103,7 @@ export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
       if (error) throw error;
 
       setActiveBillId(billId);
-      // Transform the items to ensure proper typing
-      setSelectedProducts((data.items as any[] || []).map(item => ({
+      setSelectedProducts(data.items.map((item: any) => ({
         ...item,
         quantity: item.quantity || 0
       })));
@@ -152,20 +115,6 @@ export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
         description: "Please try again",
       });
     }
-  };
-
-  // Convert BillItem[] to BillItemJson[] for database storage
-  const serializeBillItems = (items: BillItem[]): BillItemJson[] => {
-    return items.map(item => ({
-      id: item.id,
-      name: item.name,
-      price: item.price,
-      quantity: item.quantity,
-      source_id: item.source_id,
-      category: item.category,
-      image_url: item.image_url,
-      description: item.description,
-    }));
   };
 
   return (
@@ -214,16 +163,7 @@ export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
 
             try {
               setIsSubmitting(true);
-              const { error } = await supabase
-                .from('bills')
-                .update({
-                  items: serializeBillItems(selectedProducts),
-                  status: 'completed',
-                })
-                .eq('id', activeBillId);
-
-              if (error) throw error;
-
+              await updateBillItems(activeBillId, selectedProducts);
               setSelectedProducts([]);
               setActiveBillId(null);
               await refetchBills();

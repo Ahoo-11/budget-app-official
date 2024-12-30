@@ -7,9 +7,9 @@ export interface BillItemJson {
   price: number;
   quantity: number;
   source_id: string;
-  category?: string;
-  image_url?: string;
-  description?: string;
+  category?: string | null;
+  image_url?: string | null;
+  description?: string | null;
 }
 
 // Type for working with bill items in the application
