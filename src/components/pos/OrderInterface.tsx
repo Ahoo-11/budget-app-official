@@ -3,13 +3,13 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Product } from "@/types/product";
 import { OrderCart } from "./OrderCart";
-import { ItemSearch } from "../expense/ItemSearch";
 import { useToast } from "@/hooks/use-toast";
 import { BillActions } from "./BillActions";
-import { ProductGrid } from "./ProductGrid";
 import { useSession } from "@supabase/auth-helpers-react";
-import { BillItem, BillItemJson } from "@/types/bill";
+import { BillItem } from "@/types/bill";
 import { fetchActiveBills, createNewBill, updateBillItems } from "./BillManager";
+import { OnHoldBills } from "./OnHoldBills";
+import { OrderContent } from "./OrderContent";
 
 interface OrderInterfaceProps {
   sourceId: string;
@@ -32,10 +32,7 @@ export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
         .gt('price', 0)
         .order('name');
       
-      if (error) {
-        console.error('Error fetching products:', error);
-        throw error;
-      }
+      if (error) throw error;
       return data as Product[];
     }
   });
@@ -71,6 +68,17 @@ export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
 
     try {
       setIsSubmitting(true);
+      
+      // If there's an active bill with items, put it on hold
+      if (activeBillId && selectedProducts.length > 0) {
+        const { error } = await supabase
+          .from('bills')
+          .update({ status: 'on-hold', items: selectedProducts })
+          .eq('id', activeBillId);
+        
+        if (error) throw error;
+      }
+
       const data = await createNewBill(sourceId, session.user.id);
       setActiveBillId(data.id);
       setSelectedProducts([]);
@@ -94,6 +102,16 @@ export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
 
   const handleSwitchBill = async (billId: string) => {
     try {
+      // Put current bill on hold if it has items
+      if (activeBillId && selectedProducts.length > 0) {
+        const { error } = await supabase
+          .from('bills')
+          .update({ status: 'on-hold', items: selectedProducts })
+          .eq('id', activeBillId);
+        
+        if (error) throw error;
+      }
+
       const { data, error } = await supabase
         .from('bills')
         .select('items')
@@ -103,8 +121,7 @@ export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
       if (error) throw error;
 
       setActiveBillId(billId);
-      const billItems = data.items as BillItemJson[];
-      setSelectedProducts(billItems.map(item => ({
+      setSelectedProducts(data.items.map((item: any) => ({
         ...item,
         quantity: item.quantity || 0,
         purchase_cost: null,
@@ -129,28 +146,29 @@ export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
 
   return (
     <div className="grid grid-cols-12 gap-4 h-full">
-      <div className="col-span-7 flex flex-col h-full overflow-hidden">
-        <div className="p-4 space-y-4">
-          <ItemSearch
-            products={products}
-            onSelect={handleProductSelect}
-            sourceId={sourceId}
+      <div className="col-span-7 flex flex-col h-full">
+        <div className="flex justify-between items-center">
+          <OnHoldBills
+            bills={activeBills}
+            onSwitchBill={handleSwitchBill}
+            activeBillId={activeBillId}
+          />
+          <BillActions
+            onNewBill={handleNewBill}
+            onSwitchBill={handleSwitchBill}
+            activeBills={activeBills}
+            activeBillId={activeBillId}
+            isSubmitting={isSubmitting}
           />
         </div>
-        <div className="flex-1 overflow-auto p-4">
-          <ProductGrid products={products} onSelect={handleProductSelect} />
-        </div>
+        <OrderContent
+          products={products}
+          sourceId={sourceId}
+          onProductSelect={handleProductSelect}
+        />
       </div>
 
       <div className="col-span-5 h-full">
-        <BillActions
-          onNewBill={handleNewBill}
-          onSwitchBill={handleSwitchBill}
-          activeBills={activeBills}
-          activeBillId={activeBillId}
-          isSubmitting={isSubmitting}
-        />
-
         <OrderCart
           items={selectedProducts}
           onUpdateQuantity={(productId, quantity) => {
