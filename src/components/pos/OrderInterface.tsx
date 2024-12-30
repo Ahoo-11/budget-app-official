@@ -22,7 +22,7 @@ export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
         .from('products')
         .select('*')
         .eq('source_id', sourceId)
-        .gt('price', 0) // Only get products with a price greater than 0
+        .gt('price', 0)
         .order('name');
       
       if (error) {
@@ -60,9 +60,9 @@ export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
   };
 
   return (
-    <div className="grid grid-cols-12 gap-6">
-      <div className="col-span-7">
-        <div className="space-y-4">
+    <div className="grid grid-cols-12 gap-4 h-full">
+      <div className="col-span-7 flex flex-col h-full overflow-hidden">
+        <div className="p-4 space-y-4">
           <CustomerSelector
             selectedCustomer={selectedCustomer}
             setSelectedCustomer={setSelectedCustomer}
@@ -72,6 +72,8 @@ export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
             onSelect={handleProductSelect}
             sourceId={sourceId}
           />
+        </div>
+        <div className="flex-1 overflow-auto p-4">
           <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-4">
             {products.map((product) => (
               <div
@@ -100,7 +102,7 @@ export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
         </div>
       </div>
 
-      <div className="col-span-5">
+      <div className="col-span-5 h-full">
         <OrderCart
           items={selectedProducts}
           onUpdateQuantity={(productId, quantity) => {
