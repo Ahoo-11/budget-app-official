@@ -1,14 +1,13 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Product } from "@/types/product";
-import { Bill, BillItem, BillItemJson } from "@/types/bill";
 import { OrderCart } from "./OrderCart";
 import { OrderContent } from "./OrderContent";
 import { BillActions } from "./BillActions";
 import { OnHoldBills } from "./OnHoldBills";
+import { useCheckoutManager } from "./checkout/CheckoutManager";
 import { useToast } from "@/hooks/use-toast";
-import { deserializeBillItems, serializeBillItems } from "./BillManager";
 import { useSession } from "@supabase/auth-helpers-react";
 
 interface OrderInterfaceProps {
@@ -16,12 +15,12 @@ interface OrderInterfaceProps {
 }
 
 export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
-  const [selectedProducts, setSelectedProducts] = useState<BillItem[]>([]);
+  const [selectedProducts, setSelectedProducts] = useState<(Product & { quantity: number })[]>([]);
   const [activeBillId, setActiveBillId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
-  const queryClient = useQueryClient();
   const session = useSession();
+  const { handleCheckout } = useCheckoutManager();
 
   const { data: products = [] } = useQuery({
     queryKey: ['products', sourceId],
@@ -37,24 +36,6 @@ export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
     }
   });
 
-  const { data: activeBills = [] } = useQuery({
-    queryKey: ['active-bills', sourceId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('bills')
-        .select('*')
-        .eq('source_id', sourceId)
-        .in('status', ['active', 'on-hold'])
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      return (data || []).map(bill => ({
-        ...bill,
-        items: Array.isArray(bill.items) ? bill.items : []
-      })) as Bill[];
-    }
-  });
-
   const handleProductSelect = (product: Product) => {
     setSelectedProducts(prev => {
       const existing = prev.find(p => p.id === product.id);
@@ -65,11 +46,7 @@ export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
             : p
         );
       }
-      return [...prev, { 
-        ...product, 
-        quantity: 1,
-        purchase_price: product.purchase_cost || 0
-      }];
+      return [...prev, { ...product, quantity: 1 }];
     });
   };
 
@@ -103,8 +80,6 @@ export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
       if (error) throw error;
       setActiveBillId(data.id);
       setSelectedProducts([]);
-      
-      queryClient.invalidateQueries({ queryKey: ['active-bills', sourceId] });
     } catch (error) {
       toast({
         title: "Error",
@@ -126,7 +101,7 @@ export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
 
       if (error) throw error;
       setActiveBillId(billId);
-      const billItems = deserializeBillItems(Array.isArray(data.items) ? data.items as BillItemJson[] : []);
+      const billItems = data.items || [];
       setSelectedProducts(billItems);
     } catch (error) {
       toast({
@@ -137,100 +112,18 @@ export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
     }
   };
 
-  const handleCheckout = async () => {
-    if (!activeBillId || selectedProducts.length === 0) {
-      toast({
-        title: "Error",
-        description: "No active bill or products selected",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      setIsSubmitting(true);
-
-      // Calculate totals
-      const subtotal = selectedProducts.reduce((sum, item) => sum + item.price * item.quantity, 0);
-      const gstRate = 0.08; // 8% GST
-      const gstAmount = subtotal * gstRate;
-      const total = subtotal + gstAmount;
-
-      // Update bill status and totals
-      const { error: billError } = await supabase
-        .from('bills')
-        .update({
-          status: 'completed',
-          items: serializeBillItems(selectedProducts),
-          subtotal,
-          gst: gstAmount,
-          total,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', activeBillId);
-
-      if (billError) throw billError;
-
-      // Update product stock levels
-      for (const item of selectedProducts) {
-        const newStock = (item.current_stock || 0) - item.quantity;
-        const { error: stockError } = await supabase
-          .from('products')
-          .update({ current_stock: newStock })
-          .eq('id', item.id);
-
-        if (stockError) throw stockError;
-
-        // Create stock movement record
-        const { error: movementError } = await supabase
-          .from('stock_movements')
-          .insert({
-            product_id: item.id,
-            movement_type: 'sale',
-            quantity: -item.quantity, // Negative for sales
-            created_by: session?.user?.id,
-            notes: `Sale from bill ${activeBillId}`,
-          });
-
-        if (movementError) throw movementError;
-      }
-
-      // Reset the current bill
-      setActiveBillId(null);
-      setSelectedProducts([]);
-
-      // Refresh queries
-      queryClient.invalidateQueries({ queryKey: ['active-bills', sourceId] });
-      queryClient.invalidateQueries({ queryKey: ['products', sourceId] });
-
-      toast({
-        title: "Success",
-        description: "Bill completed successfully",
-      });
-    } catch (error) {
-      console.error('Checkout error:', error);
-      toast({
-        title: "Error",
-        description: "Failed to complete checkout",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <OnHoldBills
-          bills={activeBills}
+          bills={[]} // Pass the actual bills data here
           onSwitchBill={handleSwitchBill}
           activeBillId={activeBillId}
         />
         <BillActions
           onNewBill={handleNewBill}
           onSwitchBill={handleSwitchBill}
-          activeBills={activeBills}
+          activeBills={[]} // Pass the actual bills data here
           activeBillId={activeBillId}
           isSubmitting={isSubmitting}
         />
@@ -256,7 +149,24 @@ export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
             onRemove={(productId) => {
               setSelectedProducts(prev => prev.filter(p => p.id !== productId));
             }}
-            onCheckout={handleCheckout}
+            onCheckout={async (customerId?: string) => {
+              if (!activeBillId) {
+                toast({
+                  title: "Error",
+                  description: "No active bill",
+                  variant: "destructive",
+                });
+                return;
+              }
+
+              setIsSubmitting(true);
+              const success = await handleCheckout(activeBillId, selectedProducts, customerId || null);
+              if (success) {
+                setSelectedProducts([]);
+                setActiveBillId(null);
+              }
+              setIsSubmitting(false);
+            }}
             isSubmitting={isSubmitting}
           />
         </div>

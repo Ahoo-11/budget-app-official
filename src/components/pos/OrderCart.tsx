@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, Calendar } from "lucide-react";
 import { Product } from "@/types/product";
-import { CustomerSelector } from "./CustomerSelector";
+import { CustomerSelector } from "./customer/CustomerSelector";
 import { format } from "date-fns";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
@@ -13,7 +13,7 @@ interface OrderCartProps {
   items: (Product & { quantity: number })[];
   onUpdateQuantity: (productId: string, quantity: number) => void;
   onRemove: (productId: string) => void;
-  onCheckout: () => void;
+  onCheckout: (customerId?: string) => void;
   isSubmitting?: boolean;
 }
 
@@ -26,18 +26,26 @@ export const OrderCart = ({
 }: OrderCartProps) => {
   const [discount, setDiscount] = useState<number>(0);
   const [date, setDate] = useState<Date>(new Date());
+  const [selectedCustomer, setSelectedCustomer] = useState<string>("");
 
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const gstRate = 0.08; // 8% GST
   const gstAmount = subtotal * gstRate;
   const finalTotal = subtotal + gstAmount - discount;
 
+  const handleCheckout = () => {
+    onCheckout(selectedCustomer);
+  };
+
   return (
     <div className="bg-white h-full flex flex-col border rounded-lg">
       <div className="p-4 space-y-4">
         <div className="flex gap-2">
           <div className="flex-1">
-            <CustomerSelector />
+            <CustomerSelector
+              selectedCustomer={selectedCustomer}
+              setSelectedCustomer={setSelectedCustomer}
+            />
           </div>
           <Popover>
             <PopoverTrigger asChild>
@@ -138,7 +146,7 @@ export const OrderCart = ({
 
             <Button
               className="w-full mt-4 bg-black text-white hover:bg-black/90"
-              onClick={onCheckout}
+              onClick={handleCheckout}
               disabled={isSubmitting}
             >
               {isSubmitting ? (
