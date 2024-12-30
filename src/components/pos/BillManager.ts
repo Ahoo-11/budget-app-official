@@ -15,7 +15,7 @@ export const serializeBillItems = (items: BillItem[]): BillItemJson[] => {
 };
 
 export const deserializeBillItems = (items: BillItemJson[]): BillItem[] => {
-  return items.map(item => ({
+  return items.map((item: BillItemJson) => ({
     ...item,
     quantity: item.quantity || 0,
     purchase_cost: null,
@@ -42,7 +42,7 @@ export const fetchActiveBills = async (sourceId: string): Promise<Bill[]> => {
 
   return (data || []).map(bill => ({
     ...bill,
-    items: bill.items as BillItemJson[],
+    items: Array.isArray(bill.items) ? bill.items as BillItemJson[] : [],
   }));
 };
 

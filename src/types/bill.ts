@@ -16,14 +16,15 @@ export interface BillItemJson {
 // Type for working with bill items in the application
 export interface BillItem extends Omit<Product, 'quantity'> {
   quantity: number;
+  [key: string]: any; // Add index signature to make it compatible with Json type
 }
 
 export interface Bill {
   id: string;
   source_id: string;
   user_id: string;
-  status: 'active' | 'on-hold' | 'completed';
-  customer_id?: string;
+  status: 'active' | 'on-hold' | 'completed' | string; // Allow string to handle unknown statuses
+  customer_id?: string | null;
   items: BillItemJson[];
   subtotal: number;
   discount: number;
