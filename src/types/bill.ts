@@ -14,7 +14,7 @@ export interface BillItemJson {
 }
 
 // Type for working with bill items in the application
-export interface BillItem extends Product {
+export interface BillItem extends Omit<Product, 'quantity'> {
   quantity: number;
 }
 

@@ -30,7 +30,7 @@ export const deserializeBillItems = (items: BillItemJson[]): BillItem[] => {
   }));
 };
 
-export const fetchActiveBills = async (sourceId: string) => {
+export const fetchActiveBills = async (sourceId: string): Promise<Bill[]> => {
   const { data, error } = await supabase
     .from('bills')
     .select('*')
@@ -42,8 +42,8 @@ export const fetchActiveBills = async (sourceId: string) => {
 
   return (data || []).map(bill => ({
     ...bill,
-    items: deserializeBillItems(bill.items as BillItemJson[])
-  })) as Bill[];
+    items: bill.items as BillItemJson[],
+  }));
 };
 
 export const createNewBill = async (sourceId: string, userId: string) => {
