@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Bill } from "@/types/bill";
+import { Bill, BillItemJson } from "@/types/bill";
 import { Product } from "@/types/product";
 import { useSession } from "@supabase/auth-helpers-react";
 
@@ -81,11 +81,13 @@ export const useBillManagement = (sourceId: string) => {
 
       if (error) throw error;
       
-      const billItems = (data.items || []).map((item: any) => ({
-        ...item,
-        quantity: Number(item.quantity) || 0,
-        price: Number(item.price) || 0,
-      })) as (Product & { quantity: number })[];
+      const billItems = Array.isArray(data.items) 
+        ? (data.items as BillItemJson[]).map(item => ({
+            ...item,
+            quantity: Number(item.quantity) || 0,
+            price: Number(item.price) || 0,
+          }))
+        : [];
 
       setActiveBillId(billId);
       setSelectedProducts(billItems);
