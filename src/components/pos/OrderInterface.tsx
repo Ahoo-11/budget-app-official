@@ -4,21 +4,22 @@ import { supabase } from "@/integrations/supabase/client";
 import { Product } from "@/types/product";
 import { OrderCart } from "./OrderCart";
 import { ItemSearch } from "../expense/ItemSearch";
-import { FilePlus, History } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useToast } from "@/hooks/use-toast";
+import { BillActions } from "./BillActions";
+import { ProductGrid } from "./ProductGrid";
+import { useSession } from "@supabase/auth-helpers-react";
+import { Bill, BillItem } from "@/types/bill";
 
 interface OrderInterfaceProps {
   sourceId: string;
 }
 
 export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
-  const [selectedProducts, setSelectedProducts] = useState<(Product & { quantity: number })[]>([]);
+  const [selectedProducts, setSelectedProducts] = useState<BillItem[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeBillId, setActiveBillId] = useState<string | null>(null);
   const { toast } = useToast();
+  const session = useSession();
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ['sale-products', sourceId],
@@ -52,7 +53,7 @@ export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
         console.error('Error fetching bills:', error);
         throw error;
       }
-      return data;
+      return data as Bill[];
     }
   });
 
@@ -71,14 +72,28 @@ export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
   };
 
   const handleNewBill = async () => {
+    if (!session?.user?.id) {
+      toast({
+        variant: "destructive",
+        title: "Authentication Error",
+        description: "Please log in to create a bill",
+      });
+      return;
+    }
+
     try {
       setIsSubmitting(true);
       const { data, error } = await supabase
         .from('bills')
         .insert({
           source_id: sourceId,
+          user_id: session.user.id,
           status: 'active',
           items: [],
+          subtotal: 0,
+          total: 0,
+          gst: 0,
+          discount: 0,
         })
         .select()
         .single();
@@ -115,14 +130,8 @@ export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
 
       if (error) throw error;
 
-      // Convert stored items back to product format with quantities
-      const storedProducts = data.items.map((item: any) => ({
-        ...item,
-        quantity: item.quantity || 1,
-      }));
-
       setActiveBillId(billId);
-      setSelectedProducts(storedProducts);
+      setSelectedProducts(data.items as BillItem[]);
     } catch (error) {
       console.error('Error switching bill:', error);
       toast({
@@ -144,108 +153,18 @@ export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
           />
         </div>
         <div className="flex-1 overflow-auto p-4">
-          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            {products.map((product) => (
-              <div
-                key={product.id}
-                className="cursor-pointer p-4 border rounded-lg hover:bg-gray-50"
-                onClick={() => handleProductSelect(product)}
-              >
-                <div className="aspect-square relative mb-2">
-                  {product.image_url ? (
-                    <img
-                      src={product.image_url}
-                      alt={product.name}
-                      className="object-cover w-full h-full rounded-md"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gray-100 rounded-md flex items-center justify-center">
-                      No image
-                    </div>
-                  )}
-                </div>
-                <h3 className="font-medium text-sm">{product.name}</h3>
-                <p className="text-sm text-muted-foreground">MVR {product.price.toFixed(2)}</p>
-              </div>
-            ))}
-          </div>
+          <ProductGrid products={products} onSelect={handleProductSelect} />
         </div>
       </div>
 
       <div className="col-span-5 h-full">
-        <div className="flex justify-end gap-2 mb-4">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={handleNewBill}
-                  className="h-9 w-9"
-                  disabled={isSubmitting}
-                >
-                  <FilePlus className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>New Bill</p>
-              </TooltipContent>
-            </Tooltip>
-
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Sheet>
-                  <SheetTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="h-9 w-9"
-                    >
-                      <History className="h-4 w-4" />
-                    </Button>
-                  </SheetTrigger>
-                  <SheetContent>
-                    <SheetHeader>
-                      <SheetTitle>Recent Bills</SheetTitle>
-                    </SheetHeader>
-                    <div className="mt-4 space-y-4">
-                      {activeBills.map((bill) => (
-                        <div
-                          key={bill.id}
-                          className={`p-4 border rounded-lg cursor-pointer hover:bg-gray-50 ${
-                            bill.id === activeBillId ? 'border-primary' : ''
-                          }`}
-                          onClick={() => handleSwitchBill(bill.id)}
-                        >
-                          <div className="flex justify-between items-center">
-                            <div>
-                              <p className="font-medium">Bill #{bill.id.slice(0, 8)}</p>
-                              <p className="text-sm text-muted-foreground">
-                                {new Date(bill.created_at).toLocaleString()}
-                              </p>
-                            </div>
-                            <div className="text-sm">
-                              <span className={`px-2 py-1 rounded-full ${
-                                bill.status === 'active' 
-                                  ? 'bg-green-100 text-green-800'
-                                  : 'bg-yellow-100 text-yellow-800'
-                              }`}>
-                                {bill.status}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </SheetContent>
-                </Sheet>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Recent Bills</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
+        <BillActions
+          onNewBill={handleNewBill}
+          onSwitchBill={handleSwitchBill}
+          activeBills={activeBills}
+          activeBillId={activeBillId}
+          isSubmitting={isSubmitting}
+        />
 
         <OrderCart
           items={selectedProducts}
