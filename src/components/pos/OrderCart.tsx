@@ -2,8 +2,12 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2 } from "lucide-react";
+import { Loader2, Calendar } from "lucide-react";
 import { Product } from "@/types/product";
+import { CustomerSelector } from "./CustomerSelector";
+import { format } from "date-fns";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 
 interface OrderCartProps {
   items: (Product & { quantity: number })[];
@@ -21,6 +25,7 @@ export const OrderCart = ({
   isSubmitting = false,
 }: OrderCartProps) => {
   const [discount, setDiscount] = useState<number>(0);
+  const [date, setDate] = useState<Date>(new Date());
 
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const gstRate = 0.08; // 8% GST
@@ -28,8 +33,32 @@ export const OrderCart = ({
   const finalTotal = subtotal + gstAmount - discount;
 
   return (
-    <div className="bg-white h-full flex flex-col">
-      <div className="border-b p-4">
+    <div className="bg-white h-full flex flex-col border rounded-lg">
+      <div className="p-4 space-y-4">
+        <div className="flex gap-2">
+          <div className="flex-1">
+            <CustomerSelector />
+          </div>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className="w-[180px] pl-3 text-left font-normal">
+                <Calendar className="mr-2 h-4 w-4" />
+                {format(date, "PPP")}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="end">
+              <CalendarComponent
+                mode="single"
+                selected={date}
+                onSelect={(date) => date && setDate(date)}
+                initialFocus
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
+      </div>
+
+      <div className="border-t p-4">
         <h3 className="font-medium text-lg">Order Summary</h3>
       </div>
 

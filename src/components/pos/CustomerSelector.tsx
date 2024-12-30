@@ -13,11 +13,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
 
 interface CustomerSelectorProps {
-  selectedCustomer: string;
-  setSelectedCustomer: (customer: string) => void;
+  selectedCustomer?: string;
+  setSelectedCustomer?: (customer: string) => void;
 }
 
 export const CustomerSelector = ({ selectedCustomer, setSelectedCustomer }: CustomerSelectorProps) => {
@@ -59,7 +58,7 @@ export const CustomerSelector = ({ selectedCustomer, setSelectedCustomer }: Cust
       queryClient.invalidateQueries({ queryKey: ['customers'] });
       setNewCustomerName("");
       setIsDialogOpen(false);
-      setSelectedCustomer(data.id);
+      setSelectedCustomer?.(data.id);
       setSearchQuery(data.name);
       toast({
         title: "Success",
@@ -89,50 +88,47 @@ export const CustomerSelector = ({ selectedCustomer, setSelectedCustomer }: Cust
   };
 
   return (
-    <div className="space-y-4">
-      <Label>Customer</Label>
-      <div className="flex gap-2">
-        <Input
-          type="text"
-          placeholder="Search customers..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="flex-1"
-        />
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button
-              type="button"
-              variant="outline"
-            >
-              <Plus className="h-4 w-4" />
+    <div className="flex gap-2">
+      <Input
+        type="text"
+        placeholder="Search customers..."
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        className="flex-1"
+      />
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogTrigger asChild>
+          <Button
+            type="button"
+            variant="outline"
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
+        </DialogTrigger>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add New Customer</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleAddCustomer} className="space-y-4">
+            <Input
+              placeholder="Customer name"
+              value={newCustomerName}
+              onChange={(e) => setNewCustomerName(e.target.value)}
+            />
+            <Button type="submit" className="w-full">
+              Add Customer
             </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add New Customer</DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleAddCustomer} className="space-y-4">
-              <Input
-                placeholder="Customer name"
-                value={newCustomerName}
-                onChange={(e) => setNewCustomerName(e.target.value)}
-              />
-              <Button type="submit" className="w-full">
-                Add Customer
-              </Button>
-            </form>
-          </DialogContent>
-        </Dialog>
-      </div>
+          </form>
+        </DialogContent>
+      </Dialog>
 
-      {searchQuery && filteredCustomers.length > 0 ? (
-        <div className="border rounded-md divide-y">
+      {searchQuery && filteredCustomers.length > 0 && (
+        <div className="absolute mt-10 w-[calc(100%-220px)] border rounded-md divide-y bg-white shadow-lg z-10">
           {filteredCustomers.map((customer) => (
             <button
               key={customer.id}
               onClick={() => {
-                setSelectedCustomer(customer.id);
+                setSelectedCustomer?.(customer.id);
                 setSearchQuery(customer.name);
               }}
               className={`w-full px-4 py-2 text-left hover:bg-accent ${
@@ -142,16 +138,6 @@ export const CustomerSelector = ({ selectedCustomer, setSelectedCustomer }: Cust
               {customer.name}
             </button>
           ))}
-        </div>
-      ) : searchQuery ? (
-        <div className="text-sm text-muted-foreground">
-          No customers found. Click the + button to add a new customer.
-        </div>
-      ) : null}
-
-      {selectedCustomer && !searchQuery && (
-        <div className="text-sm">
-          Selected: {selectedCustomerName}
         </div>
       )}
     </div>
