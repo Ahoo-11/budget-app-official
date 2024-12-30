@@ -22,6 +22,8 @@ export const useCheckoutManager = () => {
     }
 
     try {
+      console.log('Starting checkout:', { billId, items, customerId });
+      
       // Get current user
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("User not authenticated");
