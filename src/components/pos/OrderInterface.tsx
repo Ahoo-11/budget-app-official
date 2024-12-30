@@ -117,8 +117,16 @@ export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
         .single();
 
       if (error) throw error;
+      
+      // Safely convert the items array to our expected type
+      const billItems = (data.items || []).map((item: any) => ({
+        ...item,
+        quantity: Number(item.quantity) || 0,
+        price: Number(item.price) || 0,
+      })) as (Product & { quantity: number })[];
+
       setActiveBillId(billId);
-      setSelectedProducts(data.items as (Product & { quantity: number })[]);
+      setSelectedProducts(billItems);
     } catch (error) {
       console.error('Error switching bill:', error);
       toast({

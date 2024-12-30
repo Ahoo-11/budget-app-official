@@ -12,11 +12,11 @@ interface Customer {
 }
 
 interface CustomerSelectorProps {
-  onSelect: (customerId: string) => void;
   selectedCustomerId?: string;
+  onSelect: (customerId: string) => void;
 }
 
-export const CustomerSelector = ({ onSelect, selectedCustomerId }: CustomerSelectorProps) => {
+export const CustomerSelector = ({ selectedCustomerId, onSelect }: CustomerSelectorProps) => {
   const [search, setSearch] = useState("");
   const [showResults, setShowResults] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);

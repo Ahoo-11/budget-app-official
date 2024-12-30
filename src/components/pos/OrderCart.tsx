@@ -26,7 +26,7 @@ export const OrderCart = ({
 }: OrderCartProps) => {
   const [discount, setDiscount] = useState<number>(0);
   const [date, setDate] = useState<Date>(new Date());
-  const [selectedCustomer, setSelectedCustomer] = useState<string>("");
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
 
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const gstRate = 0.08; // 8% GST
@@ -34,7 +34,7 @@ export const OrderCart = ({
   const finalTotal = subtotal + gstAmount - discount;
 
   const handleCheckout = () => {
-    onCheckout(selectedCustomer);
+    onCheckout(selectedCustomerId || undefined);
   };
 
   return (
@@ -43,8 +43,8 @@ export const OrderCart = ({
         <div className="flex gap-2">
           <div className="flex-1">
             <CustomerSelector
-              selectedCustomer={selectedCustomer}
-              setSelectedCustomer={setSelectedCustomer}
+              selectedCustomerId={selectedCustomerId}
+              onSelect={setSelectedCustomerId}
             />
           </div>
           <Popover>
