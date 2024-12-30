@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Product } from "@/types/product";
 import { OrderCart } from "./OrderCart";
 import { ItemSearch } from "../expense/ItemSearch";
-import { ProductGrid } from "../products/ProductGrid";
 
 interface OrderInterfaceProps {
   sourceId: string;
@@ -15,12 +14,13 @@ export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { data: products = [], isLoading } = useQuery({
-    queryKey: ['products', sourceId],
+    queryKey: ['sale-products', sourceId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('products')
         .select('*')
         .eq('source_id', sourceId)
+        .gt('price', 0) // Only get products with a price greater than 0
         .order('name');
       
       if (error) {
