@@ -3,14 +3,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, Calendar } from "lucide-react";
-import { Product } from "@/types/product";
+import { BillProduct } from "@/types/bill";
 import { CustomerSelector } from "./customer/CustomerSelector";
 import { format } from "date-fns";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 
 interface OrderCartProps {
-  items: (Product & { quantity: number })[];
+  items: BillProduct[];
   onUpdateQuantity: (productId: string, quantity: number) => void;
   onRemove: (productId: string) => void;
   onCheckout: (customerId?: string) => void;
