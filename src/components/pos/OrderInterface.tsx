@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Product } from "@/types/product";
-import { BillItem } from "@/types/bill";
+import { Bill, BillItem } from "@/types/bill";
 import { OrderCart } from "./OrderCart";
 import { ItemSearch } from "../expense/ItemSearch";
 import { ProductGrid } from "./ProductGrid";
@@ -45,7 +45,10 @@ export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data;
+      return (data || []).map(bill => ({
+        ...bill,
+        items: Array.isArray(bill.items) ? bill.items : []
+      })) as Bill[];
     }
   });
 
@@ -70,10 +73,16 @@ export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
   const handleNewBill = async () => {
     try {
       setIsSubmitting(true);
+      const user = await supabase.auth.getUser();
+      if (!user.data.user) {
+        throw new Error("User not authenticated");
+      }
+
       const { data, error } = await supabase
         .from('bills')
         .insert({
           source_id: sourceId,
+          user_id: user.data.user.id,
           status: 'active',
           items: [],
           subtotal: 0,
@@ -108,7 +117,7 @@ export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
 
       if (error) throw error;
       setActiveBillId(billId);
-      setSelectedProducts(data.items || []);
+      setSelectedProducts(Array.isArray(data.items) ? data.items : []);
     } catch (error) {
       toast({
         title: "Error",
