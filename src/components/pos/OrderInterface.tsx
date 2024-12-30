@@ -9,6 +9,7 @@ import { OnHoldBills } from "./OnHoldBills";
 import { useCheckoutManager } from "./checkout/CheckoutManager";
 import { useToast } from "@/hooks/use-toast";
 import { useSession } from "@supabase/auth-helpers-react";
+import { Bill } from "@/types/bill";
 
 interface OrderInterfaceProps {
   sourceId: string;
@@ -21,6 +22,20 @@ export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
   const { toast } = useToast();
   const session = useSession();
   const { handleCheckout } = useCheckoutManager();
+
+  const { data: bills = [], refetch: refetchBills } = useQuery({
+    queryKey: ['bills', sourceId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('bills')
+        .select('*')
+        .eq('source_id', sourceId)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data as Bill[];
+    }
+  });
 
   const { data: products = [] } = useQuery({
     queryKey: ['products', sourceId],
@@ -80,7 +95,9 @@ export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
       if (error) throw error;
       setActiveBillId(data.id);
       setSelectedProducts([]);
+      await refetchBills();
     } catch (error) {
+      console.error('Error creating bill:', error);
       toast({
         title: "Error",
         description: "Failed to create new bill",
@@ -101,11 +118,9 @@ export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
 
       if (error) throw error;
       setActiveBillId(billId);
-      
-      // Ensure we properly type the items from the bill
-      const billItems = (data.items || []) as (Product & { quantity: number })[];
-      setSelectedProducts(billItems);
+      setSelectedProducts(data.items as (Product & { quantity: number })[]);
     } catch (error) {
+      console.error('Error switching bill:', error);
       toast({
         title: "Error",
         description: "Failed to switch bill",
@@ -118,10 +133,12 @@ export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <OnHoldBills
+          bills={bills}
           onSwitchBill={handleSwitchBill}
           activeBillId={activeBillId}
         />
         <BillActions
+          activeBills={bills}
           onNewBill={handleNewBill}
           onSwitchBill={handleSwitchBill}
           activeBillId={activeBillId}
@@ -164,6 +181,7 @@ export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
               if (success) {
                 setSelectedProducts([]);
                 setActiveBillId(null);
+                await refetchBills();
               }
               setIsSubmitting(false);
             }}
