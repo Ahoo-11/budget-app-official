@@ -2,13 +2,14 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Product } from "@/types/product";
-import { Bill, BillItem } from "@/types/bill";
+import { Bill, BillItem, BillItemJson } from "@/types/bill";
 import { OrderCart } from "./OrderCart";
 import { ItemSearch } from "../expense/ItemSearch";
 import { ProductGrid } from "./ProductGrid";
 import { BillActions } from "./BillActions";
 import { OnHoldBills } from "./OnHoldBills";
 import { useToast } from "@/hooks/use-toast";
+import { deserializeBillItems } from "./BillManager";
 
 interface OrderInterfaceProps {
   sourceId: string;
@@ -117,7 +118,9 @@ export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
 
       if (error) throw error;
       setActiveBillId(billId);
-      setSelectedProducts(Array.isArray(data.items) ? data.items : []);
+      // Deserialize the bill items before setting them in state
+      const billItems = deserializeBillItems(Array.isArray(data.items) ? data.items as BillItemJson[] : []);
+      setSelectedProducts(billItems);
     } catch (error) {
       toast({
         title: "Error",
