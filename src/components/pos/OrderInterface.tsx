@@ -101,7 +101,9 @@ export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
 
       if (error) throw error;
       setActiveBillId(billId);
-      const billItems = data.items || [];
+      
+      // Ensure we properly type the items from the bill
+      const billItems = (data.items || []) as (Product & { quantity: number })[];
       setSelectedProducts(billItems);
     } catch (error) {
       toast({
@@ -116,14 +118,12 @@ export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <OnHoldBills
-          bills={[]} // Pass the actual bills data here
           onSwitchBill={handleSwitchBill}
           activeBillId={activeBillId}
         />
         <BillActions
           onNewBill={handleNewBill}
           onSwitchBill={handleSwitchBill}
-          activeBills={[]} // Pass the actual bills data here
           activeBillId={activeBillId}
           isSubmitting={isSubmitting}
         />

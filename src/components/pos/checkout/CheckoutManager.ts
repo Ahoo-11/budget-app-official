@@ -22,6 +22,10 @@ export const useCheckoutManager = () => {
     }
 
     try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("User not authenticated");
+
       // Calculate totals
       const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
       const gstRate = 0.08; // 8% GST
@@ -63,6 +67,7 @@ export const useCheckoutManager = () => {
             quantity: -item.quantity,
             unit_cost: item.price,
             notes: `Sale from bill ${billId}`,
+            created_by: user.id
           });
 
         if (movementError) throw movementError;
