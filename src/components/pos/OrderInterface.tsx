@@ -5,12 +5,10 @@ import { Product } from "@/types/product";
 import { BillItem } from "@/types/bill";
 import { OrderCart } from "./OrderCart";
 import { ItemSearch } from "../expense/ItemSearch";
-import { HotTable } from "@handsontable/react";
-import { registerAllModules } from 'handsontable/registry';
-import "handsontable/dist/handsontable.full.min.css";
-
-// Register all Handsontable modules
-registerAllModules();
+import { ProductGrid } from "./ProductGrid";
+import { BillActions } from "./BillActions";
+import { OnHoldBills } from "./OnHoldBills";
+import { useToast } from "@/hooks/use-toast";
 
 interface OrderInterfaceProps {
   sourceId: string;
@@ -18,6 +16,9 @@ interface OrderInterfaceProps {
 
 export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
   const [selectedProducts, setSelectedProducts] = useState<BillItem[]>([]);
+  const [activeBillId, setActiveBillId] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
 
   const { data: products = [] } = useQuery({
     queryKey: ['products', sourceId],
@@ -30,6 +31,21 @@ export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
       
       if (error) throw error;
       return data as Product[];
+    }
+  });
+
+  const { data: activeBills = [] } = useQuery({
+    queryKey: ['active-bills', sourceId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('bills')
+        .select('*')
+        .eq('source_id', sourceId)
+        .in('status', ['active', 'on-hold'])
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data;
     }
   });
 
@@ -51,69 +67,87 @@ export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
     });
   };
 
-  const spreadsheetData = selectedProducts.map(product => [
-    product.name,
-    product.purchase_price,
-    product.quantity,
-    (product.purchase_price * product.quantity).toFixed(2)
-  ]);
+  const handleNewBill = async () => {
+    try {
+      setIsSubmitting(true);
+      const { data, error } = await supabase
+        .from('bills')
+        .insert({
+          source_id: sourceId,
+          status: 'active',
+          items: [],
+          subtotal: 0,
+          total: 0,
+          gst: 0,
+          discount: 0,
+        })
+        .select()
+        .single();
 
-  const handleSpreadsheetChange = (changes: any[]) => {
-    if (!changes) return;
+      if (error) throw error;
+      setActiveBillId(data.id);
+      setSelectedProducts([]);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to create new bill",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
-    changes.forEach(([row, prop, , newValue]) => {
-      const product = selectedProducts[row];
-      if (!product) return;
+  const handleSwitchBill = async (billId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('bills')
+        .select('*')
+        .eq('id', billId)
+        .single();
 
-      setSelectedProducts(prev => prev.map((p, index) => {
-        if (index !== row) return p;
-
-        switch(prop) {
-          case 1: // Price column
-            return { ...p, purchase_price: parseFloat(newValue) || 0 };
-          case 2: // Quantity column
-            return { ...p, quantity: parseFloat(newValue) || 0 };
-          default:
-            return p;
-        }
-      }));
-    });
+      if (error) throw error;
+      setActiveBillId(billId);
+      setSelectedProducts(data.items || []);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to switch bill",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
-    <div className="grid grid-cols-12 gap-6">
-      <div className="col-span-7">
-        <ItemSearch
-          products={products}
-          onSelect={handleProductSelect}
-          sourceId={sourceId}
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <OnHoldBills
+          bills={activeBills}
+          onSwitchBill={handleSwitchBill}
+          activeBillId={activeBillId}
         />
-
-        {selectedProducts.length > 0 && (
-          <div className="mt-6">
-            <div className="bg-accent/50 p-4 rounded-lg mb-4">
-              <HotTable
-                data={spreadsheetData}
-                colHeaders={['Item', 'Price', 'Quantity', 'Total']}
-                columns={[
-                  { data: 0, type: 'text', readOnly: true },
-                  { data: 1, type: 'numeric', numericFormat: { pattern: '0.00' } },
-                  { data: 2, type: 'numeric', numericFormat: { pattern: '0' } },
-                  { data: 3, type: 'numeric', readOnly: true, numericFormat: { pattern: '0.00' } },
-                ]}
-                stretchH="all"
-                height={Math.min(400, 100 + selectedProducts.length * 30)}
-                licenseKey="non-commercial-and-evaluation"
-                afterChange={handleSpreadsheetChange}
-                className="font-sans"
-              />
-            </div>
-          </div>
-        )}
+        <BillActions
+          onNewBill={handleNewBill}
+          onSwitchBill={handleSwitchBill}
+          activeBills={activeBills}
+          activeBillId={activeBillId}
+          isSubmitting={isSubmitting}
+        />
       </div>
 
-      <div className="col-span-5">
-        <div className="bg-white rounded-lg shadow-lg p-6 border">
+      <div className="grid grid-cols-12 gap-6">
+        <div className="col-span-7">
+          <div className="space-y-4">
+            <ItemSearch
+              products={products}
+              onSelect={handleProductSelect}
+              sourceId={sourceId}
+            />
+            <ProductGrid products={products} onSelect={handleProductSelect} />
+          </div>
+        </div>
+
+        <div className="col-span-5">
           <OrderCart
             items={selectedProducts}
             onUpdateQuantity={(productId, quantity) => {
@@ -124,9 +158,10 @@ export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
             onRemove={(productId) => {
               setSelectedProducts(prev => prev.filter(p => p.id !== productId));
             }}
-            onCheckout={() => {
+            onCheckout={async () => {
               // Implement checkout logic
             }}
+            isSubmitting={isSubmitting}
           />
         </div>
       </div>
