@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { Bill, BillItem } from "@/types/bill";
+import { Bill, BillProduct } from "@/types/bill";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -9,7 +9,7 @@ export const useCheckoutManager = () => {
 
   const handleCheckout = async (
     billId: string,
-    items: BillItem[],
+    items: BillProduct[],
     customerId: string | null = null
   ) => {
     if (!billId || items.length === 0) {
