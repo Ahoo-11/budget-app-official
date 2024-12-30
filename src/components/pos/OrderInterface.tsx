@@ -4,10 +4,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Product } from "@/types/product";
 import { OrderCart } from "./OrderCart";
 import { ItemSearch } from "../expense/ItemSearch";
-import { CustomerSelector } from "./CustomerSelector";
 import { FilePlus, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { useToast } from "@/hooks/use-toast";
 
 interface OrderInterfaceProps {
   sourceId: string;
@@ -15,8 +16,9 @@ interface OrderInterfaceProps {
 
 export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
   const [selectedProducts, setSelectedProducts] = useState<(Product & { quantity: number })[]>([]);
-  const [selectedCustomer, setSelectedCustomer] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [activeBillId, setActiveBillId] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ['sale-products', sourceId],
@@ -36,6 +38,24 @@ export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
     }
   });
 
+  const { data: activeBills = [], refetch: refetchBills } = useQuery({
+    queryKey: ['active-bills', sourceId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('bills')
+        .select('*')
+        .eq('source_id', sourceId)
+        .in('status', ['active', 'on-hold'])
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching bills:', error);
+        throw error;
+      }
+      return data;
+    }
+  });
+
   const handleProductSelect = (product: Product) => {
     setSelectedProducts(prev => {
       const existing = prev.find(p => p.id === product.id);
@@ -50,26 +70,67 @@ export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
     });
   };
 
-  const handleCheckout = async () => {
-    setIsSubmitting(true);
+  const handleNewBill = async () => {
     try {
-      // Implement checkout logic here
-      console.log('Processing checkout:', { selectedProducts, selectedCustomer });
+      setIsSubmitting(true);
+      const { data, error } = await supabase
+        .from('bills')
+        .insert({
+          source_id: sourceId,
+          status: 'active',
+          items: [],
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setActiveBillId(data.id);
+      setSelectedProducts([]);
+      await refetchBills();
+      
+      toast({
+        title: "New bill created",
+        description: "You can now add items to this bill",
+      });
     } catch (error) {
-      console.error('Checkout error:', error);
+      console.error('Error creating new bill:', error);
+      toast({
+        variant: "destructive",
+        title: "Error creating bill",
+        description: "Please try again",
+      });
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleNewBill = () => {
-    // This will be implemented in the next phase
-    console.log('Creating new bill...');
-  };
+  const handleSwitchBill = async (billId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('bills')
+        .select('items')
+        .eq('id', billId)
+        .single();
 
-  const handleViewRecent = () => {
-    // This will be implemented in the next phase
-    console.log('Viewing recent transactions...');
+      if (error) throw error;
+
+      // Convert stored items back to product format with quantities
+      const storedProducts = data.items.map((item: any) => ({
+        ...item,
+        quantity: item.quantity || 1,
+      }));
+
+      setActiveBillId(billId);
+      setSelectedProducts(storedProducts);
+    } catch (error) {
+      console.error('Error switching bill:', error);
+      toast({
+        variant: "destructive",
+        title: "Error switching bill",
+        description: "Please try again",
+      });
+    }
   };
 
   return (
@@ -121,6 +182,7 @@ export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
                   size="icon"
                   onClick={handleNewBill}
                   className="h-9 w-9"
+                  disabled={isSubmitting}
                 >
                   <FilePlus className="h-4 w-4" />
                 </Button>
@@ -132,17 +194,54 @@ export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
 
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={handleViewRecent}
-                  className="h-9 w-9"
-                >
-                  <History className="h-4 w-4" />
-                </Button>
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-9 w-9"
+                    >
+                      <History className="h-4 w-4" />
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent>
+                    <SheetHeader>
+                      <SheetTitle>Recent Bills</SheetTitle>
+                    </SheetHeader>
+                    <div className="mt-4 space-y-4">
+                      {activeBills.map((bill) => (
+                        <div
+                          key={bill.id}
+                          className={`p-4 border rounded-lg cursor-pointer hover:bg-gray-50 ${
+                            bill.id === activeBillId ? 'border-primary' : ''
+                          }`}
+                          onClick={() => handleSwitchBill(bill.id)}
+                        >
+                          <div className="flex justify-between items-center">
+                            <div>
+                              <p className="font-medium">Bill #{bill.id.slice(0, 8)}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {new Date(bill.created_at).toLocaleString()}
+                              </p>
+                            </div>
+                            <div className="text-sm">
+                              <span className={`px-2 py-1 rounded-full ${
+                                bill.status === 'active' 
+                                  ? 'bg-green-100 text-green-800'
+                                  : 'bg-yellow-100 text-yellow-800'
+                              }`}>
+                                {bill.status}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </SheetContent>
+                </Sheet>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Recent Transactions</p>
+                <p>Recent Bills</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -158,7 +257,47 @@ export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
           onRemove={(productId) => {
             setSelectedProducts(prev => prev.filter(p => p.id !== productId));
           }}
-          onCheckout={handleCheckout}
+          onCheckout={async () => {
+            if (!activeBillId) {
+              toast({
+                variant: "destructive",
+                title: "No active bill",
+                description: "Please create a new bill first",
+              });
+              return;
+            }
+
+            try {
+              setIsSubmitting(true);
+              const { error } = await supabase
+                .from('bills')
+                .update({
+                  items: selectedProducts,
+                  status: 'completed',
+                })
+                .eq('id', activeBillId);
+
+              if (error) throw error;
+
+              setSelectedProducts([]);
+              setActiveBillId(null);
+              await refetchBills();
+
+              toast({
+                title: "Bill completed",
+                description: "The bill has been processed successfully",
+              });
+            } catch (error) {
+              console.error('Error completing bill:', error);
+              toast({
+                variant: "destructive",
+                title: "Error completing bill",
+                description: "Please try again",
+              });
+            } finally {
+              setIsSubmitting(false);
+            }
+          }}
           isSubmitting={isSubmitting}
         />
       </div>

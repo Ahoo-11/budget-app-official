@@ -39,6 +39,69 @@ export type Database = {
         }
         Relationships: []
       }
+      bills: {
+        Row: {
+          created_at: string
+          customer_id: string | null
+          date: string
+          discount: number
+          gst: number
+          id: string
+          items: Json
+          source_id: string
+          status: string
+          subtotal: number
+          total: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id?: string | null
+          date?: string
+          discount?: number
+          gst?: number
+          id?: string
+          items?: Json
+          source_id: string
+          status: string
+          subtotal?: number
+          total?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string | null
+          date?: string
+          discount?: number
+          gst?: number
+          id?: string
+          items?: Json
+          source_id?: string
+          status?: string
+          subtotal?: number
+          total?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bills_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bills_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       categories: {
         Row: {
           id: string
