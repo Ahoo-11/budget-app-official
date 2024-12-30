@@ -9,7 +9,7 @@ import { CategoryManager } from "@/components/source/CategoryManager";
 import { SupplierManager } from "@/components/source/SupplierManager";
 import { ExpenseInterface } from "@/components/expense/ExpenseInterface";
 import { InventoryManager } from "@/components/inventory/InventoryManager";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 const Source = () => {
   const { sourceId } = useParams();
@@ -87,7 +87,7 @@ const Source = () => {
         </TabsList>
 
         <TabsContent value="income" className="m-0">
-          <OrderInterface sourceId={sourceId!} type="income" />
+          <OrderInterface sourceId={sourceId!} />
         </TabsContent>
 
         <TabsContent value="expense" className="m-0">
