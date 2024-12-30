@@ -5,6 +5,9 @@ import { Product } from "@/types/product";
 import { OrderCart } from "./OrderCart";
 import { ItemSearch } from "../expense/ItemSearch";
 import { CustomerSelector } from "./CustomerSelector";
+import { FilePlus, History } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface OrderInterfaceProps {
   sourceId: string;
@@ -59,14 +62,20 @@ export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
     }
   };
 
+  const handleNewBill = () => {
+    // This will be implemented in the next phase
+    console.log('Creating new bill...');
+  };
+
+  const handleViewRecent = () => {
+    // This will be implemented in the next phase
+    console.log('Viewing recent transactions...');
+  };
+
   return (
     <div className="grid grid-cols-12 gap-4 h-full">
       <div className="col-span-7 flex flex-col h-full overflow-hidden">
         <div className="p-4 space-y-4">
-          <CustomerSelector
-            selectedCustomer={selectedCustomer}
-            setSelectedCustomer={setSelectedCustomer}
-          />
           <ItemSearch
             products={products}
             onSelect={handleProductSelect}
@@ -103,6 +112,42 @@ export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
       </div>
 
       <div className="col-span-5 h-full">
+        <div className="flex justify-end gap-2 mb-4">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={handleNewBill}
+                  className="h-9 w-9"
+                >
+                  <FilePlus className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>New Bill</p>
+              </TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={handleViewRecent}
+                  className="h-9 w-9"
+                >
+                  <History className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Recent Transactions</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+
         <OrderCart
           items={selectedProducts}
           onUpdateQuantity={(productId, quantity) => {
