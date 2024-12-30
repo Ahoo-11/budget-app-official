@@ -2,12 +2,12 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Bill, BillItemJson } from "@/types/bill";
+import { Bill, BillItemJson, BillProduct } from "@/types/bill";
 import { Product } from "@/types/product";
 import { useSession } from "@supabase/auth-helpers-react";
 
 export const useBillManagement = (sourceId: string) => {
-  const [selectedProducts, setSelectedProducts] = useState<(Product & { quantity: number })[]>([]);
+  const [selectedProducts, setSelectedProducts] = useState<BillProduct[]>([]);
   const [activeBillId, setActiveBillId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
@@ -83,9 +83,16 @@ export const useBillManagement = (sourceId: string) => {
       
       const billItems = Array.isArray(data.items) 
         ? (data.items as BillItemJson[]).map(item => ({
-            ...item,
-            quantity: Number(item.quantity) || 0,
+            id: item.id,
+            name: item.name,
             price: Number(item.price) || 0,
+            quantity: Number(item.quantity) || 0,
+            source_id: item.source_id,
+            category: item.category,
+            image_url: item.image_url,
+            description: item.description,
+            current_stock: 0,
+            purchase_cost: null,
           }))
         : [];
 
@@ -111,7 +118,19 @@ export const useBillManagement = (sourceId: string) => {
             : p
         );
       }
-      return [...prev, { ...product, quantity: 1 }];
+      const billProduct: BillProduct = {
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        quantity: 1,
+        source_id: product.source_id,
+        category: product.category || null,
+        image_url: product.image_url || null,
+        description: product.description || null,
+        current_stock: product.current_stock || 0,
+        purchase_cost: product.purchase_cost || null,
+      };
+      return [...prev, billProduct];
     });
   };
 

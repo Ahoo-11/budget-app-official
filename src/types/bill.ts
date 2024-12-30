@@ -13,17 +13,26 @@ export interface BillItemJson {
   description: string | null;
 }
 
-// Type for working with bill items in the application
-export interface BillItem extends Omit<Product, 'quantity'> {
+// Specific type for bill items that includes only necessary product fields
+export type BillProduct = Pick<Product, 
+  | 'id' 
+  | 'name' 
+  | 'price' 
+  | 'source_id' 
+  | 'category' 
+  | 'image_url' 
+  | 'description'
+  | 'current_stock'
+  | 'purchase_cost'
+> & {
   quantity: number;
-  [key: string]: any; // Add index signature to make it compatible with Json type
-}
+};
 
 export interface Bill {
   id: string;
   source_id: string;
   user_id: string;
-  status: 'active' | 'on-hold' | 'completed' | string; // Allow string to handle unknown statuses
+  status: 'active' | 'on-hold' | 'completed' | string;
   customer_id?: string | null;
   items: BillItemJson[];
   subtotal: number;
