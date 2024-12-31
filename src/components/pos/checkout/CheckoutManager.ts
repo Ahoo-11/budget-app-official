@@ -34,12 +34,25 @@ export const useCheckoutManager = () => {
       const gstAmount = subtotal * gstRate;
       const total = subtotal + gstAmount;
 
+      // Prepare items for storage by converting to plain objects
+      const serializedItems = items.map(item => ({
+        id: item.id,
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity,
+        type: item.type,
+        source_id: item.source_id,
+        category: item.category,
+        image_url: item.image_url,
+        description: item.description
+      }));
+
       // Update bill status and totals
       const { error: billError } = await supabase
         .from('bills')
         .update({
           status: 'completed',
-          items: items,
+          items: serializedItems,
           subtotal,
           gst: gstAmount,
           total,
@@ -52,34 +65,36 @@ export const useCheckoutManager = () => {
 
       if (billError) throw billError;
 
-      // Update product stock levels and create stock movements
+      // Update product stock levels and create stock movements for products only
       for (const item of items) {
-        const newStock = (item.current_stock || 0) - item.quantity;
-        
-        // Update product stock
-        const { error: stockError } = await supabase
-          .from('products')
-          .update({ current_stock: newStock })
-          .eq('id', item.id);
+        if (item.type === 'product' && item.current_stock !== undefined) {
+          const newStock = item.current_stock - item.quantity;
+          
+          // Update product stock
+          const { error: stockError } = await supabase
+            .from('products')
+            .update({ current_stock: newStock })
+            .eq('id', item.id);
 
-        if (stockError) throw stockError;
+          if (stockError) throw stockError;
 
-        // Create stock movement
-        const { error: movementError } = await supabase
-          .from('stock_movements')
-          .insert({
-            product_id: item.id,
-            movement_type: 'sale',
-            quantity: -item.quantity,
-            unit_cost: item.price,
-            notes: `Sale from bill ${billId}`,
-            created_by: user.id
-          })
-          .select();
+          // Create stock movement
+          const { error: movementError } = await supabase
+            .from('stock_movements')
+            .insert({
+              product_id: item.id,
+              movement_type: 'sale',
+              quantity: -item.quantity,
+              unit_cost: item.price,
+              notes: `Sale from bill ${billId}`,
+              created_by: user.id
+            })
+            .select();
 
-        if (movementError) {
-          console.error('Stock movement error:', movementError);
-          throw movementError;
+          if (movementError) {
+            console.error('Stock movement error:', movementError);
+            throw movementError;
+          }
         }
       }
 

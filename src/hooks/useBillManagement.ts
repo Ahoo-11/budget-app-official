@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Bill, BillItemJson, BillProduct } from "@/types/bill";
 import { Product } from "@/types/product";
+import { Service } from "@/types/service";
 import { useSession } from "@supabase/auth-helpers-react";
 
 export const useBillManagement = (sourceId: string) => {
@@ -83,14 +84,7 @@ export const useBillManagement = (sourceId: string) => {
       
       const billItems = Array.isArray(data.items) 
         ? (data.items as BillItemJson[]).map(item => ({
-            id: item.id,
-            name: item.name,
-            price: Number(item.price) || 0,
-            quantity: Number(item.quantity) || 0,
-            source_id: item.source_id,
-            category: item.category,
-            image_url: item.image_url,
-            description: item.description,
+            ...item,
             current_stock: 0,
             purchase_cost: null,
           }))
@@ -108,27 +102,28 @@ export const useBillManagement = (sourceId: string) => {
     }
   };
 
-  const handleProductSelect = (product: Product) => {
+  const handleProductSelect = (item: Product | Service) => {
     setSelectedProducts(prev => {
-      const existing = prev.find(p => p.id === product.id);
+      const existing = prev.find(p => p.id === item.id);
       if (existing) {
         return prev.map(p => 
-          p.id === product.id 
+          p.id === item.id 
             ? { ...p, quantity: p.quantity + 1 }
             : p
         );
       }
       const billProduct: BillProduct = {
-        id: product.id,
-        name: product.name,
-        price: product.price,
+        id: item.id,
+        name: item.name,
+        price: item.price,
         quantity: 1,
-        source_id: product.source_id,
-        category: product.category || null,
-        image_url: product.image_url || null,
-        description: product.description || null,
-        current_stock: product.current_stock || 0,
-        purchase_cost: product.purchase_cost || null,
+        source_id: item.source_id,
+        category: item.category || null,
+        image_url: 'image_url' in item ? item.image_url : null,
+        description: item.description || null,
+        type: 'current_stock' in item ? 'product' : 'service',
+        current_stock: 'current_stock' in item ? item.current_stock : undefined,
+        purchase_cost: 'purchase_cost' in item ? item.purchase_cost : null,
       };
       return [...prev, billProduct];
     });
