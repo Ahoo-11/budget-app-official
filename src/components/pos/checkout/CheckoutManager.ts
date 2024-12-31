@@ -48,7 +48,7 @@ export const useCheckoutManager = () => {
       }));
 
       // Update bill status and totals
-      const { error: billError } = await supabase
+      const { error: billError, data: updatedBill } = await supabase
         .from('bills')
         .update({
           status: 'completed',
@@ -64,6 +64,22 @@ export const useCheckoutManager = () => {
         .single();
 
       if (billError) throw billError;
+
+      // Create transaction for the sale
+      const { error: transactionError } = await supabase
+        .from('transactions')
+        .insert({
+          source_id: updatedBill.source_id,
+          type: 'income',
+          amount: total,
+          description: `POS Sale - Bill #${billId}`,
+          date: new Date().toISOString(),
+          user_id: user.id,
+          customer_id: customerId,
+          created_by_name: user.email
+        });
+
+      if (transactionError) throw transactionError;
 
       // Update product stock levels and create stock movements for products only
       for (const item of items) {
@@ -88,8 +104,7 @@ export const useCheckoutManager = () => {
               unit_cost: item.price,
               notes: `Sale from bill ${billId}`,
               created_by: user.id
-            })
-            .select();
+            });
 
           if (movementError) {
             console.error('Stock movement error:', movementError);
@@ -101,6 +116,7 @@ export const useCheckoutManager = () => {
       // Refresh queries
       queryClient.invalidateQueries({ queryKey: ['bills'] });
       queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
 
       toast({
         title: "Success",
