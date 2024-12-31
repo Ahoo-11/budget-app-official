@@ -6,7 +6,7 @@ export const useBillStatus = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
-  const handleUpdateBillStatus = useCallback(async (billId: string, status: 'active' | 'on-hold' | 'completed') => {
+  const handleUpdateBillStatus = useCallback(async (billId: string, status: 'active' | 'completed') => {
     setIsSubmitting(true);
     try {
       const { error } = await supabase

@@ -6,7 +6,6 @@ import { BillProduct } from "@/types/bill";
 import { OrderCart } from "./OrderCart";
 import { OrderContent } from "./OrderContent";
 import { BillActions } from "./BillActions";
-import { OnHoldBills } from "./OnHoldBills";
 import { useCheckoutManager } from "./checkout/CheckoutManager";
 import { useBillManagement } from "@/hooks/useBillManagement";
 
@@ -69,20 +68,13 @@ export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <OnHoldBills
-          bills={bills}
-          onSwitchBill={handleSwitchBill}
-          activeBillId={activeBillId}
-        />
-        <BillActions
-          activeBills={bills}
-          onNewBill={handleNewBill}
-          onSwitchBill={handleSwitchBill}
-          activeBillId={activeBillId}
-          isSubmitting={isSubmitting}
-        />
-      </div>
+      <BillActions
+        activeBills={bills}
+        onNewBill={handleNewBill}
+        onSwitchBill={handleSwitchBill}
+        activeBillId={activeBillId}
+        isSubmitting={isSubmitting}
+      />
 
       <div className="grid grid-cols-12 gap-6">
         <div className="col-span-7">

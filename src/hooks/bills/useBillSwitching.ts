@@ -7,7 +7,7 @@ import { BillProduct, BillItemJson } from "@/types/bill";
 export const useBillSwitching = (
   sourceId: string,
   setSelectedProducts: (products: BillProduct[]) => void,
-  handleUpdateBillStatus: (billId: string, status: 'active' | 'on-hold' | 'completed') => Promise<boolean>
+  handleUpdateBillStatus: (billId: string, status: 'active' | 'completed') => Promise<boolean>
 ) => {
   const [activeBillId, setActiveBillId] = useState<string | null>(null);
   const { toast } = useToast();
@@ -24,12 +24,6 @@ export const useBillSwitching = (
     }
 
     try {
-      // First, put the current active bill on hold if it exists
-      if (activeBillId) {
-        const success = await handleUpdateBillStatus(activeBillId, 'on-hold');
-        if (!success) return;
-      }
-
       // Create a new active bill
       const { data: newBill, error } = await supabase
         .from('bills')
@@ -58,21 +52,11 @@ export const useBillSwitching = (
         variant: "destructive",
       });
     }
-  }, [activeBillId, session?.user?.id, sourceId, handleUpdateBillStatus, setSelectedProducts, toast]);
+  }, [session?.user?.id, sourceId, setSelectedProducts, toast]);
 
   const handleSwitchBill = useCallback(async (billId: string) => {
     try {
-      // Put current active bill on hold if it exists and is different from the target bill
-      if (activeBillId && activeBillId !== billId) {
-        const success = await handleUpdateBillStatus(activeBillId, 'on-hold');
-        if (!success) return;
-      }
-
-      // Activate the selected bill
-      const success = await handleUpdateBillStatus(billId, 'active');
-      if (!success) return;
-
-      // Fetch the updated bill data
+      // Fetch the bill data
       const { data, error } = await supabase
         .from('bills')
         .select('*')
@@ -105,7 +89,7 @@ export const useBillSwitching = (
         variant: "destructive",
       });
     }
-  }, [activeBillId, handleUpdateBillStatus, setSelectedProducts, toast]);
+  }, [setSelectedProducts, toast]);
 
   return {
     activeBillId,
