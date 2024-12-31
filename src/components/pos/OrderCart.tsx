@@ -8,6 +8,8 @@ import { CustomerSelector } from "./customer/CustomerSelector";
 import { format } from "date-fns";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 
 interface OrderCartProps {
   items: BillProduct[];
@@ -15,6 +17,7 @@ interface OrderCartProps {
   onRemove: (productId: string) => void;
   onCheckout: (customerId?: string) => void;
   isSubmitting?: boolean;
+  activeBillId?: string;
 }
 
 export const OrderCart = ({
@@ -23,15 +26,72 @@ export const OrderCart = ({
   onRemove,
   onCheckout,
   isSubmitting = false,
+  activeBillId,
 }: OrderCartProps) => {
   const [discount, setDiscount] = useState<number>(0);
   const [date, setDate] = useState<Date>(new Date());
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
+  const { toast } = useToast();
 
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const gstRate = 0.08; // 8% GST
   const gstAmount = subtotal * gstRate;
   const finalTotal = subtotal + gstAmount - discount;
+
+  const updateBillInSupabase = async (updates: any) => {
+    if (!activeBillId) return;
+
+    try {
+      const { error } = await supabase
+        .from('bills')
+        .update(updates)
+        .eq('id', activeBillId);
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error updating bill:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update bill",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleCustomerSelect = async (customerId: string) => {
+    setSelectedCustomerId(customerId);
+    await updateBillInSupabase({ customer_id: customerId });
+  };
+
+  const handleDateChange = async (newDate: Date) => {
+    setDate(newDate);
+    await updateBillInSupabase({ date: newDate.toISOString() });
+  };
+
+  const handleDiscountChange = async (newDiscount: number) => {
+    setDiscount(newDiscount);
+    await updateBillInSupabase({
+      discount: newDiscount,
+      total: subtotal + gstAmount - newDiscount
+    });
+  };
+
+  // Update bill whenever items change
+  const updateBillItems = async () => {
+    if (!activeBillId) return;
+    
+    await updateBillInSupabase({
+      items: items,
+      subtotal: subtotal,
+      gst: gstAmount,
+      total: finalTotal
+    });
+  };
+
+  // Call updateBillItems whenever items array changes
+  React.useEffect(() => {
+    updateBillItems();
+  }, [items, subtotal, gstAmount, finalTotal]);
 
   const handleCheckout = () => {
     onCheckout(selectedCustomerId || undefined);
@@ -44,7 +104,7 @@ export const OrderCart = ({
           <div className="flex-1">
             <CustomerSelector
               selectedCustomerId={selectedCustomerId}
-              onSelect={setSelectedCustomerId}
+              onSelect={handleCustomerSelect}
             />
           </div>
           <Popover>
@@ -58,7 +118,7 @@ export const OrderCart = ({
               <CalendarComponent
                 mode="single"
                 selected={date}
-                onSelect={(date) => date && setDate(date)}
+                onSelect={(date) => date && handleDateChange(date)}
                 initialFocus
               />
             </PopoverContent>
@@ -128,7 +188,7 @@ export const OrderCart = ({
                   min="0"
                   step="0.01"
                   value={discount}
-                  onChange={(e) => setDiscount(Number(e.target.value))}
+                  onChange={(e) => handleDiscountChange(Number(e.target.value))}
                   className="h-8"
                 />
               </div>

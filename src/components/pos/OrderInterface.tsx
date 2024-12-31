@@ -89,6 +89,7 @@ export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
         <div className="col-span-5">
           <OrderCart
             items={selectedProducts}
+            activeBillId={activeBillId}
             onUpdateQuantity={(productId, quantity) => {
               setSelectedProducts(prev =>
                 prev.map(p => p.id === productId ? { ...p, quantity } : p)
