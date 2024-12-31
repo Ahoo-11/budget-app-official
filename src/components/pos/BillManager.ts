@@ -8,7 +8,7 @@ const isObject = (value: Json): value is Record<string, Json> => {
 };
 
 // Type guard for bill items
-const isValidBillItem = (item: Record<string, Json>): item is BillItemJson => {
+const isValidBillItem = (item: Record<string, Json>): item is Record<string, Json> & BillItemJson => {
   return (
     typeof item.id === 'string' &&
     typeof item.name === 'string' &&
@@ -36,7 +36,7 @@ export const deserializeBillItems = (items: Json): BillProduct[] => {
   
   return items
     .filter(isObject)
-    .filter((item): item is BillItemJson => isValidBillItem(item))
+    .filter((item): item is Record<string, Json> & BillItemJson => isValidBillItem(item))
     .map(item => ({
       id: String(item.id),
       name: String(item.name),
