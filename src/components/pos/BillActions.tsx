@@ -1,8 +1,13 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Bill } from "@/types/bill";
 import { FilePlus, Receipt } from "lucide-react";
+import { BillListItem } from "./bills/BillListItem";
+import { BillBulkActions } from "./bills/BillBulkActions";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface BillActionsProps {
   onNewBill: () => void;
@@ -15,11 +20,58 @@ interface BillActionsProps {
 export const BillActions = ({ 
   onNewBill, 
   onSwitchBill, 
-  activeBills, 
+  activeBills,
   activeBillId,
   isSubmitting 
 }: BillActionsProps) => {
+  const { toast } = useToast();
+  const [selectedBills, setSelectedBills] = useState<string[]>([]);
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
   const uncompletedBills = activeBills.filter(bill => bill.status === 'active');
+  const isAllSelected = uncompletedBills.length > 0 && selectedBills.length === uncompletedBills.length;
+
+  const handleSelectAll = (checked: boolean) => {
+    setSelectedBills(checked ? uncompletedBills.map(bill => bill.id) : []);
+  };
+
+  const handleSelectBill = (billId: string, isSelected: boolean) => {
+    setSelectedBills(prev =>
+      isSelected
+        ? [...prev, billId]
+        : prev.filter(id => id !== billId)
+    );
+  };
+
+  const handleDeleteSelected = async () => {
+    try {
+      const { error } = await supabase
+        .from('bills')
+        .delete()
+        .in('id', selectedBills);
+
+      if (error) throw error;
+
+      toast({
+        title: "Bills deleted",
+        description: `Successfully deleted ${selectedBills.length} ${selectedBills.length === 1 ? 'bill' : 'bills'}.`,
+      });
+
+      setSelectedBills([]);
+      window.location.reload();
+    } catch (error) {
+      console.error('Error deleting bills:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete bills. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleBillClick = (billId: string) => {
+    onSwitchBill(billId);
+    setIsSheetOpen(false);
+  };
 
   return (
     <div className="flex justify-end gap-2">
@@ -43,7 +95,7 @@ export const BillActions = ({
 
         <Tooltip>
           <TooltipTrigger asChild>
-            <Sheet>
+            <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
               <SheetTrigger asChild>
                 <Button
                   variant="outline"
@@ -62,30 +114,26 @@ export const BillActions = ({
                 <SheetHeader>
                   <SheetTitle>Active Bills</SheetTitle>
                 </SheetHeader>
-                <div className="mt-4 space-y-4">
-                  {uncompletedBills.map((bill) => (
-                    <div
-                      key={bill.id}
-                      className={`p-4 border rounded-lg cursor-pointer hover:bg-gray-50 ${
-                        bill.id === activeBillId ? 'border-primary' : ''
-                      }`}
-                      onClick={() => onSwitchBill(bill.id)}
-                    >
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <p className="font-medium">Bill #{bill.id.slice(0, 8)}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {new Date(bill.created_at).toLocaleString()}
-                          </p>
-                        </div>
-                        <div className="text-sm">
-                          <span className="px-2 py-1 rounded-full bg-blue-100 text-blue-800">
-                            In Progress
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                <div className="mt-4">
+                  <BillBulkActions
+                    selectedBills={selectedBills}
+                    onSelectAll={handleSelectAll}
+                    isAllSelected={isAllSelected}
+                    onDeleteSelected={handleDeleteSelected}
+                    totalBills={uncompletedBills.length}
+                  />
+                  <div className="mt-4 space-y-4">
+                    {uncompletedBills.map((bill) => (
+                      <BillListItem
+                        key={bill.id}
+                        bill={bill}
+                        isSelected={selectedBills.includes(bill.id)}
+                        onSelect={handleSelectBill}
+                        activeBillId={activeBillId}
+                        onBillClick={handleBillClick}
+                      />
+                    ))}
+                  </div>
                 </div>
               </SheetContent>
             </Sheet>
