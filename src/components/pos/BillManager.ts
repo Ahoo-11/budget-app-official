@@ -2,13 +2,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { Bill, BillProduct, BillItemJson } from "@/types/bill";
 import { Json } from "@/integrations/supabase/types";
 
-type JsonObject = { [key: string]: Json | undefined };
-
-const isBillItemJson = (item: Json): item is JsonObject => {
-  return typeof item === 'object' && item !== null;
+// Helper function to check if a value is a non-null object
+const isObject = (value: unknown): value is Record<string, unknown> => {
+  return typeof value === 'object' && value !== null;
 };
 
-const isValidBillItem = (item: JsonObject): item is BillItemJson => {
+// Type guard for bill items
+const isValidBillItem = (item: Record<string, unknown>): item is BillItemJson => {
   return (
     typeof item.id === 'string' &&
     typeof item.name === 'string' &&
@@ -17,7 +17,7 @@ const isValidBillItem = (item: JsonObject): item is BillItemJson => {
   );
 };
 
-export const serializeBillItems = (items: BillProduct[]): BillItemJson[] => {
+export const serializeBillItems = (items: BillProduct[]): Record<string, unknown>[] => {
   return items.map(item => ({
     id: item.id,
     name: item.name,
@@ -35,11 +35,11 @@ export const deserializeBillItems = (items: Json): BillProduct[] => {
   if (!Array.isArray(items)) return [];
   
   return items
-    .filter(isBillItemJson)
+    .filter(isObject)
     .filter(isValidBillItem)
     .map(item => ({
-      id: item.id,
-      name: item.name,
+      id: String(item.id),
+      name: String(item.name),
       price: Number(item.price) || 0,
       quantity: Number(item.quantity) || 0,
       type: item.type as 'product' | 'service' | undefined,
@@ -90,11 +90,7 @@ export const createNewBill = async (sourceId: string, userId: string) => {
 };
 
 export const updateBillItems = async (billId: string, items: BillProduct[]) => {
-  const serializedItems = serializeBillItems(items).map(item => ({
-    ...item,
-    price: Number(item.price),
-    quantity: Number(item.quantity)
-  }));
+  const serializedItems = serializeBillItems(items);
 
   const { error } = await supabase
     .from('bills')
