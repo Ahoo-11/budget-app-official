@@ -28,7 +28,19 @@ export const useBillManagement = (sourceId: string) => {
       
       return (data || []).map(bill => ({
         ...bill,
-        items: Array.isArray(bill.items) ? bill.items as BillItemJson[] : [],
+        items: Array.isArray(bill.items) 
+          ? (bill.items as any[]).map(item => ({
+              id: item.id,
+              name: item.name,
+              price: Number(item.price) || 0,
+              quantity: Number(item.quantity) || 0,
+              type: item.type,
+              source_id: item.source_id,
+              category: item.category,
+              image_url: item.image_url,
+              description: item.description,
+            }))
+          : [],
         status: bill.status as 'active' | 'on-hold' | 'completed'
       })) as Bill[];
     }
@@ -88,8 +100,16 @@ export const useBillManagement = (sourceId: string) => {
       if (error) throw error;
       
       const billItems = Array.isArray(data.items) 
-        ? (data.items as BillItemJson[]).map(item => ({
-            ...item,
+        ? (data.items as any[]).map(item => ({
+            id: item.id,
+            name: item.name,
+            price: Number(item.price) || 0,
+            quantity: Number(item.quantity) || 0,
+            type: item.type,
+            source_id: item.source_id,
+            category: item.category,
+            image_url: item.image_url,
+            description: item.description,
             current_stock: 0,
             purchase_cost: null,
           }))

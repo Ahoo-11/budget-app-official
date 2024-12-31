@@ -43,7 +43,19 @@ export const fetchActiveBills = async (sourceId: string): Promise<Bill[]> => {
 
   return (data || []).map(bill => ({
     ...bill,
-    items: Array.isArray(bill.items) ? bill.items as BillItemJson[] : [],
+    items: Array.isArray(bill.items) 
+      ? (bill.items as any[]).map(item => ({
+          id: item.id,
+          name: item.name,
+          price: Number(item.price) || 0,
+          quantity: Number(item.quantity) || 0,
+          type: item.type,
+          source_id: item.source_id,
+          category: item.category,
+          image_url: item.image_url,
+          description: item.description,
+        }))
+      : [],
     status: bill.status as 'active' | 'on-hold' | 'completed'
   }));
 };
@@ -69,7 +81,12 @@ export const createNewBill = async (sourceId: string, userId: string) => {
 };
 
 export const updateBillItems = async (billId: string, items: BillProduct[]) => {
-  const serializedItems = serializeBillItems(items);
+  const serializedItems = serializeBillItems(items).map(item => ({
+    ...item,
+    price: Number(item.price),
+    quantity: Number(item.quantity)
+  }));
+
   const { error } = await supabase
     .from('bills')
     .update({
