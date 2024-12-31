@@ -25,6 +25,7 @@ export const useBillSwitching = (
     }
 
     try {
+      console.log('Creating new bill...');
       const { data: newBill, error } = await supabase
         .from('bills')
         .insert({
@@ -42,6 +43,7 @@ export const useBillSwitching = (
 
       if (error) throw error;
       
+      console.log('New bill created:', newBill);
       setActiveBillId(newBill.id);
       setSelectedProducts([]);
     } catch (error) {
@@ -56,6 +58,7 @@ export const useBillSwitching = (
 
   const handleSwitchBill = useCallback(async (billId: string) => {
     try {
+      console.log('Switching to bill:', billId);
       const { data, error } = await supabase
         .from('bills')
         .select('*')
@@ -64,10 +67,15 @@ export const useBillSwitching = (
 
       if (error) throw error;
       
+      console.log('Fetched bill data:', data);
+      console.log('Bill items before deserialization:', data.items);
+      
       const billItems = deserializeBillItems(data.items);
+      console.log('Deserialized bill items:', billItems);
       
       setActiveBillId(billId);
       setSelectedProducts(billItems);
+      console.log('State updated with bill items');
     } catch (error) {
       console.error('Error switching bill:', error);
       toast({
