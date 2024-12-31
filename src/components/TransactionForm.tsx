@@ -11,6 +11,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Service } from "@/types/service";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface TransactionFormProps {
   description: string;
@@ -71,41 +72,57 @@ export const TransactionForm = ({
         />
       </div>
 
-      {sourceId && services.length > 0 && (
-        <div>
-          <label className="block text-sm font-medium mb-2">Select Service (Optional)</label>
-          <select
-            className="w-full p-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-success/20"
-            onChange={(e) => {
-              const service = services.find(s => s.id === e.target.value);
-              if (service) handleServiceSelect(service);
-            }}
-            disabled={isSubmitting}
-          >
-            <option value="">Select a service...</option>
-            {services.map((service) => (
-              <option key={service.id} value={service.id}>
-                {service.name} - ${service.price}
-              </option>
-            ))}
-          </select>
-        </div>
+      {sourceId && (
+        <Tabs defaultValue="manual" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="manual">Manual Entry</TabsTrigger>
+            <TabsTrigger value="services">Select Service</TabsTrigger>
+          </TabsList>
+          <TabsContent value="manual">
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">Amount</label>
+                <Input
+                  type="number"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  className="w-full p-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-success/20"
+                  placeholder="Enter amount"
+                  required
+                  min="0"
+                  step="0.01"
+                  disabled={isSubmitting}
+                />
+              </div>
+            </div>
+          </TabsContent>
+          <TabsContent value="services">
+            <div className="space-y-4">
+              {services.length > 0 ? (
+                <div className="grid gap-2">
+                  {services.map((service) => (
+                    <button
+                      key={service.id}
+                      type="button"
+                      onClick={() => handleServiceSelect(service)}
+                      className="w-full p-4 text-left border rounded-lg hover:bg-accent transition-colors"
+                    >
+                      <div className="font-medium">{service.name}</div>
+                      <div className="text-sm text-muted-foreground">
+                        ${service.price.toFixed(2)}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-4 text-muted-foreground">
+                  No services found
+                </div>
+              )}
+            </div>
+          </TabsContent>
+        </Tabs>
       )}
-
-      <div>
-        <label className="block text-sm font-medium mb-2">Amount</label>
-        <Input
-          type="number"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-          className="w-full p-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-success/20"
-          placeholder="Enter amount"
-          required
-          min="0"
-          step="0.01"
-          disabled={isSubmitting}
-        />
-      </div>
 
       <div>
         <label className="block text-sm font-medium mb-2">Date</label>
