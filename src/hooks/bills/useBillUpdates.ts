@@ -3,6 +3,20 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { BillProduct } from "@/types/bill";
 
+const serializeBillItems = (items: BillProduct[]) => {
+  return items.map(item => ({
+    id: item.id,
+    name: item.name,
+    price: item.price,
+    quantity: item.quantity,
+    type: item.type,
+    source_id: item.source_id,
+    category: item.category,
+    image_url: item.image_url,
+    description: item.description,
+  }));
+};
+
 export const useBillUpdates = (activeBillId: string | undefined, items: BillProduct[]) => {
   const [discount, setDiscount] = useState<number>(0);
   const [date, setDate] = useState<Date>(new Date());
@@ -18,10 +32,13 @@ export const useBillUpdates = (activeBillId: string | undefined, items: BillProd
     if (!activeBillId) return;
 
     try {
-      console.log('Updating bill with:', updates);
+      console.log('Updating bill with:', { ...updates, items: updates.items?.length });
       const { error } = await supabase
         .from('bills')
-        .update(updates)
+        .update({
+          ...updates,
+          updated_at: new Date().toISOString()
+        })
         .eq('id', activeBillId);
 
       if (error) throw error;
@@ -39,7 +56,12 @@ export const useBillUpdates = (activeBillId: string | undefined, items: BillProd
     setSelectedCustomerId(customerId);
     await updateBillInSupabase({ 
       customer_id: customerId,
-      updated_at: new Date().toISOString()
+      items: serializeBillItems(items),
+      subtotal,
+      gst: gstAmount,
+      total: finalTotal,
+      discount,
+      date: date.toISOString()
     });
   };
 
@@ -47,30 +69,42 @@ export const useBillUpdates = (activeBillId: string | undefined, items: BillProd
     setDate(newDate);
     await updateBillInSupabase({ 
       date: newDate.toISOString(),
-      updated_at: new Date().toISOString()
+      items: serializeBillItems(items),
+      subtotal,
+      gst: gstAmount,
+      total: finalTotal,
+      discount,
+      customer_id: selectedCustomerId
     });
   };
 
   const handleDiscountChange = async (newDiscount: number) => {
     setDiscount(newDiscount);
+    const newTotal = subtotal + gstAmount - newDiscount;
     await updateBillInSupabase({
       discount: newDiscount,
-      total: finalTotal,
-      updated_at: new Date().toISOString()
+      total: newTotal,
+      items: serializeBillItems(items),
+      subtotal,
+      gst: gstAmount,
+      date: date.toISOString(),
+      customer_id: selectedCustomerId
     });
   };
 
   // Update bill whenever items change
   useEffect(() => {
-    if (!activeBillId) return;
+    if (!activeBillId || items.length === 0) return;
     
     console.log('Items changed, updating bill:', items);
     updateBillInSupabase({
-      items,
+      items: serializeBillItems(items),
       subtotal,
       gst: gstAmount,
       total: finalTotal,
-      updated_at: new Date().toISOString()
+      discount,
+      customer_id: selectedCustomerId,
+      date: date.toISOString()
     });
   }, [items, subtotal, gstAmount, finalTotal, activeBillId]);
 
@@ -89,6 +123,7 @@ export const useBillUpdates = (activeBillId: string | undefined, items: BillProd
         if (error) throw error;
 
         if (bill) {
+          console.log('Loaded bill data:', bill);
           setDiscount(bill.discount || 0);
           setDate(new Date(bill.date));
           setSelectedCustomerId(bill.customer_id || "");

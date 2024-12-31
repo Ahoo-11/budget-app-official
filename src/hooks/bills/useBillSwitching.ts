@@ -37,6 +37,7 @@ export const useBillSwitching = (
           total: 0,
           gst: 0,
           discount: 0,
+          date: new Date().toISOString()
         })
         .select()
         .single();
@@ -68,14 +69,12 @@ export const useBillSwitching = (
       if (error) throw error;
       
       console.log('Fetched bill data:', data);
-      console.log('Bill items before deserialization:', data.items);
       
       const billItems = deserializeBillItems(data.items);
       console.log('Deserialized bill items:', billItems);
       
       setActiveBillId(billId);
       setSelectedProducts(billItems);
-      console.log('State updated with bill items');
     } catch (error) {
       console.error('Error switching bill:', error);
       toast({
