@@ -9,7 +9,7 @@ import { FiltersCard } from "@/components/stats/FiltersCard";
 
 const Index = () => {
   const [selectedSource, setSelectedSource] = useState("");
-  const [date, setDate] = useState<DateRange>({
+  const [date, setDate] = useState<DateRange | undefined>({
     from: addDays(new Date(), -30),
     to: new Date(),
   });
@@ -18,8 +18,8 @@ const Index = () => {
 
   const filteredTransactions = transactions.filter((transaction) => {
     const transactionDate = new Date(transaction.date);
-    const matchesDateRange = (!date.from || transactionDate >= date.from) && 
-                            (!date.to || transactionDate <= date.to);
+    const matchesDateRange = (!date?.from || transactionDate >= date.from) && 
+                            (!date?.to || transactionDate <= date.to);
     const matchesSource = !selectedSource || transaction.source_id === selectedSource;
     
     return matchesDateRange && matchesSource;
