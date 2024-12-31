@@ -82,7 +82,7 @@ export const useBillSwitching = (
       if (error) throw error;
 
       const billItems = Array.isArray(data.items) 
-        ? (data.items as BillItemJson[]).map(item => ({
+        ? (data.items as unknown[] as BillItemJson[]).map(item => ({
             id: item.id,
             name: item.name,
             price: Number(item.price) || 0,

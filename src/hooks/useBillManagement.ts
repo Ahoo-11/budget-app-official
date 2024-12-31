@@ -30,7 +30,7 @@ export const useBillManagement = (sourceId: string) => {
       return (data || []).map(bill => ({
         ...bill,
         items: Array.isArray(bill.items) 
-          ? (bill.items as BillItemJson[]).map(item => ({
+          ? (bill.items as unknown[] as BillItemJson[]).map(item => ({
               id: item.id,
               name: item.name,
               price: Number(item.price) || 0,
