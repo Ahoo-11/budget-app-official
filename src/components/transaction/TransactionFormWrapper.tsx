@@ -9,6 +9,7 @@ import { CategorySelector } from "../CategorySelector";
 import { TransactionForm } from "../TransactionForm";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
+import { BusinessTemplateConfig } from "@/types/template-config";
 
 interface TransactionFormWrapperProps {
   onAdd: (transaction: Omit<Transaction, 'id' | 'created_at'>) => void;
@@ -16,6 +17,14 @@ interface TransactionFormWrapperProps {
   source_id?: string;
   editingTransaction?: Transaction | null;
   onClose?: () => void;
+}
+
+interface SourceTemplate {
+  template_id: string;
+  templates: {
+    type: 'business' | 'personal';
+    config: BusinessTemplateConfig;
+  } | null;
 }
 
 export const TransactionFormWrapper = ({
@@ -39,7 +48,7 @@ export const TransactionFormWrapper = ({
   const { toast } = useToast();
 
   // Fetch source template to determine if it's product-based
-  const { data: sourceTemplate } = useQuery({
+  const { data: sourceTemplate } = useQuery<SourceTemplate | null>({
     queryKey: ['source-template', selectedSource || source_id],
     queryFn: async () => {
       if (!selectedSource && !source_id) return null;
