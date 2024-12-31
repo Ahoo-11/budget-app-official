@@ -1,13 +1,26 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, Calendar } from "lucide-react";
+import { Loader2, Calendar, Trash2 } from "lucide-react";
 import { BillProduct } from "@/types/bill";
 import { CustomerSelector } from "./customer/CustomerSelector";
 import { format } from "date-fns";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { useBillUpdates } from "./bill/useBillUpdates";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 
 interface OrderCartProps {
   items: BillProduct[];
@@ -26,6 +39,7 @@ export const OrderCart = ({
   isSubmitting = false,
   activeBillId,
 }: OrderCartProps) => {
+  const { toast } = useToast();
   const {
     discount,
     date,
@@ -40,6 +54,34 @@ export const OrderCart = ({
 
   const handleCheckout = () => {
     onCheckout(selectedCustomerId || undefined);
+  };
+
+  const handleCancelBill = async () => {
+    if (!activeBillId) return;
+
+    try {
+      const { error } = await supabase
+        .from('bills')
+        .delete()
+        .eq('id', activeBillId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Bill cancelled",
+        description: "The bill has been successfully cancelled.",
+      });
+
+      // Refresh the page to show updated bills
+      window.location.reload();
+    } catch (error) {
+      console.error('Error cancelling bill:', error);
+      toast({
+        title: "Error",
+        description: "Failed to cancel the bill. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -149,20 +191,51 @@ export const OrderCart = ({
               <span>MVR {finalTotal.toFixed(2)}</span>
             </div>
 
-            <Button
-              className="w-full mt-4 bg-black text-white hover:bg-black/90"
-              onClick={handleCheckout}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Processing...
-                </>
-              ) : (
-                "CHECKOUT"
-              )}
-            </Button>
+            <div className="flex gap-2 mt-4">
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="flex-1 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Cancel Bill
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Cancel Bill</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to cancel this bill? This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Keep Bill</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleCancelBill}
+                      className="bg-red-600 hover:bg-red-700"
+                    >
+                      Yes, cancel bill
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+
+              <Button
+                className="flex-1 bg-black text-white hover:bg-black/90"
+                onClick={handleCheckout}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  "CHECKOUT"
+                )}
+              </Button>
+            </div>
           </div>
         </div>
       )}
