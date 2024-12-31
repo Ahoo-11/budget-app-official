@@ -8,6 +8,7 @@ import { PayerSelector } from "../PayerSelector";
 import { CategorySelector } from "../CategorySelector";
 import { TransactionForm } from "../TransactionForm";
 import { useToast } from "@/hooks/use-toast";
+import { useQuery } from "@tanstack/react-query";
 
 interface TransactionFormWrapperProps {
   onAdd: (transaction: Omit<Transaction, 'id' | 'created_at'>) => void;
@@ -36,6 +37,34 @@ export const TransactionFormWrapper = ({
   const [displayName, setDisplayName] = useState("Unknown User");
   const session = useSession();
   const { toast } = useToast();
+
+  // Fetch source template to determine if it's product-based
+  const { data: sourceTemplate } = useQuery({
+    queryKey: ['source-template', selectedSource || source_id],
+    queryFn: async () => {
+      if (!selectedSource && !source_id) return null;
+      
+      const { data, error } = await supabase
+        .from('source_templates')
+        .select(`
+          template_id,
+          templates (
+            type,
+            config
+          )
+        `)
+        .eq('source_id', selectedSource || source_id)
+        .single();
+
+      if (error) {
+        console.error('Error fetching source template:', error);
+        return null;
+      }
+
+      return data;
+    },
+    enabled: !!(selectedSource || source_id)
+  });
 
   useEffect(() => {
     const fetchDisplayName = async () => {
@@ -123,6 +152,10 @@ export const TransactionFormWrapper = ({
         user_id: session.user.id,
         created_by_name: displayName
       };
+
+      // Only create stock movements if this is a product-based source
+      const isProductBased = sourceTemplate?.templates?.type === 'business' && 
+                           sourceTemplate?.templates?.config?.productBased === true;
 
       if (editingTransaction && onUpdate) {
         await onUpdate({
