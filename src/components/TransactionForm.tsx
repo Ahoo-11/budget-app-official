@@ -8,6 +8,9 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Service } from "@/types/service";
 
 interface TransactionFormProps {
   description: string;
@@ -18,6 +21,7 @@ interface TransactionFormProps {
   setDate: (date: Date) => void;
   isSubmitting: boolean;
   isEditing?: boolean;
+  sourceId?: string;
 }
 
 export const TransactionForm = ({
@@ -29,7 +33,29 @@ export const TransactionForm = ({
   setDate,
   isSubmitting,
   isEditing = false,
+  sourceId,
 }: TransactionFormProps) => {
+  const { data: services = [] } = useQuery({
+    queryKey: ['services', sourceId],
+    queryFn: async () => {
+      if (!sourceId) return [];
+      const { data, error } = await supabase
+        .from('services')
+        .select('*')
+        .eq('source_id', sourceId)
+        .order('name');
+      
+      if (error) throw error;
+      return data as Service[];
+    },
+    enabled: !!sourceId
+  });
+
+  const handleServiceSelect = (service: Service) => {
+    setDescription(service.name);
+    setAmount(service.price.toString());
+  };
+
   return (
     <>
       <div>
@@ -44,6 +70,27 @@ export const TransactionForm = ({
           disabled={isSubmitting}
         />
       </div>
+
+      {sourceId && services.length > 0 && (
+        <div>
+          <label className="block text-sm font-medium mb-2">Select Service (Optional)</label>
+          <select
+            className="w-full p-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-success/20"
+            onChange={(e) => {
+              const service = services.find(s => s.id === e.target.value);
+              if (service) handleServiceSelect(service);
+            }}
+            disabled={isSubmitting}
+          >
+            <option value="">Select a service...</option>
+            {services.map((service) => (
+              <option key={service.id} value={service.id}>
+                {service.name} - ${service.price}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       <div>
         <label className="block text-sm font-medium mb-2">Amount</label>
