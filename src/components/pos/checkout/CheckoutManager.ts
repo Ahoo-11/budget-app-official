@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { Bill, BillProduct } from "@/types/bill";
+import { BillProduct } from "@/types/bill";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -46,7 +46,9 @@ export const useCheckoutManager = () => {
           customer_id: customerId,
           updated_at: new Date().toISOString(),
         })
-        .eq('id', billId);
+        .eq('id', billId)
+        .select()
+        .single();
 
       if (billError) throw billError;
 
@@ -54,6 +56,7 @@ export const useCheckoutManager = () => {
       for (const item of items) {
         const newStock = (item.current_stock || 0) - item.quantity;
         
+        // Update product stock
         const { error: stockError } = await supabase
           .from('products')
           .update({ current_stock: newStock })
@@ -61,6 +64,7 @@ export const useCheckoutManager = () => {
 
         if (stockError) throw stockError;
 
+        // Create stock movement
         const { error: movementError } = await supabase
           .from('stock_movements')
           .insert({
@@ -70,9 +74,13 @@ export const useCheckoutManager = () => {
             unit_cost: item.price,
             notes: `Sale from bill ${billId}`,
             created_by: user.id
-          });
+          })
+          .select();
 
-        if (movementError) throw movementError;
+        if (movementError) {
+          console.error('Stock movement error:', movementError);
+          throw movementError;
+        }
       }
 
       // Refresh queries
