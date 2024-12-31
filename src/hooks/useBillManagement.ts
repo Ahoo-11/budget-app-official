@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Bill } from "@/types/bill";
 import { useBillProducts } from "./bills/useBillProducts";
@@ -6,6 +6,7 @@ import { useBillStatus } from "./bills/useBillStatus";
 import { useBillSwitching } from "./bills/useBillSwitching";
 
 export const useBillManagement = (sourceId: string) => {
+  const queryClient = useQueryClient();
   const { selectedProducts, setSelectedProducts, handleProductSelect } = useBillProducts();
   const { isSubmitting, handleUpdateBillStatus } = useBillStatus();
   const { activeBillId, handleNewBill, handleSwitchBill } = useBillSwitching(
@@ -14,7 +15,7 @@ export const useBillManagement = (sourceId: string) => {
     handleUpdateBillStatus
   );
 
-  const { data: bills = [], refetch: refetchBills } = useQuery({
+  const { data: bills = [] } = useQuery({
     queryKey: ['bills', sourceId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -29,7 +30,7 @@ export const useBillManagement = (sourceId: string) => {
       return (data || []).map(bill => ({
         ...bill,
         items: Array.isArray(bill.items) 
-          ? (bill.items as any[]).map(item => ({
+          ? bill.items.map(item => ({
               id: item.id,
               name: item.name,
               price: Number(item.price) || 0,
@@ -43,7 +44,8 @@ export const useBillManagement = (sourceId: string) => {
           : [],
         status: bill.status as 'active' | 'on-hold' | 'completed'
       })) as Bill[];
-    }
+    },
+    refetchInterval: 5000 // Refresh every 5 seconds to keep bills in sync
   });
 
   return {
@@ -56,6 +58,6 @@ export const useBillManagement = (sourceId: string) => {
     handleSwitchBill,
     handleProductSelect,
     handleUpdateBillStatus,
-    refetchBills
+    refetchBills: () => queryClient.invalidateQueries({ queryKey: ['bills', sourceId] })
   };
 };

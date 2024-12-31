@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 import { useSession } from "@supabase/auth-helpers-react";
+import { useToast } from "@/components/ui/use-toast";
 import { BillProduct } from "@/types/bill";
 
 export const useBillSwitching = (
@@ -13,7 +13,7 @@ export const useBillSwitching = (
   const { toast } = useToast();
   const session = useSession();
 
-  const handleNewBill = async () => {
+  const handleNewBill = useCallback(async () => {
     if (!session?.user?.id) {
       toast({
         title: "Error",
@@ -30,8 +30,8 @@ export const useBillSwitching = (
         if (!success) return;
       }
 
-      // Then create a new active bill
-      const { data, error } = await supabase
+      // Create a new active bill
+      const { data: newBill, error } = await supabase
         .from('bills')
         .insert({
           source_id: sourceId,
@@ -48,7 +48,7 @@ export const useBillSwitching = (
 
       if (error) throw error;
       
-      setActiveBillId(data.id);
+      setActiveBillId(newBill.id);
       setSelectedProducts([]);
     } catch (error) {
       console.error('Error creating bill:', error);
@@ -58,9 +58,9 @@ export const useBillSwitching = (
         variant: "destructive",
       });
     }
-  };
+  }, [activeBillId, session?.user?.id, sourceId, handleUpdateBillStatus, setSelectedProducts, toast]);
 
-  const handleSwitchBill = async (billId: string) => {
+  const handleSwitchBill = useCallback(async (billId: string) => {
     try {
       // Put current active bill on hold if it exists and is different from the target bill
       if (activeBillId && activeBillId !== billId) {
@@ -80,9 +80,9 @@ export const useBillSwitching = (
         .single();
 
       if (error) throw error;
-      
+
       const billItems = Array.isArray(data.items) 
-        ? (data.items as any[]).map(item => ({
+        ? data.items.map(item => ({
             id: item.id,
             name: item.name,
             price: Number(item.price) || 0,
@@ -92,8 +92,6 @@ export const useBillSwitching = (
             category: item.category,
             image_url: item.image_url,
             description: item.description,
-            current_stock: 0,
-            purchase_cost: null,
           }))
         : [];
 
@@ -107,7 +105,7 @@ export const useBillSwitching = (
         variant: "destructive",
       });
     }
-  };
+  }, [activeBillId, handleUpdateBillStatus, setSelectedProducts, toast]);
 
   return {
     activeBillId,
