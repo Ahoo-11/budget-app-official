@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Bill } from "@/types/bill";
+import { Bill, BillItemJson } from "@/types/bill";
 import { useBillProducts } from "./bills/useBillProducts";
 import { useBillStatus } from "./bills/useBillStatus";
 import { useBillSwitching } from "./bills/useBillSwitching";
@@ -30,7 +30,7 @@ export const useBillManagement = (sourceId: string) => {
       return (data || []).map(bill => ({
         ...bill,
         items: Array.isArray(bill.items) 
-          ? bill.items.map(item => ({
+          ? (bill.items as BillItemJson[]).map(item => ({
               id: item.id,
               name: item.name,
               price: Number(item.price) || 0,

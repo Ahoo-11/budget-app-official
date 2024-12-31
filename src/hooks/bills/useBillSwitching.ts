@@ -2,7 +2,7 @@ import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/components/ui/use-toast";
-import { BillProduct } from "@/types/bill";
+import { BillProduct, BillItemJson } from "@/types/bill";
 
 export const useBillSwitching = (
   sourceId: string,
@@ -82,7 +82,7 @@ export const useBillSwitching = (
       if (error) throw error;
 
       const billItems = Array.isArray(data.items) 
-        ? data.items.map(item => ({
+        ? (data.items as BillItemJson[]).map(item => ({
             id: item.id,
             name: item.name,
             price: Number(item.price) || 0,

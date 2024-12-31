@@ -31,8 +31,8 @@ export interface BillProduct {
 export interface BillItemJson {
   id: string;
   name: string;
-  price: number;
-  quantity: number;
+  price: number | string;
+  quantity: number | string;
   type?: 'product' | 'service';
   source_id?: string;
   category?: string | null;
