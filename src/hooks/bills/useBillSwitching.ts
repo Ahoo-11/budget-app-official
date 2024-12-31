@@ -2,7 +2,7 @@ import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/components/ui/use-toast";
-import { BillProduct, BillItemJson } from "@/types/bill";
+import { BillProduct } from "@/types/bill";
 import { deserializeBillItems } from "@/components/pos/BillManager";
 
 export const useBillSwitching = (
@@ -63,9 +63,8 @@ export const useBillSwitching = (
         .single();
 
       if (error) throw error;
-
-      // Use the deserializeBillItems function to properly convert the items
-      const billItems = deserializeBillItems(data.items as BillItemJson[]);
+      
+      const billItems = deserializeBillItems(data.items);
       
       setActiveBillId(billId);
       setSelectedProducts(billItems);
