@@ -44,6 +44,7 @@ export const ServiceGrid = ({ sourceId, onSelect }: ServiceGridProps) => {
             <p className="text-xs text-muted-foreground mt-1">{service.description}</p>
           )}
         </div>
-      </div>
-    ));
-  }
+      ))}
+    </div>
+  );
+};
