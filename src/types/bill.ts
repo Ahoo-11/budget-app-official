@@ -3,7 +3,7 @@ export interface Bill {
   source_id: string;
   user_id: string;
   status: 'active' | 'on-hold' | 'completed';
-  customer_id?: string;
+  customer_id?: string | null;
   items: BillItemJson[];
   subtotal: number;
   discount: number;
@@ -20,10 +20,10 @@ export interface BillProduct {
   price: number;
   quantity: number;
   type?: 'product' | 'service';
-  source_id: string;
-  category?: string;
-  image_url?: string;
-  description?: string;
+  source_id?: string;
+  category?: string | null;
+  image_url?: string | null;
+  description?: string | null;
   current_stock?: number;
   purchase_cost?: number | null;
 }
@@ -34,8 +34,8 @@ export interface BillItemJson {
   price: number;
   quantity: number;
   type?: 'product' | 'service';
-  source_id: string;
-  category?: string;
-  image_url?: string;
-  description?: string;
+  source_id?: string;
+  category?: string | null;
+  image_url?: string | null;
+  description?: string | null;
 }

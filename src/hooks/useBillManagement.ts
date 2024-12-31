@@ -25,7 +25,12 @@ export const useBillManagement = (sourceId: string) => {
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      return data as Bill[];
+      
+      return (data || []).map(bill => ({
+        ...bill,
+        items: Array.isArray(bill.items) ? bill.items as BillItemJson[] : [],
+        status: bill.status as 'active' | 'on-hold' | 'completed'
+      })) as Bill[];
     }
   });
 

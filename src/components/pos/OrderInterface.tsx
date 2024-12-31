@@ -50,7 +50,9 @@ export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
         name: service.name,
         price: service.price,
         quantity: 1,
-        type: 'service'
+        type: 'service',
+        source_id: service.source_id,
+        description: service.description
       };
       
       const existing = prev.find(p => p.id === service.id && p.type === 'service');

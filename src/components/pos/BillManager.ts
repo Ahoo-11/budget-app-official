@@ -7,6 +7,7 @@ export const serializeBillItems = (items: BillProduct[]): BillItemJson[] => {
     name: item.name,
     price: item.price,
     quantity: item.quantity,
+    type: item.type,
     source_id: item.source_id,
     category: item.category,
     image_url: item.image_url,
@@ -15,11 +16,12 @@ export const serializeBillItems = (items: BillProduct[]): BillItemJson[] => {
 };
 
 export const deserializeBillItems = (items: BillItemJson[]): BillProduct[] => {
-  return items.map((item: BillItemJson) => ({
+  return items.map(item => ({
     id: item.id,
     name: item.name,
     price: Number(item.price) || 0,
     quantity: Number(item.quantity) || 0,
+    type: item.type,
     source_id: item.source_id,
     category: item.category,
     image_url: item.image_url,
@@ -42,6 +44,7 @@ export const fetchActiveBills = async (sourceId: string): Promise<Bill[]> => {
   return (data || []).map(bill => ({
     ...bill,
     items: Array.isArray(bill.items) ? bill.items as BillItemJson[] : [],
+    status: bill.status as 'active' | 'on-hold' | 'completed'
   }));
 };
 
