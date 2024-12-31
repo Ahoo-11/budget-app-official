@@ -48,10 +48,10 @@ export const TransactionFormWrapper = ({
   const { toast } = useToast();
 
   // Fetch source template to determine if it's product-based
-  const { data: sourceTemplate } = useQuery<SourceTemplate | null>({
+  const { data: sourceTemplate } = useQuery<SourceTemplate>({
     queryKey: ['source-template', selectedSource || source_id],
     queryFn: async () => {
-      if (!selectedSource && !source_id) return null;
+      if (!selectedSource && !source_id) return { template_id: '', templates: null };
       
       const { data, error } = await supabase
         .from('source_templates')
@@ -67,10 +67,25 @@ export const TransactionFormWrapper = ({
 
       if (error) {
         console.error('Error fetching source template:', error);
-        return null;
+        return { template_id: '', templates: null };
       }
 
-      return data;
+      // Transform the config from JSON to BusinessTemplateConfig
+      if (data?.templates?.config) {
+        const config = typeof data.templates.config === 'string' 
+          ? JSON.parse(data.templates.config) 
+          : data.templates.config;
+
+        return {
+          template_id: data.template_id,
+          templates: {
+            type: data.templates.type,
+            config: config as BusinessTemplateConfig
+          }
+        };
+      }
+
+      return { template_id: '', templates: null };
     },
     enabled: !!(selectedSource || source_id)
   });
@@ -163,8 +178,7 @@ export const TransactionFormWrapper = ({
       };
 
       // Only create stock movements if this is a product-based source
-      const isProductBased = sourceTemplate?.templates?.type === 'business' && 
-                           sourceTemplate?.templates?.config?.productBased === true;
+      const isProductBased = sourceTemplate?.templates?.config?.productBased === true;
 
       if (editingTransaction && onUpdate) {
         await onUpdate({
