@@ -16,12 +16,14 @@ export const serializeBillItems = (items: BillProduct[]): BillItemJson[] => {
 };
 
 export const deserializeBillItems = (items: BillItemJson[]): BillProduct[] => {
+  if (!Array.isArray(items)) return [];
+  
   return items.map(item => ({
     id: item.id,
     name: item.name,
     price: Number(item.price) || 0,
     quantity: Number(item.quantity) || 0,
-    type: item.type,
+    type: item.type || 'product',
     source_id: item.source_id,
     category: item.category,
     image_url: item.image_url,
@@ -36,27 +38,15 @@ export const fetchActiveBills = async (sourceId: string): Promise<Bill[]> => {
     .from('bills')
     .select('*')
     .eq('source_id', sourceId)
-    .in('status', ['active', 'on-hold'])
+    .in('status', ['active'])
     .order('created_at', { ascending: false });
 
   if (error) throw error;
 
   return (data || []).map(bill => ({
     ...bill,
-    items: Array.isArray(bill.items) 
-      ? (bill.items as any[]).map(item => ({
-          id: item.id,
-          name: item.name,
-          price: Number(item.price) || 0,
-          quantity: Number(item.quantity) || 0,
-          type: item.type,
-          source_id: item.source_id,
-          category: item.category,
-          image_url: item.image_url,
-          description: item.description,
-        }))
-      : [],
-    status: bill.status as 'active' | 'on-hold' | 'completed'
+    items: deserializeBillItems(bill.items as BillItemJson[]),
+    status: bill.status as 'active' | 'completed'
   }));
 };
 
