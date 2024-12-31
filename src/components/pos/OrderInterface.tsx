@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Product } from "@/types/product";
+import { Service } from "@/types/service";
 import { BillProduct } from "@/types/bill";
 import { OrderCart } from "./OrderCart";
 import { OrderContent } from "./OrderContent";
@@ -42,6 +43,28 @@ export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
     }
   });
 
+  const handleServiceSelect = (service: Service) => {
+    setSelectedProducts(prev => {
+      const serviceProduct: BillProduct = {
+        id: service.id,
+        name: service.name,
+        price: service.price,
+        quantity: 1,
+        type: 'service'
+      };
+      
+      const existing = prev.find(p => p.id === service.id && p.type === 'service');
+      if (existing) {
+        return prev.map(p => 
+          p.id === service.id && p.type === 'service'
+            ? { ...p, quantity: p.quantity + 1 }
+            : p
+        );
+      }
+      return [...prev, serviceProduct];
+    });
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -65,6 +88,7 @@ export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
             products={products}
             sourceId={sourceId}
             onProductSelect={handleProductSelect}
+            onServiceSelect={handleServiceSelect}
           />
         </div>
 
