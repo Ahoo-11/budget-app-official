@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,8 +7,7 @@ import { CustomerSelector } from "./customer/CustomerSelector";
 import { format } from "date-fns";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { useBillUpdates } from "./bill/useBillUpdates";
 
 interface OrderCartProps {
   items: BillProduct[];
@@ -28,70 +26,17 @@ export const OrderCart = ({
   isSubmitting = false,
   activeBillId,
 }: OrderCartProps) => {
-  const [discount, setDiscount] = useState<number>(0);
-  const [date, setDate] = useState<Date>(new Date());
-  const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
-  const { toast } = useToast();
-
-  const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const gstRate = 0.08; // 8% GST
-  const gstAmount = subtotal * gstRate;
-  const finalTotal = subtotal + gstAmount - discount;
-
-  const updateBillInSupabase = async (updates: any) => {
-    if (!activeBillId) return;
-
-    try {
-      const { error } = await supabase
-        .from('bills')
-        .update(updates)
-        .eq('id', activeBillId);
-
-      if (error) throw error;
-    } catch (error) {
-      console.error('Error updating bill:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update bill",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleCustomerSelect = async (customerId: string) => {
-    setSelectedCustomerId(customerId);
-    await updateBillInSupabase({ customer_id: customerId });
-  };
-
-  const handleDateChange = async (newDate: Date) => {
-    setDate(newDate);
-    await updateBillInSupabase({ date: newDate.toISOString() });
-  };
-
-  const handleDiscountChange = async (newDiscount: number) => {
-    setDiscount(newDiscount);
-    await updateBillInSupabase({
-      discount: newDiscount,
-      total: subtotal + gstAmount - newDiscount
-    });
-  };
-
-  // Update bill whenever items change
-  const updateBillItems = async () => {
-    if (!activeBillId) return;
-    
-    await updateBillInSupabase({
-      items: items,
-      subtotal: subtotal,
-      gst: gstAmount,
-      total: finalTotal
-    });
-  };
-
-  // Call updateBillItems whenever items array changes
-  React.useEffect(() => {
-    updateBillItems();
-  }, [items, subtotal, gstAmount, finalTotal]);
+  const {
+    discount,
+    date,
+    selectedCustomerId,
+    subtotal,
+    gstAmount,
+    finalTotal,
+    handleCustomerSelect,
+    handleDateChange,
+    handleDiscountChange
+  } = useBillUpdates(activeBillId, items);
 
   const handleCheckout = () => {
     onCheckout(selectedCustomerId || undefined);
