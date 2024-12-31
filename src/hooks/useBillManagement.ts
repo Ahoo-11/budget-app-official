@@ -58,6 +58,18 @@ export const useBillManagement = (sourceId: string) => {
 
     try {
       setIsSubmitting(true);
+
+      // First, put the current active bill on hold if it exists
+      if (activeBillId) {
+        const { error: updateError } = await supabase
+          .from('bills')
+          .update({ status: 'on-hold' })
+          .eq('id', activeBillId);
+
+        if (updateError) throw updateError;
+      }
+
+      // Then create a new active bill
       const { data, error } = await supabase
         .from('bills')
         .insert({
@@ -91,6 +103,24 @@ export const useBillManagement = (sourceId: string) => {
 
   const handleSwitchBill = async (billId: string) => {
     try {
+      // Put current active bill on hold if it exists and is different from the target bill
+      if (activeBillId && activeBillId !== billId) {
+        const { error: updateError } = await supabase
+          .from('bills')
+          .update({ status: 'on-hold' })
+          .eq('id', activeBillId);
+
+        if (updateError) throw updateError;
+      }
+
+      // Activate the selected bill
+      const { error: activateError } = await supabase
+        .from('bills')
+        .update({ status: 'active' })
+        .eq('id', billId);
+
+      if (activateError) throw activateError;
+
       const { data, error } = await supabase
         .from('bills')
         .select('*')
@@ -117,6 +147,7 @@ export const useBillManagement = (sourceId: string) => {
 
       setActiveBillId(billId);
       setSelectedProducts(billItems);
+      await refetchBills();
     } catch (error) {
       console.error('Error switching bill:', error);
       toast({

@@ -1,5 +1,5 @@
 import { Bill } from "@/types/bill";
-import { Archive } from "lucide-react";
+import { PauseCircle } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface OnHoldBillsProps {
@@ -27,11 +27,11 @@ export const OnHoldBills = ({ bills, onSwitchBill, activeBillId }: OnHoldBillsPr
                   bill.id === activeBillId ? 'bg-gray-100 ring-2 ring-black' : ''
                 }`}
               >
-                <Archive className="h-5 w-5" />
+                <PauseCircle className="h-5 w-5 text-orange-500" />
               </button>
             </TooltipTrigger>
             <TooltipContent>
-              <p>Bill #{bill.id.slice(0, 8)}</p>
+              <p>On-hold Bill #{bill.id.slice(0, 8)}</p>
               <p className="text-xs text-muted-foreground">
                 {new Date(bill.created_at).toLocaleString()}
               </p>
