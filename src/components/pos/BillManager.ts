@@ -3,12 +3,12 @@ import { Bill, BillProduct, BillItemJson } from "@/types/bill";
 import { Json } from "@/integrations/supabase/types";
 
 // Helper function to check if a value is a non-null object
-const isObject = (value: unknown): value is Record<string, unknown> => {
+const isObject = (value: Json): value is Record<string, Json> => {
   return typeof value === 'object' && value !== null;
 };
 
 // Type guard for bill items
-const isValidBillItem = (item: Record<string, unknown>): item is BillItemJson => {
+const isValidBillItem = (item: Record<string, Json>): item is BillItemJson => {
   return (
     typeof item.id === 'string' &&
     typeof item.name === 'string' &&
@@ -17,7 +17,7 @@ const isValidBillItem = (item: Record<string, unknown>): item is BillItemJson =>
   );
 };
 
-export const serializeBillItems = (items: BillProduct[]): Record<string, unknown>[] => {
+export const serializeBillItems = (items: BillProduct[]): Json => {
   return items.map(item => ({
     id: item.id,
     name: item.name,
@@ -36,7 +36,7 @@ export const deserializeBillItems = (items: Json): BillProduct[] => {
   
   return items
     .filter(isObject)
-    .filter(isValidBillItem)
+    .filter((item): item is BillItemJson => isValidBillItem(item))
     .map(item => ({
       id: String(item.id),
       name: String(item.name),
