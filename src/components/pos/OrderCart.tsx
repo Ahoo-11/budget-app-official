@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, Calendar, Trash2 } from "lucide-react";
 import { BillProduct } from "@/types/bill";
-import { PayerSelector } from "./payer/PayerSelector";
+import { PayerSelector } from "@/components/pos/payer/PayerSelector";
 import { format } from "date-fns";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
