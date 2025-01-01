@@ -8,10 +8,18 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Service } from "@/types/service";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { TransactionStatus } from "@/types/transaction";
 
 interface TransactionFormProps {
   description: string;
@@ -20,9 +28,13 @@ interface TransactionFormProps {
   setAmount: (amount: string) => void;
   date: Date;
   setDate: (date: Date) => void;
+  status: TransactionStatus;
+  setStatus: (status: TransactionStatus) => void;
   isSubmitting: boolean;
   isEditing?: boolean;
   sourceId?: string;
+  documentUrl?: string;
+  onDocumentUpload?: (file: File) => Promise<void>;
 }
 
 export const TransactionForm = ({
@@ -32,9 +44,13 @@ export const TransactionForm = ({
   setAmount,
   date,
   setDate,
+  status,
+  setStatus,
   isSubmitting,
   isEditing = false,
   sourceId,
+  documentUrl,
+  onDocumentUpload,
 }: TransactionFormProps) => {
   const { data: services = [] } = useQuery({
     queryKey: ['services', sourceId],
@@ -55,6 +71,13 @@ export const TransactionForm = ({
   const handleServiceSelect = (service: Service) => {
     setDescription(service.name);
     setAmount(service.price.toString());
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && onDocumentUpload) {
+      await onDocumentUpload(file);
+    }
   };
 
   return (
@@ -125,6 +148,27 @@ export const TransactionForm = ({
       )}
 
       <div>
+        <label className="block text-sm font-medium mb-2">Status</label>
+        <Select
+          value={status}
+          onValueChange={(value) => setStatus(value as TransactionStatus)}
+          disabled={isSubmitting}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Select status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="pending">Pending</SelectItem>
+            <SelectItem value="approved">Approved</SelectItem>
+            <SelectItem value="completed">Completed</SelectItem>
+            <SelectItem value="overdue">Overdue</SelectItem>
+            <SelectItem value="cancelled">Cancelled</SelectItem>
+            <SelectItem value="partially_paid">Partially Paid</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div>
         <label className="block text-sm font-medium mb-2">Date</label>
         <Popover>
           <PopoverTrigger asChild>
@@ -146,6 +190,26 @@ export const TransactionForm = ({
             />
           </PopoverContent>
         </Popover>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium mb-2">Supporting Document</label>
+        <Input
+          type="file"
+          onChange={handleFileChange}
+          disabled={isSubmitting}
+          accept="image/*,.pdf"
+        />
+        {documentUrl && (
+          <a
+            href={documentUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm text-blue-500 hover:underline mt-2 block"
+          >
+            View current document
+          </a>
+        )}
       </div>
 
       <Button

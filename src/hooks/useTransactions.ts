@@ -20,7 +20,6 @@ export const useTransactions = (source_id?: string) => {
       if (source_id) {
         query = query.eq('source_id', source_id);
       } else {
-        // If no source_id is provided, fetch transactions from all sources the user has access to
         const { data: userRole } = await supabase
           .from('user_roles')
           .select('role')
@@ -29,7 +28,6 @@ export const useTransactions = (source_id?: string) => {
 
         if (userRole?.role === 'controller' || userRole?.role === 'super_admin') {
           // Controller and super_admin can access all sources
-          // No need to modify the query
         } else {
           const { data: permissions } = await supabase
             .from('source_permissions')
@@ -40,7 +38,6 @@ export const useTransactions = (source_id?: string) => {
             const sourceIds = permissions.map(p => p.source_id);
             query = query.in('source_id', sourceIds);
           } else {
-            // If no permissions found, return no transactions
             return [];
           }
         }
@@ -68,6 +65,7 @@ export const useTransactions = (source_id?: string) => {
         amount: parseFloat(transaction.amount.toString()),
         category_id: transaction.category_id || null,
         payer_id: transaction.payer_id || null,
+        status: transaction.status || 'pending',
         user_id: session?.user?.id || '00000000-0000-0000-0000-000000000000'
       };
 
@@ -106,6 +104,7 @@ export const useTransactions = (source_id?: string) => {
         amount: parseFloat(transaction.amount.toString()),
         category_id: transaction.category_id || null,
         payer_id: transaction.payer_id || null,
+        status: transaction.status || 'pending',
         user_id: session?.user?.id || '00000000-0000-0000-0000-000000000000'
       };
 

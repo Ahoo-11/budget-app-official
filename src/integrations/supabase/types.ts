@@ -344,10 +344,13 @@ export type Database = {
           frequency: Database["public"]["Enums"]["recurring_frequency"]
           id: string
           is_fixed: boolean | null
+          last_transaction_date: string | null
+          last_transaction_status: string | null
           next_due_date: string
           payer_id: string | null
           source_id: string
           start_date: string
+          status: string
           type: string
           updated_at: string | null
           user_id: string
@@ -363,10 +366,13 @@ export type Database = {
           frequency: Database["public"]["Enums"]["recurring_frequency"]
           id?: string
           is_fixed?: boolean | null
+          last_transaction_date?: string | null
+          last_transaction_status?: string | null
           next_due_date: string
           payer_id?: string | null
           source_id: string
           start_date: string
+          status?: string
           type: string
           updated_at?: string | null
           user_id: string
@@ -382,10 +388,13 @@ export type Database = {
           frequency?: Database["public"]["Enums"]["recurring_frequency"]
           id?: string
           is_fixed?: boolean | null
+          last_transaction_date?: string | null
+          last_transaction_status?: string | null
           next_due_date?: string
           payer_id?: string | null
           source_id?: string
           start_date?: string
+          status?: string
           type?: string
           updated_at?: string | null
           user_id?: string
@@ -673,9 +682,14 @@ export type Database = {
           customer_id: string | null
           date: string
           description: string
+          document_url: string | null
           id: string
+          parent_transaction_id: string | null
           payer_id: string | null
+          remaining_amount: number | null
           source_id: string
+          status: string
+          total_amount: number | null
           type: string
           user_id: string
         }
@@ -688,9 +702,14 @@ export type Database = {
           customer_id?: string | null
           date?: string
           description: string
+          document_url?: string | null
           id?: string
+          parent_transaction_id?: string | null
           payer_id?: string | null
+          remaining_amount?: number | null
           source_id: string
+          status?: string
+          total_amount?: number | null
           type: string
           user_id: string
         }
@@ -703,9 +722,14 @@ export type Database = {
           customer_id?: string | null
           date?: string
           description?: string
+          document_url?: string | null
           id?: string
+          parent_transaction_id?: string | null
           payer_id?: string | null
+          remaining_amount?: number | null
           source_id?: string
+          status?: string
+          total_amount?: number | null
           type?: string
           user_id?: string
         }
@@ -722,6 +746,13 @@ export type Database = {
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_parent_transaction_id_fkey"
+            columns: ["parent_transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
             referencedColumns: ["id"]
           },
           {
@@ -825,6 +856,13 @@ export type Database = {
     Enums: {
       recurring_frequency: "daily" | "weekly" | "monthly" | "yearly"
       template_type: "business" | "personal"
+      transaction_status:
+        | "pending"
+        | "approved"
+        | "completed"
+        | "overdue"
+        | "cancelled"
+        | "partially_paid"
       user_role_type:
         | "super_admin"
         | "admin"

@@ -1,72 +1,111 @@
 import { Transaction } from "@/types/transaction";
-import { ArrowUpRight, ArrowDownRight, Trash2, Edit } from "lucide-react";
 import { format } from "date-fns";
+import { ArrowDownIcon, ArrowUpIcon, FileIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 interface TransactionItemProps {
   transaction: Transaction;
-  onDelete?: () => void;
-  onEdit?: () => void;
+  onDelete?: (id: string) => void;
+  onEdit?: (transaction: Transaction) => void;
 }
 
 export const TransactionItem = ({ transaction, onDelete, onEdit }: TransactionItemProps) => {
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "completed":
+        return "bg-green-500";
+      case "pending":
+        return "bg-yellow-500";
+      case "approved":
+        return "bg-blue-500";
+      case "overdue":
+        return "bg-red-500";
+      case "cancelled":
+        return "bg-gray-500";
+      case "partially_paid":
+        return "bg-purple-500";
+      default:
+        return "bg-gray-500";
+    }
+  };
+
   return (
-    <div className="flex items-center justify-between p-4 rounded-lg border bg-card text-card-foreground shadow-sm">
+    <div className="flex items-center justify-between p-4 bg-card rounded-lg border">
       <div className="flex items-center gap-4">
         <div
           className={`p-2 rounded-full ${
-            transaction.type === "income"
-              ? "bg-green-100 text-green-600"
-              : "bg-red-100 text-red-600"
+            transaction.type === "income" ? "bg-success/20" : "bg-destructive/20"
           }`}
         >
           {transaction.type === "income" ? (
-            <ArrowUpRight className="h-4 w-4" />
+            <ArrowUpIcon className="w-4 h-4 text-success" />
           ) : (
-            <ArrowDownRight className="h-4 w-4" />
+            <ArrowDownIcon className="w-4 h-4 text-destructive" />
           )}
         </div>
+
         <div>
-          <p className="font-medium">{transaction.description}</p>
-          <div className="space-y-1">
-            <p className="text-sm text-muted-foreground">
-              {transaction.category}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {format(new Date(transaction.date), "PPP")}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              Created by: {transaction.created_by_name}
-            </p>
+          <div className="font-medium">{transaction.description}</div>
+          <div className="text-sm text-muted-foreground">
+            {format(new Date(transaction.date), "PPP")}
           </div>
+          {transaction.category && (
+            <div className="text-sm text-muted-foreground">{transaction.category}</div>
+          )}
         </div>
       </div>
+
       <div className="flex items-center gap-4">
-        <p
-          className={`font-medium ${
-            transaction.type === "income"
-              ? "text-green-600"
-              : "text-red-600"
-          }`}
-        >
-          {transaction.type === "income" ? "+" : "-"}$
-          {Math.abs(transaction.amount).toFixed(2)}
-        </p>
+        <Badge variant="secondary" className={getStatusColor(transaction.status)}>
+          {transaction.status}
+        </Badge>
+
+        {transaction.document_url && (
+          <a
+            href={transaction.document_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <FileIcon className="w-4 h-4" />
+          </a>
+        )}
+
+        <div className="text-right">
+          <div
+            className={`font-medium ${
+              transaction.type === "income" ? "text-success" : "text-destructive"
+            }`}
+          >
+            ${transaction.amount.toFixed(2)}
+          </div>
+          {transaction.remaining_amount !== null && (
+            <div className="text-sm text-muted-foreground">
+              Remaining: ${transaction.remaining_amount?.toFixed(2)}
+            </div>
+          )}
+        </div>
+
         <div className="flex gap-2">
           {onEdit && (
-            <button
-              onClick={onEdit}
-              className="p-2 hover:bg-accent rounded-full transition-colors"
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onEdit(transaction)}
             >
-              <Edit className="h-4 w-4 text-muted-foreground" />
-            </button>
+              Edit
+            </Button>
           )}
           {onDelete && (
-            <button
-              onClick={onDelete}
-              className="p-2 hover:bg-accent rounded-full transition-colors"
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onDelete(transaction.id)}
+              className="text-destructive hover:text-destructive"
             >
-              <Trash2 className="h-4 w-4 text-muted-foreground" />
-            </button>
+              Delete
+            </Button>
           )}
         </div>
       </div>
