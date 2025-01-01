@@ -10,10 +10,10 @@ import { Payer } from "@/types/payer";
 
 interface PayerSelectorProps {
   selectedPayerId?: string;
-  onSelect: (payerId: string) => void;
+  setSelectedPayer: (payerId: string) => void;
 }
 
-export const PayerSelector = ({ selectedPayerId, onSelect }: PayerSelectorProps) => {
+export const PayerSelector = ({ selectedPayerId, setSelectedPayer }: PayerSelectorProps) => {
   const session = useSession();
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -50,7 +50,7 @@ export const PayerSelector = ({ selectedPayerId, onSelect }: PayerSelectorProps)
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['payers'] });
       setIsDialogOpen(false);
-      onSelect(data.id);
+      setSelectedPayer(data.id);
       setSearchQuery(data.name);
       toast({
         title: "Success",
@@ -71,7 +71,7 @@ export const PayerSelector = ({ selectedPayerId, onSelect }: PayerSelectorProps)
   );
 
   const handlePayerSelect = (payer: Payer) => {
-    onSelect(payer.id);
+    setSelectedPayer(payer.id);
     setSearchQuery(payer.name);
   };
 

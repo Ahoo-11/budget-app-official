@@ -89,7 +89,7 @@ export const OrderCart = ({
         <div className="flex gap-2">
           <div className="flex-1">
             <PayerSelector
-              selectedPayer={selectedPayerId}
+              selectedPayerId={selectedPayerId}
               setSelectedPayer={handlePayerSelect}
             />
           </div>
