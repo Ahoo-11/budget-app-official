@@ -1,22 +1,34 @@
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 
 interface PayerSearchInputProps {
   searchQuery: string;
   onSearchChange: (value: string) => void;
+  onAddClick: () => void;
 }
 
-export const PayerSearchInput = ({ searchQuery, onSearchChange }: PayerSearchInputProps) => {
+export const PayerSearchInput = ({
+  searchQuery,
+  onSearchChange,
+  onAddClick
+}: PayerSearchInputProps) => {
   return (
-    <div className="relative flex-1">
-      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+    <div className="flex gap-2">
       <Input
         type="text"
         placeholder="Search payers..."
         value={searchQuery}
         onChange={(e) => onSearchChange(e.target.value)}
-        className="pl-9"
+        className="flex-1"
       />
+      <Button
+        type="button"
+        variant="outline"
+        onClick={onAddClick}
+      >
+        <Plus className="h-4 w-4" />
+      </Button>
     </div>
   );
 };

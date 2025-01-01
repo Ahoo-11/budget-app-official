@@ -1,7 +1,7 @@
 export interface Payer {
   id: string;
-  name: string;
   user_id: string;
+  name: string;
   created_at: string;
 }
 

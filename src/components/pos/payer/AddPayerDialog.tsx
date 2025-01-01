@@ -6,17 +6,19 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
-import { Plus } from "lucide-react";
 
 interface AddPayerDialogProps {
-  onAdd: (name: string) => void;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
+  onAdd: (name: string) => void;
 }
 
-export const AddPayerDialog = ({ onAdd, isOpen, onOpenChange }: AddPayerDialogProps) => {
+export const AddPayerDialog = ({
+  isOpen,
+  onOpenChange,
+  onAdd,
+}: AddPayerDialogProps) => {
   const [newPayerName, setNewPayerName] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -29,15 +31,6 @@ export const AddPayerDialog = ({ onAdd, isOpen, onOpenChange }: AddPayerDialogPr
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogTrigger asChild>
-        <Button
-          type="button"
-          variant="outline"
-          className="shrink-0"
-        >
-          <Plus className="h-4 w-4" />
-        </Button>
-      </DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Add New Payer</DialogTitle>

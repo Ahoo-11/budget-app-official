@@ -77,23 +77,25 @@ export const PayerSelector = ({ selectedPayerId, onSelect }: PayerSelectorProps)
 
   return (
     <div className="relative">
-      <div className="flex gap-2">
-        <PayerSearchInput
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-        />
-        <AddPayerDialog
-          isOpen={isDialogOpen}
-          onOpenChange={setIsDialogOpen}
-          onAdd={(name) => addPayer.mutate(name)}
-        />
-      </div>
+      <PayerSearchInput
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        onAddClick={() => setIsDialogOpen(true)}
+      />
 
-      {searchQuery && <PayerList
-        payers={filteredPayers}
-        selectedPayerId={selectedPayerId}
-        onSelect={handlePayerSelect}
-      />}
+      {searchQuery && (
+        <PayerList
+          payers={filteredPayers}
+          selectedPayerId={selectedPayerId}
+          onSelect={handlePayerSelect}
+        />
+      )}
+
+      <AddPayerDialog
+        isOpen={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        onAdd={(name) => addPayer.mutate(name)}
+      />
     </div>
   );
 };

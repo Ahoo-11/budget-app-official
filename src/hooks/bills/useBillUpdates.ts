@@ -32,7 +32,6 @@ export const useBillUpdates = (activeBillId: string | undefined, items: BillProd
     if (!activeBillId) return;
 
     try {
-      console.log('Updating bill with:', { ...updates, items: updates.items?.length });
       const { error } = await supabase
         .from('bills')
         .update({
@@ -95,7 +94,6 @@ export const useBillUpdates = (activeBillId: string | undefined, items: BillProd
   useEffect(() => {
     if (!activeBillId || items.length === 0) return;
     
-    console.log('Items changed, updating bill:', items);
     updateBillInSupabase({
       items: serializeBillItems(items),
       subtotal,
@@ -121,7 +119,6 @@ export const useBillUpdates = (activeBillId: string | undefined, items: BillProd
         if (error) throw error;
 
         if (bill) {
-          console.log('Loaded bill data:', bill);
           setDiscount(bill.discount || 0);
           setDate(new Date(bill.date));
           setSelectedPayerId(bill.payer_id || "");
