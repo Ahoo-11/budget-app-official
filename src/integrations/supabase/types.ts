@@ -464,6 +464,48 @@ export type Database = {
           },
         ]
       }
+      source_customer_settings: {
+        Row: {
+          created_at: string
+          credit_days: number
+          customer_id: string
+          id: string
+          source_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          credit_days?: number
+          customer_id: string
+          id?: string
+          source_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          credit_days?: number
+          customer_id?: string
+          id?: string
+          source_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "source_customer_settings_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "source_customer_settings_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       source_permissions: {
         Row: {
           can_create: boolean

@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, X } from "lucide-react";
+import { CustomerCreditSettings } from "@/components/customers/CustomerCreditSettings";
 
 interface Customer {
   id: string;
@@ -14,9 +15,10 @@ interface Customer {
 interface CustomerSelectorProps {
   selectedCustomerId?: string;
   onSelect: (customerId: string) => void;
+  sourceId?: string;
 }
 
-export const CustomerSelector = ({ selectedCustomerId, onSelect }: CustomerSelectorProps) => {
+export const CustomerSelector = ({ selectedCustomerId, onSelect, sourceId }: CustomerSelectorProps) => {
   const [search, setSearch] = useState("");
   const [showResults, setShowResults] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -83,6 +85,13 @@ export const CustomerSelector = ({ selectedCustomerId, onSelect }: CustomerSelec
           {selectedCustomerId ? (
             <div className="flex items-center gap-2 p-2 border rounded-md">
               <span className="flex-1">{selectedCustomer?.name}</span>
+              {sourceId && (
+                <CustomerCreditSettings
+                  customerId={selectedCustomerId}
+                  sourceId={sourceId}
+                  customerName={selectedCustomer?.name || ""}
+                />
+              )}
               <Button
                 variant="ghost"
                 size="sm"
