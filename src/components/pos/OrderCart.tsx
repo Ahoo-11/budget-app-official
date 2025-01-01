@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, Calendar, Trash2 } from "lucide-react";
 import { BillProduct } from "@/types/bill";
-import { CustomerSelector } from "./customer/CustomerSelector";
+import { PayerSelector } from "./payer/PayerSelector";
 import { format } from "date-fns";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
@@ -26,7 +26,7 @@ interface OrderCartProps {
   items: BillProduct[];
   onUpdateQuantity: (productId: string, quantity: number) => void;
   onRemove: (productId: string) => void;
-  onCheckout: (customerId?: string) => void;
+  onCheckout: (payerId?: string) => void;
   isSubmitting?: boolean;
   activeBillId?: string;
 }
@@ -43,17 +43,17 @@ export const OrderCart = ({
   const {
     discount,
     date,
-    selectedCustomerId,
+    selectedPayerId,
     subtotal,
     gstAmount,
     finalTotal,
-    handleCustomerSelect,
+    handlePayerSelect,
     handleDateChange,
     handleDiscountChange
   } = useBillUpdates(activeBillId, items);
 
   const handleCheckout = () => {
-    onCheckout(selectedCustomerId || undefined);
+    onCheckout(selectedPayerId || undefined);
   };
 
   const handleCancelBill = async () => {
@@ -72,7 +72,6 @@ export const OrderCart = ({
         description: "The bill has been successfully cancelled.",
       });
 
-      // Refresh the page to show updated bills
       window.location.reload();
     } catch (error) {
       console.error('Error cancelling bill:', error);
@@ -89,9 +88,10 @@ export const OrderCart = ({
       <div className="p-4 space-y-4">
         <div className="flex gap-2">
           <div className="flex-1">
-            <CustomerSelector
-              selectedCustomerId={selectedCustomerId}
-              onSelect={handleCustomerSelect}
+            <PayerSelector
+              selectedPayerId={selectedPayerId}
+              onSelect={handlePayerSelect}
+              sourceId={activeBillId?.split('-')[0]}
             />
           </div>
           <Popover>

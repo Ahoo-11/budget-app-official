@@ -20,7 +20,7 @@ const serializeBillItems = (items: BillProduct[]) => {
 export const useBillUpdates = (activeBillId: string | undefined, items: BillProduct[]) => {
   const [discount, setDiscount] = useState<number>(0);
   const [date, setDate] = useState<Date>(new Date());
-  const [selectedCustomerId, setSelectedCustomerId] = useState<string>("");
+  const [selectedPayerId, setSelectedPayerId] = useState<string>("");
   const { toast } = useToast();
 
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
@@ -52,10 +52,10 @@ export const useBillUpdates = (activeBillId: string | undefined, items: BillProd
     }
   };
 
-  const handleCustomerSelect = async (customerId: string) => {
-    setSelectedCustomerId(customerId);
+  const handlePayerSelect = async (payerId: string) => {
+    setSelectedPayerId(payerId);
     await updateBillInSupabase({ 
-      customer_id: customerId,
+      payer_id: payerId,
       items: serializeBillItems(items),
       subtotal,
       gst: gstAmount,
@@ -74,7 +74,7 @@ export const useBillUpdates = (activeBillId: string | undefined, items: BillProd
       gst: gstAmount,
       total: finalTotal,
       discount,
-      customer_id: selectedCustomerId
+      payer_id: selectedPayerId
     });
   };
 
@@ -88,11 +88,10 @@ export const useBillUpdates = (activeBillId: string | undefined, items: BillProd
       subtotal,
       gst: gstAmount,
       date: date.toISOString(),
-      customer_id: selectedCustomerId
+      payer_id: selectedPayerId
     });
   };
 
-  // Update bill whenever items change
   useEffect(() => {
     if (!activeBillId || items.length === 0) return;
     
@@ -103,12 +102,11 @@ export const useBillUpdates = (activeBillId: string | undefined, items: BillProd
       gst: gstAmount,
       total: finalTotal,
       discount,
-      customer_id: selectedCustomerId,
+      payer_id: selectedPayerId,
       date: date.toISOString()
     });
   }, [items, subtotal, gstAmount, finalTotal, activeBillId]);
 
-  // Load initial bill data when activeBillId changes
   useEffect(() => {
     const loadBillData = async () => {
       if (!activeBillId) return;
@@ -118,7 +116,7 @@ export const useBillUpdates = (activeBillId: string | undefined, items: BillProd
           .from('bills')
           .select('*')
           .eq('id', activeBillId)
-          .single();
+          .maybeSingle();
 
         if (error) throw error;
 
@@ -126,7 +124,7 @@ export const useBillUpdates = (activeBillId: string | undefined, items: BillProd
           console.log('Loaded bill data:', bill);
           setDiscount(bill.discount || 0);
           setDate(new Date(bill.date));
-          setSelectedCustomerId(bill.customer_id || "");
+          setSelectedPayerId(bill.payer_id || "");
         }
       } catch (error) {
         console.error('Error loading bill:', error);
@@ -144,11 +142,11 @@ export const useBillUpdates = (activeBillId: string | undefined, items: BillProd
   return {
     discount,
     date,
-    selectedCustomerId,
+    selectedPayerId,
     subtotal,
     gstAmount,
     finalTotal,
-    handleCustomerSelect,
+    handlePayerSelect,
     handleDateChange,
     handleDiscountChange
   };
