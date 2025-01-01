@@ -1,4 +1,4 @@
-import { Transaction, TransactionStatus } from "@/types/transaction";
+import { Transaction, getDisplayStatus } from "@/types/transaction";
 import { format } from "date-fns";
 import { ArrowDownIcon, ArrowUpIcon, FileIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -27,23 +27,22 @@ export const TransactionItem = ({ transaction, onDelete, onEdit }: TransactionIt
         return "bg-green-500";
       case "pending":
         return "bg-yellow-500";
-      case "approved":
-        return "bg-blue-500";
-      case "overdue":
-        return "bg-red-500";
-      case "cancelled":
-        return "bg-gray-500";
       case "partially_paid":
         return "bg-purple-500";
+      case "overdue":
+        return "bg-red-500";
       default:
         return "bg-gray-500";
     }
   };
 
+  const displayStatus = getDisplayStatus(transaction);
+
   const handleStatusChange = async (newStatus: string) => {
+    if (newStatus === "overdue") return; // Can't set overdue status directly
     await updateTransaction({
       ...transaction,
-      status: newStatus as TransactionStatus
+      status: newStatus as Transaction["status"]
     });
   };
 
@@ -80,17 +79,14 @@ export const TransactionItem = ({ transaction, onDelete, onEdit }: TransactionIt
         >
           <SelectTrigger className="w-[140px]">
             <SelectValue>
-              <Badge variant="secondary" className={getStatusColor(transaction.status)}>
-                {transaction.status}
+              <Badge variant="secondary" className={getStatusColor(displayStatus)}>
+                {displayStatus}
               </Badge>
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="pending">Pending</SelectItem>
-            <SelectItem value="approved">Approved</SelectItem>
             <SelectItem value="completed">Completed</SelectItem>
-            <SelectItem value="overdue">Overdue</SelectItem>
-            <SelectItem value="cancelled">Cancelled</SelectItem>
             <SelectItem value="partially_paid">Partially Paid</SelectItem>
           </SelectContent>
         </Select>

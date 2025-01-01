@@ -18,4 +18,21 @@ export interface Transaction {
   parent_transaction_id?: string;
 }
 
-export type TransactionStatus = "pending" | "approved" | "completed" | "overdue" | "cancelled" | "partially_paid";
+export type TransactionStatus = "pending" | "completed" | "partially_paid";
+
+export interface TransactionDisplay extends Transaction {
+  displayStatus: TransactionStatus | "overdue";
+}
+
+export const isOverdue = (transaction: Transaction): boolean => {
+  if (transaction.status !== "pending") return false;
+  const transactionDate = new Date(transaction.date);
+  const today = new Date();
+  // Default to 1 day credit period if not specified
+  return today > new Date(transactionDate.getTime() + 24 * 60 * 60 * 1000);
+};
+
+export const getDisplayStatus = (transaction: Transaction): TransactionStatus | "overdue" => {
+  if (isOverdue(transaction)) return "overdue";
+  return transaction.status;
+};
