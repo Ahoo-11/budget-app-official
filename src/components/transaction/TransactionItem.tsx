@@ -1,8 +1,16 @@
-import { Transaction } from "@/types/transaction";
+import { Transaction, TransactionStatus } from "@/types/transaction";
 import { format } from "date-fns";
 import { ArrowDownIcon, ArrowUpIcon, FileIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useTransactions } from "@/hooks/useTransactions";
 
 interface TransactionItemProps {
   transaction: Transaction;
@@ -11,6 +19,8 @@ interface TransactionItemProps {
 }
 
 export const TransactionItem = ({ transaction, onDelete, onEdit }: TransactionItemProps) => {
+  const { updateTransaction } = useTransactions();
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "completed":
@@ -28,6 +38,13 @@ export const TransactionItem = ({ transaction, onDelete, onEdit }: TransactionIt
       default:
         return "bg-gray-500";
     }
+  };
+
+  const handleStatusChange = async (newStatus: string) => {
+    await updateTransaction({
+      ...transaction,
+      status: newStatus as TransactionStatus
+    });
   };
 
   return (
@@ -57,9 +74,26 @@ export const TransactionItem = ({ transaction, onDelete, onEdit }: TransactionIt
       </div>
 
       <div className="flex items-center gap-4">
-        <Badge variant="secondary" className={getStatusColor(transaction.status)}>
-          {transaction.status}
-        </Badge>
+        <Select
+          value={transaction.status}
+          onValueChange={handleStatusChange}
+        >
+          <SelectTrigger className="w-[140px]">
+            <SelectValue>
+              <Badge variant="secondary" className={getStatusColor(transaction.status)}>
+                {transaction.status}
+              </Badge>
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="pending">Pending</SelectItem>
+            <SelectItem value="approved">Approved</SelectItem>
+            <SelectItem value="completed">Completed</SelectItem>
+            <SelectItem value="overdue">Overdue</SelectItem>
+            <SelectItem value="cancelled">Cancelled</SelectItem>
+            <SelectItem value="partially_paid">Partially Paid</SelectItem>
+          </SelectContent>
+        </Select>
 
         {transaction.document_url && (
           <a
