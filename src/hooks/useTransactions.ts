@@ -66,7 +66,7 @@ export const useTransactions = (source_id?: string) => {
         category_id: transaction.category_id || null,
         payer_id: transaction.payer_id || null,
         status: transaction.status || 'pending',
-        user_id: session?.user?.id || '00000000-0000-0000-0000-000000000000'
+        user_id: session?.user?.id
       };
 
       const { data, error } = await supabase
@@ -98,14 +98,15 @@ export const useTransactions = (source_id?: string) => {
   });
 
   const updateTransactionMutation = useMutation({
-    mutationFn: async ({ id, ...transaction }: Transaction) => {
+    mutationFn: async (transaction: Transaction) => {
+      const { id, ...updateData } = transaction;
       const cleanTransaction = {
-        ...transaction,
-        amount: parseFloat(transaction.amount.toString()),
-        category_id: transaction.category_id || null,
-        payer_id: transaction.payer_id || null,
-        status: transaction.status || 'pending',
-        user_id: session?.user?.id || '00000000-0000-0000-0000-000000000000'
+        ...updateData,
+        amount: parseFloat(updateData.amount.toString()),
+        category_id: updateData.category_id || null,
+        payer_id: updateData.payer_id || null,
+        status: updateData.status || 'pending',
+        user_id: session?.user?.id
       };
 
       const { error } = await supabase

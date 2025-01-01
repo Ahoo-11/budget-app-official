@@ -11,11 +11,11 @@ export interface Transaction {
   date: string;
   created_at?: string;
   created_by_name: string;
-  status: "pending" | "approved" | "completed" | "overdue" | "cancelled" | "partially_paid";
+  status: TransactionStatus;
   document_url?: string;
   total_amount?: number;
   remaining_amount?: number;
   parent_transaction_id?: string;
 }
 
-export type TransactionStatus = Transaction["status"];
+export type TransactionStatus = "pending" | "approved" | "completed" | "overdue" | "cancelled" | "partially_paid";
