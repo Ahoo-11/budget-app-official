@@ -1,8 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
-import { CalendarIcon, ArrowUpIcon, ArrowDownIcon } from "lucide-react";
+import { CalendarIcon, ArrowUpIcon, ArrowDownIcon, PlusCircle, RepeatIcon } from "lucide-react";
 
 interface RecurringTransaction {
   id: string;
@@ -29,13 +30,28 @@ export const RecurringTransactions = () => {
   });
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-2xl font-bold">Recurring Transactions</h2>
-      <div className="grid gap-4 md:grid-cols-2">
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div className="space-y-1">
+          <h2 className="text-2xl font-bold">Recurring Transactions</h2>
+          <p className="text-sm text-muted-foreground">
+            Manage your recurring income and expenses
+          </p>
+        </div>
+        <Button className="flex items-center gap-2">
+          <PlusCircle className="w-4 h-4" />
+          Add Recurring
+        </Button>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {recurringTransactions.map((transaction) => (
-          <Card key={transaction.id} className="p-4 space-y-2">
+          <Card key={transaction.id} className="p-4 space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="font-semibold">{transaction.description}</h3>
+              <div className="flex items-center gap-2">
+                <RepeatIcon className="w-4 h-4 text-muted-foreground" />
+                <h3 className="font-semibold">{transaction.description}</h3>
+              </div>
               <span className={`flex items-center ${
                 transaction.type === 'income' ? 'text-success' : 'text-destructive'
               }`}>
@@ -43,25 +59,42 @@ export const RecurringTransactions = () => {
                 ${transaction.amount.toFixed(2)}
               </span>
             </div>
+            
             <div className="flex items-center text-sm text-muted-foreground">
               <CalendarIcon className="w-4 h-4 mr-1" />
               Next due: {format(new Date(transaction.next_due_date), 'PPP')}
             </div>
+            
             <div className="flex items-center gap-2 text-sm">
-              <span className="px-2 py-1 rounded-full bg-secondary">
+              <span className="px-2 py-1 rounded-full bg-secondary capitalize">
                 {transaction.frequency}
               </span>
               {transaction.is_fixed && (
                 <span className="px-2 py-1 rounded-full bg-secondary">
-                  fixed amount
+                  Fixed amount
                 </span>
               )}
             </div>
+            
+            <div className="pt-2 border-t">
+              <Button variant="outline" className="w-full" size="sm">
+                Edit
+              </Button>
+            </div>
           </Card>
         ))}
+        
         {recurringTransactions.length === 0 && (
-          <div className="col-span-2 text-center py-8 text-muted-foreground">
-            No recurring transactions found
+          <div className="col-span-full flex flex-col items-center justify-center py-12 text-center">
+            <RepeatIcon className="w-12 h-12 text-muted-foreground mb-4" />
+            <h3 className="text-lg font-semibold">No recurring transactions</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Start by adding your first recurring transaction
+            </p>
+            <Button className="flex items-center gap-2">
+              <PlusCircle className="w-4 h-4" />
+              Add Recurring Transaction
+            </Button>
           </div>
         )}
       </div>
