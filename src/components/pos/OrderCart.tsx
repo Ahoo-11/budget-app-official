@@ -89,8 +89,8 @@ export const OrderCart = ({
         <div className="flex gap-2">
           <div className="flex-1">
             <PayerSelector
-              selectedPayerId={selectedPayerId}
-              onSelect={handlePayerSelect}
+              selectedPayer={selectedPayerId}
+              setSelectedPayer={handlePayerSelect}
             />
           </div>
           <Popover>

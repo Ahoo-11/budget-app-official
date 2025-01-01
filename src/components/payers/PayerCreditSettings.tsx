@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import { PayerCreditSettings } from "@/types/payer";
+import { PayerCreditSettings as PayerCreditSettingsType } from "@/types/payer";
 
 interface PayerCreditSettingsProps {
   sourceId: string;
@@ -27,14 +27,17 @@ export const PayerCreditSettings = ({ sourceId, payerId }: PayerCreditSettingsPr
         .single();
 
       if (error) throw error;
-      return data as PayerCreditSettings;
+      return data as PayerCreditSettingsType;
     },
-    onSuccess: (data) => {
-      if (data) {
-        setCreditDays(data.credit_days);
-      }
-    }
+    enabled: !!sourceId && !!payerId
   });
+
+  // Update credit days when settings change
+  useEffect(() => {
+    if (settings) {
+      setCreditDays(settings.credit_days);
+    }
+  }, [settings]);
 
   const updateSettings = useMutation({
     mutationFn: async () => {

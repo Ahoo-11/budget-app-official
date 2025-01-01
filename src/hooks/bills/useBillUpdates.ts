@@ -3,20 +3,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { BillProduct } from "@/types/bill";
 
-const serializeBillItems = (items: BillProduct[]) => {
-  return items.map(item => ({
-    id: item.id,
-    name: item.name,
-    price: item.price,
-    quantity: item.quantity,
-    type: item.type,
-    source_id: item.source_id,
-    category: item.category,
-    image_url: item.image_url,
-    description: item.description,
-  }));
-};
-
 export const useBillUpdates = (activeBillId: string | undefined, items: BillProduct[]) => {
   const [discount, setDiscount] = useState<number>(0);
   const [date, setDate] = useState<Date>(new Date());
