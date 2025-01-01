@@ -9,6 +9,7 @@ import { CategoryManager } from "@/components/source/CategoryManager";
 import { SupplierManager } from "@/components/source/SupplierManager";
 import { ExpenseInterface } from "@/components/expense/ExpenseInterface";
 import { InventoryManager } from "@/components/inventory/InventoryManager";
+import { RecurringTransactions } from "@/components/source/RecurringTransactions";
 import { useToast } from "@/hooks/use-toast";
 
 const Source = () => {
@@ -72,6 +73,7 @@ const Source = () => {
         <TabsList className="w-full justify-start border-b rounded-none px-4 bg-background">
           <TabsTrigger value="income">Income</TabsTrigger>
           <TabsTrigger value="expense">Expense</TabsTrigger>
+          <TabsTrigger value="recurring">Recurring</TabsTrigger>
           <TabsTrigger value="inventory">Inventory</TabsTrigger>
           <TabsTrigger value="products">Products</TabsTrigger>
           <TabsTrigger value="categories">Categories</TabsTrigger>
@@ -85,6 +87,10 @@ const Source = () => {
 
           <TabsContent value="expense" className="m-0">
             <ExpenseInterface sourceId={sourceId!} />
+          </TabsContent>
+
+          <TabsContent value="recurring" className="m-0">
+            <RecurringTransactions sourceId={sourceId!} />
           </TabsContent>
 
           <TabsContent value="inventory" className="m-0">
