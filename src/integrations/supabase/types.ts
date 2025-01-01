@@ -332,6 +332,88 @@ export type Database = {
         }
         Relationships: []
       }
+      recurring_transactions: {
+        Row: {
+          amount: number
+          amount_variance: number | null
+          category_id: string | null
+          created_at: string | null
+          day_of_month: number | null
+          description: string
+          end_date: string | null
+          frequency: Database["public"]["Enums"]["recurring_frequency"]
+          id: string
+          is_fixed: boolean | null
+          next_due_date: string
+          payer_id: string | null
+          source_id: string
+          start_date: string
+          type: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          amount_variance?: number | null
+          category_id?: string | null
+          created_at?: string | null
+          day_of_month?: number | null
+          description: string
+          end_date?: string | null
+          frequency: Database["public"]["Enums"]["recurring_frequency"]
+          id?: string
+          is_fixed?: boolean | null
+          next_due_date: string
+          payer_id?: string | null
+          source_id: string
+          start_date: string
+          type: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          amount_variance?: number | null
+          category_id?: string | null
+          created_at?: string | null
+          day_of_month?: number | null
+          description?: string
+          end_date?: string | null
+          frequency?: Database["public"]["Enums"]["recurring_frequency"]
+          id?: string
+          is_fixed?: boolean | null
+          next_due_date?: string
+          payer_id?: string | null
+          source_id?: string
+          start_date?: string
+          type?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recurring_transactions_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recurring_transactions_payer_id_fkey"
+            columns: ["payer_id"]
+            isOneToOne: false
+            referencedRelation: "payers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recurring_transactions_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       services: {
         Row: {
           category: string | null
@@ -741,6 +823,7 @@ export type Database = {
       }
     }
     Enums: {
+      recurring_frequency: "daily" | "weekly" | "monthly" | "yearly"
       template_type: "business" | "personal"
       user_role_type:
         | "super_admin"
