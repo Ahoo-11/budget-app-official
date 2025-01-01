@@ -688,7 +688,7 @@ export type Database = {
           payer_id: string | null
           remaining_amount: number | null
           source_id: string
-          status: string
+          status: Database["public"]["Enums"]["transaction_status"]
           total_amount: number | null
           type: string
           user_id: string
@@ -708,7 +708,7 @@ export type Database = {
           payer_id?: string | null
           remaining_amount?: number | null
           source_id: string
-          status?: string
+          status?: Database["public"]["Enums"]["transaction_status"]
           total_amount?: number | null
           type: string
           user_id: string
@@ -728,7 +728,7 @@ export type Database = {
           payer_id?: string | null
           remaining_amount?: number | null
           source_id?: string
-          status?: string
+          status?: Database["public"]["Enums"]["transaction_status"]
           total_amount?: number | null
           type?: string
           user_id?: string
@@ -856,13 +856,7 @@ export type Database = {
     Enums: {
       recurring_frequency: "daily" | "weekly" | "monthly" | "yearly"
       template_type: "business" | "personal"
-      transaction_status:
-        | "pending"
-        | "approved"
-        | "completed"
-        | "overdue"
-        | "cancelled"
-        | "partially_paid"
+      transaction_status: "pending" | "completed" | "partially_paid"
       user_role_type:
         | "super_admin"
         | "admin"
