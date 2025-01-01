@@ -3,6 +3,7 @@ import { SourceSelector } from "../SourceSelector";
 import { PayerSelector } from "../PayerSelector";
 import { CategorySelector } from "../CategorySelector";
 import { TransactionForm } from "../TransactionForm";
+import { TransactionStatus } from "@/types/transaction";
 
 interface TransactionFormContentProps {
   type: "income" | "expense";
@@ -19,6 +20,8 @@ interface TransactionFormContentProps {
   setAmount: (amount: string) => void;
   date: Date;
   setDate: (date: Date) => void;
+  status: TransactionStatus;
+  setStatus: (status: TransactionStatus) => void;
   isSubmitting: boolean;
   isEditing?: boolean;
   source_id?: string;
@@ -39,6 +42,8 @@ export const TransactionFormContent = ({
   setAmount,
   date,
   setDate,
+  status,
+  setStatus,
   isSubmitting,
   isEditing,
   source_id,
@@ -67,8 +72,11 @@ export const TransactionFormContent = ({
         setAmount={setAmount}
         date={date}
         setDate={setDate}
+        status={status}
+        setStatus={setStatus}
         isSubmitting={isSubmitting}
         isEditing={isEditing}
+        sourceId={source_id || selectedSource}
       />
     </>
   );

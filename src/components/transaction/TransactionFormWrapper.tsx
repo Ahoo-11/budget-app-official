@@ -127,17 +127,17 @@ export const TransactionFormWrapper = ({
         date: formState.date.toISOString(),
         source_id: source_id || formState.selectedSource,
         user_id: session.user.id,
-        created_by_name: formState.displayName
+        created_by_name: formState.displayName,
+        status: formState.status
       };
-
-      const isProductBased = sourceTemplate?.templates?.config?.productBased === true;
 
       if (editingTransaction && onUpdate) {
         await onUpdate({
           ...transactionData,
           id: editingTransaction.id,
           created_at: editingTransaction.created_at,
-          created_by_name: formState.displayName
+          created_by_name: formState.displayName,
+          status: formState.status
         });
       } else {
         await onAdd(transactionData);
@@ -151,6 +151,7 @@ export const TransactionFormWrapper = ({
       formState.setSelectedPayer("");
       formState.setSelectedCategory("");
       formState.setDate(new Date());
+      formState.setStatus("pending");
       
       if (onClose) {
         onClose();

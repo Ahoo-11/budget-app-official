@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Transaction } from "@/types/transaction";
+import { Transaction, TransactionStatus } from "@/types/transaction";
 import { useSession } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -14,6 +14,7 @@ export const useTransactionForm = (editingTransaction?: Transaction | null) => {
   const [date, setDate] = useState(new Date());
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [displayName, setDisplayName] = useState("Unknown User");
+  const [status, setStatus] = useState<TransactionStatus>("pending");
   const session = useSession();
 
   useEffect(() => {
@@ -44,6 +45,7 @@ export const useTransactionForm = (editingTransaction?: Transaction | null) => {
       setSelectedPayer(editingTransaction.payer_id || "");
       setSelectedCategory(editingTransaction.category_id || "");
       setDate(new Date(editingTransaction.date));
+      setStatus(editingTransaction.status);
     }
   }, [editingTransaction]);
 
@@ -64,6 +66,8 @@ export const useTransactionForm = (editingTransaction?: Transaction | null) => {
     setSelectedCategory,
     date,
     setDate,
+    status,
+    setStatus,
     isSubmitting,
     setIsSubmitting,
     displayName,
