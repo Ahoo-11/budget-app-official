@@ -42,12 +42,12 @@ export type Database = {
       bills: {
         Row: {
           created_at: string
-          customer_id: string | null
           date: string
           discount: number
           gst: number
           id: string
           items: Json
+          payer_id: string | null
           source_id: string
           status: string
           subtotal: number
@@ -57,12 +57,12 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          customer_id?: string | null
           date?: string
           discount?: number
           gst?: number
           id?: string
           items?: Json
+          payer_id?: string | null
           source_id: string
           status: string
           subtotal?: number
@@ -72,12 +72,12 @@ export type Database = {
         }
         Update: {
           created_at?: string
-          customer_id?: string | null
           date?: string
           discount?: number
           gst?: number
           id?: string
           items?: Json
+          payer_id?: string | null
           source_id?: string
           status?: string
           subtotal?: number
@@ -87,10 +87,10 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "bills_customer_id_fkey"
-            columns: ["customer_id"]
+            foreignKeyName: "bills_payer_id_fkey"
+            columns: ["payer_id"]
             isOneToOne: false
-            referencedRelation: "customers"
+            referencedRelation: "payers"
             referencedColumns: ["id"]
           },
           {
@@ -137,36 +137,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      customers: {
-        Row: {
-          address: string | null
-          contact_info: Json | null
-          created_at: string
-          id: string
-          name: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          address?: string | null
-          contact_info?: Json | null
-          created_at?: string
-          id?: string
-          name: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          address?: string | null
-          contact_info?: Json | null
-          created_at?: string
-          id?: string
-          name?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
       }
       payers: {
         Row: {
@@ -464,41 +434,41 @@ export type Database = {
           },
         ]
       }
-      source_customer_settings: {
+      source_payer_settings: {
         Row: {
           created_at: string
           credit_days: number
-          customer_id: string
           id: string
+          payer_id: string
           source_id: string
           updated_at: string
         }
         Insert: {
           created_at?: string
           credit_days?: number
-          customer_id: string
           id?: string
+          payer_id: string
           source_id: string
           updated_at?: string
         }
         Update: {
           created_at?: string
           credit_days?: number
-          customer_id?: string
           id?: string
+          payer_id?: string
           source_id?: string
           updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "source_customer_settings_customer_id_fkey"
-            columns: ["customer_id"]
+            foreignKeyName: "source_payer_settings_payer_id_fkey"
+            columns: ["payer_id"]
             isOneToOne: false
-            referencedRelation: "customers"
+            referencedRelation: "payers"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "source_customer_settings_source_id_fkey"
+            foreignKeyName: "source_payer_settings_source_id_fkey"
             columns: ["source_id"]
             isOneToOne: false
             referencedRelation: "sources"
@@ -721,7 +691,6 @@ export type Database = {
           category_id: string | null
           created_at: string
           created_by_name: string
-          customer_id: string | null
           date: string
           description: string
           document_url: string | null
@@ -741,7 +710,6 @@ export type Database = {
           category_id?: string | null
           created_at?: string
           created_by_name?: string
-          customer_id?: string | null
           date?: string
           description: string
           document_url?: string | null
@@ -761,7 +729,6 @@ export type Database = {
           category_id?: string | null
           created_at?: string
           created_by_name?: string
-          customer_id?: string | null
           date?: string
           description?: string
           document_url?: string | null
@@ -781,13 +748,6 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "categories"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "transactions_customer_id_fkey"
-            columns: ["customer_id"]
-            isOneToOne: false
-            referencedRelation: "customers"
             referencedColumns: ["id"]
           },
           {

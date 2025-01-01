@@ -3,17 +3,17 @@ import { supabase } from "@/integrations/supabase/client";
 export const getBillStatus = async (
   billDate: Date,
   sourceId: string,
-  customerId: string | null
+  payerId: string | null
 ): Promise<'overdue' | 'pending'> => {
-  if (!customerId) return 'pending';
+  if (!payerId) return 'pending';
 
   try {
-    // Get customer credit settings
+    // Get payer credit settings
     const { data: settings } = await supabase
-      .from('source_customer_settings')
+      .from('source_payer_settings')
       .select('credit_days')
       .eq('source_id', sourceId)
-      .eq('customer_id', customerId)
+      .eq('payer_id', payerId)
       .single();
 
     const creditDays = settings?.credit_days || 1; // Default to 1 day if no settings

@@ -4,55 +4,55 @@ import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, X } from "lucide-react";
-import { CustomerCreditSettings } from "@/components/customers/CustomerCreditSettings";
+import { PayerCreditSettings } from "@/components/payers/PayerCreditSettings";
 
-interface Customer {
+interface Payer {
   id: string;
   name: string;
   contact_info?: any;
 }
 
-interface CustomerSelectorProps {
-  selectedCustomerId?: string;
-  onSelect: (customerId: string) => void;
+interface PayerSelectorProps {
+  selectedPayerId?: string;
+  onSelect: (payerId: string) => void;
   sourceId?: string;
 }
 
-export const CustomerSelector = ({ selectedCustomerId, onSelect, sourceId }: CustomerSelectorProps) => {
+export const CustomerSelector = ({ selectedPayerId, onSelect, sourceId }: PayerSelectorProps) => {
   const [search, setSearch] = useState("");
   const [showResults, setShowResults] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
-  const { data: customers = [] } = useQuery({
-    queryKey: ['customers'],
+  const { data: payers = [] } = useQuery({
+    queryKey: ['payers'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('customers')
+        .from('payers')
         .select('*')
         .order('name');
       
       if (error) throw error;
-      return data as Customer[];
+      return data as Payer[];
     }
   });
 
-  const { data: selectedCustomer } = useQuery({
-    queryKey: ['customer', selectedCustomerId],
-    enabled: !!selectedCustomerId,
+  const { data: selectedPayer } = useQuery({
+    queryKey: ['payer', selectedPayerId],
+    enabled: !!selectedPayerId,
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('customers')
+        .from('payers')
         .select('*')
-        .eq('id', selectedCustomerId)
+        .eq('id', selectedPayerId)
         .single();
       
       if (error) throw error;
-      return data as Customer;
+      return data as Payer;
     }
   });
 
-  const filteredCustomers = customers.filter(customer =>
-    customer.name.toLowerCase().includes(search.toLowerCase())
+  const filteredPayers = payers.filter(payer =>
+    payer.name.toLowerCase().includes(search.toLowerCase())
   );
 
   useEffect(() => {
@@ -66,8 +66,8 @@ export const CustomerSelector = ({ selectedCustomerId, onSelect, sourceId }: Cus
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleCustomerSelect = (customer: Customer) => {
-    onSelect(customer.id);
+  const handlePayerSelect = (payer: Payer) => {
+    onSelect(payer.id);
     setSearch("");
     setShowResults(false);
   };
@@ -82,14 +82,14 @@ export const CustomerSelector = ({ selectedCustomerId, onSelect, sourceId }: Cus
     <div ref={wrapperRef} className="relative">
       <div className="flex gap-2">
         <div className="relative flex-1">
-          {selectedCustomerId ? (
+          {selectedPayerId ? (
             <div className="flex items-center gap-2 p-2 border rounded-md">
-              <span className="flex-1">{selectedCustomer?.name}</span>
+              <span className="flex-1">{selectedPayer?.name}</span>
               {sourceId && (
-                <CustomerCreditSettings
-                  customerId={selectedCustomerId}
+                <PayerCreditSettings
+                  payerId={selectedPayerId}
                   sourceId={sourceId}
-                  customerName={selectedCustomer?.name || ""}
+                  payerName={selectedPayer?.name || ""}
                 />
               )}
               <Button
@@ -106,7 +106,7 @@ export const CustomerSelector = ({ selectedCustomerId, onSelect, sourceId }: Cus
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 type="text"
-                placeholder="Search customers..."
+                placeholder="Search payers..."
                 value={search}
                 onChange={(e) => {
                   setSearch(e.target.value);
@@ -120,18 +120,18 @@ export const CustomerSelector = ({ selectedCustomerId, onSelect, sourceId }: Cus
         </div>
       </div>
 
-      {showResults && search && filteredCustomers.length > 0 && (
+      {showResults && search && filteredPayers.length > 0 && (
         <div className="absolute z-50 w-full mt-1 bg-background border rounded-md shadow-lg max-h-60 overflow-auto">
-          {filteredCustomers.map(customer => (
+          {filteredPayers.map(payer => (
             <button
-              key={customer.id}
-              onClick={() => handleCustomerSelect(customer)}
+              key={payer.id}
+              onClick={() => handlePayerSelect(payer)}
               className="w-full px-4 py-2 text-left hover:bg-accent transition-colors"
             >
-              <div className="font-medium">{customer.name}</div>
-              {customer.contact_info && (
+              <div className="font-medium">{payer.name}</div>
+              {payer.contact_info && (
                 <div className="text-sm text-muted-foreground">
-                  {customer.contact_info.phone || customer.contact_info.email}
+                  {payer.contact_info.phone || payer.contact_info.email}
                 </div>
               )}
             </button>
