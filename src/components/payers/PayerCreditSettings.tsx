@@ -11,6 +11,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { PayerCreditSettings as PayerCreditSettingsType } from "@/types/payer";
 
 interface PayerCreditSettingsProps {
   payerId: string;
@@ -35,7 +36,7 @@ export const PayerCreditSettings = ({ payerId, sourceId, payerName }: PayerCredi
         .single();
 
       if (error && error.code !== 'PGRST116') throw error;
-      return data;
+      return data as PayerCreditSettingsType;
     }
   });
 
