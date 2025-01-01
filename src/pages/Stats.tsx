@@ -9,7 +9,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useTransactions } from "@/hooks/useTransactions";
 import { TransactionTypeDistribution } from "@/components/stats/TransactionTypeDistribution";
 import { TransactionReports } from "@/components/stats/TransactionReports";
-import { RecurringTransactions } from "@/components/stats/RecurringTransactions";
 
 const Stats = () => {
   const [date, setDate] = useState<DateRange>({
@@ -35,7 +34,6 @@ const Stats = () => {
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="types">Types</TabsTrigger>
             <TabsTrigger value="reports">Reports</TabsTrigger>
-            <TabsTrigger value="recurring">Recurring</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-4">
@@ -99,10 +97,6 @@ const Stats = () => {
               transactions={transactions}
               dateRange={date}
             />
-          </TabsContent>
-
-          <TabsContent value="recurring">
-            <RecurringTransactions />
           </TabsContent>
         </Tabs>
       </div>
