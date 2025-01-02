@@ -22,7 +22,7 @@ export const useCheckoutManager = () => {
     }
 
     try {
-      console.log('Starting checkout:', { billId, items, payerId });
+      console.log('Starting checkout process:', { billId, items, payerId });
       
       // Get current user
       const { data: { user } } = await supabase.auth.getUser();
@@ -33,6 +33,8 @@ export const useCheckoutManager = () => {
       const gstRate = 0.08; // 8% GST
       const gstAmount = subtotal * gstRate;
       const total = subtotal + gstAmount;
+
+      console.log('Calculated totals:', { subtotal, gstAmount, total });
 
       // Prepare items for storage by converting to plain objects
       const serializedItems = items.map(item => ({
@@ -46,6 +48,8 @@ export const useCheckoutManager = () => {
         image_url: item.image_url,
         description: item.description
       }));
+
+      console.log('Updating bill status to completed...');
 
       // Update bill status and totals
       const { error: billError, data: updatedBill } = await supabase
@@ -63,7 +67,12 @@ export const useCheckoutManager = () => {
         .select()
         .single();
 
-      if (billError) throw billError;
+      if (billError) {
+        console.error('Error updating bill:', billError);
+        throw billError;
+      }
+
+      console.log('Bill updated successfully:', updatedBill);
 
       // Create transaction for the sale
       const { error: transactionError } = await supabase
@@ -111,6 +120,19 @@ export const useCheckoutManager = () => {
             throw movementError;
           }
         }
+      }
+
+      // Verify bill status after update
+      const { data: verifyBill, error: verifyError } = await supabase
+        .from('bills')
+        .select('status')
+        .eq('id', billId)
+        .single();
+        
+      console.log('Final bill status verification:', verifyBill);
+
+      if (verifyError) {
+        console.error('Error verifying bill status:', verifyError);
       }
 
       // Refresh queries
