@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Home, Menu, Plus, Settings2, LogOut, BarChart } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -11,12 +11,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { SourceActions } from "./SourceActions";
 import { useToast } from "@/hooks/use-toast";
 import { useSession } from "@supabase/auth-helpers-react";
+import { cn } from "@/lib/utils";
 
 export function AppSidebar() {
   const [isAddSourceOpen, setIsAddSourceOpen] = useState(false);
   const [newSourceName, setNewSourceName] = useState("");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
   const session = useSession();
 
@@ -179,7 +181,13 @@ export function AppSidebar() {
       <div className="flex-1">
         <nav className="space-y-2">
           <Link to="/" onClick={() => setIsMobileMenuOpen(false)}>
-            <Button variant="ghost" className="w-full justify-start">
+            <Button 
+              variant="ghost"
+              className={cn(
+                "w-full justify-start",
+                location.pathname === "/" && "bg-accent text-accent-foreground font-medium"
+              )}
+            >
               <Home className="mr-2 h-4 w-4" />
               Home
             </Button>
@@ -193,7 +201,13 @@ export function AppSidebar() {
                     onClick={() => setIsMobileMenuOpen(false)}
                     className="flex-1"
                   >
-                    <Button variant="ghost" className="w-full justify-start">
+                    <Button 
+                      variant="ghost"
+                      className={cn(
+                        "w-full justify-start",
+                        location.pathname === `/source/${source.id}` && "bg-accent text-accent-foreground font-medium"
+                      )}
+                    >
                       <Home className="mr-2 h-4 w-4" />
                       {source.name}
                     </Button>
@@ -202,14 +216,23 @@ export function AppSidebar() {
                 </div>
               ))}
               <Link to="/stats" onClick={() => setIsMobileMenuOpen(false)}>
-                <Button variant="ghost" className="w-full justify-start">
+                <Button 
+                  variant="ghost"
+                  className={cn(
+                    "w-full justify-start",
+                    location.pathname === "/stats" && "bg-accent text-accent-foreground font-medium"
+                  )}
+                >
                   <BarChart className="mr-2 h-4 w-4" />
                   Stats
                 </Button>
               </Link>
               <Button 
                 variant="ghost" 
-                className="w-full justify-start"
+                className={cn(
+                  "w-full justify-start",
+                  location.pathname === "/add-source" && "bg-accent text-accent-foreground font-medium"
+                )}
                 onClick={() => {
                   setIsAddSourceOpen(true);
                   setIsMobileMenuOpen(false);
