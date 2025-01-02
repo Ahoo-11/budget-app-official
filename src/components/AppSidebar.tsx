@@ -31,10 +31,20 @@ export function AppSidebar() {
         .eq('id', session.user.id)
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching user status:', error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to fetch user status. Please try refreshing the page.",
+        });
+        throw error;
+      }
       return data?.status;
     },
-    enabled: !!session?.user?.id
+    enabled: !!session?.user?.id,
+    retry: 3,
+    retryDelay: 1000
   });
 
   const { data: sources = [], refetch } = useQuery({
@@ -42,55 +52,85 @@ export function AppSidebar() {
     queryFn: async () => {
       if (!session?.user?.id || userStatus !== 'approved') return [];
       
-      // First check user's role
-      const { data: userRole } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', session.user.id)
-        .single();
+      try {
+        // First check user's role
+        const { data: userRole, error: roleError } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', session.user.id)
+          .single();
 
-      let query = supabase.from('sources').select('*');
-
-      // If not a controller/super_admin, only fetch permitted sources
-      if (!userRole || !['controller', 'super_admin'].includes(userRole.role)) {
-        const { data: permissions } = await supabase
-          .from('source_permissions')
-          .select('source_id')
-          .eq('user_id', session.user.id);
-
-        if (permissions && permissions.length > 0) {
-          const sourceIds = permissions.map(p => p.source_id);
-          query = query.in('id', sourceIds);
-        } else {
-          return [];
+        if (roleError) {
+          console.error('Error fetching user role:', roleError);
+          throw roleError;
         }
-      }
 
-      const { data, error } = await query.order('created_at');
-      
-      if (error) {
-        console.error('Error fetching sources:', error);
+        let query = supabase.from('sources').select('*');
+
+        // If not a controller/super_admin, only fetch permitted sources
+        if (!userRole || !['controller', 'super_admin'].includes(userRole.role)) {
+          const { data: permissions, error: permError } = await supabase
+            .from('source_permissions')
+            .select('source_id')
+            .eq('user_id', session.user.id);
+
+          if (permError) {
+            console.error('Error fetching permissions:', permError);
+            throw permError;
+          }
+
+          if (permissions && permissions.length > 0) {
+            const sourceIds = permissions.map(p => p.source_id);
+            query = query.in('id', sourceIds);
+          } else {
+            return [];
+          }
+        }
+
+        const { data, error } = await query.order('created_at');
+        
+        if (error) {
+          console.error('Error fetching sources:', error);
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to fetch sources. Please try refreshing the page.",
+          });
+          throw error;
+        }
+        return data as Source[];
+      } catch (error) {
+        console.error('Error in sources query:', error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "An error occurred while fetching sources. Please try again.",
+        });
         throw error;
       }
-      return data as Source[];
     },
-    enabled: !!session?.user?.id && userStatus === 'approved'
+    enabled: !!session?.user?.id && userStatus === 'approved',
+    retry: 3,
+    retryDelay: 1000
   });
 
   const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to log out. Please try again.",
-      });
-    } else {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      
       toast({
         title: "Success",
         description: "You have been logged out.",
       });
       navigate('/auth');
+    } catch (error) {
+      console.error('Error during logout:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to log out. Please try again.",
+      });
     }
   };
 
@@ -104,30 +144,31 @@ export function AppSidebar() {
       return;
     }
 
-    const { error } = await supabase
-      .from('sources')
-      .insert([{ 
-        name: newSourceName.trim(),
-        user_id: session.user.id
-      }]);
+    try {
+      const { error } = await supabase
+        .from('sources')
+        .insert([{ 
+          name: newSourceName.trim(),
+          user_id: session.user.id
+        }]);
 
-    if (error) {
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Source added successfully.",
+      });
+      setNewSourceName("");
+      setIsAddSourceOpen(false);
+      refetch();
+    } catch (error) {
       console.error('Error adding source:', error);
       toast({
         variant: "destructive",
         title: "Error",
         description: "Failed to add source. Please try again.",
       });
-      return;
     }
-
-    toast({
-      title: "Success",
-      description: "Source added successfully.",
-    });
-    setNewSourceName("");
-    setIsAddSourceOpen(false);
-    refetch();
   };
 
   const NavContent = () => (
