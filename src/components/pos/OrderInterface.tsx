@@ -46,11 +46,11 @@ export const OrderInterface = ({ sourceId }: { sourceId: string }) => {
       quantity: 1,
       type: 'product',
       source_id: sourceId,
-      category: product.category,
-      image_url: product.image_url,
-      description: product.description,
-      current_stock: product.current_stock,
-      purchase_cost: product.purchase_cost
+      category: product.category || null,
+      image_url: product.image_url || null,
+      description: product.description || null,
+      current_stock: product.current_stock || 0,
+      purchase_cost: product.purchase_cost || null
     };
     handleProductSelect(billProduct);
   }, [handleProductSelect, sourceId]);
@@ -63,9 +63,9 @@ export const OrderInterface = ({ sourceId }: { sourceId: string }) => {
       quantity: 1,
       type: 'service',
       source_id: sourceId,
-      category: service.category,
-      image_url: service.image_url,
-      description: service.description
+      category: service.category || null,
+      image_url: service.image_url || null,
+      description: service.description || null
     };
     handleProductSelect(billProduct);
   }, [handleProductSelect, sourceId]);
@@ -123,13 +123,15 @@ export const OrderInterface = ({ sourceId }: { sourceId: string }) => {
         onUpdateQuantity={(productId: string, quantity: number) => {
           const product = selectedProducts.find(p => p.id === productId);
           if (product) {
-            handleProductSelect({ ...product, quantity });
+            const updatedProduct = { ...product, quantity };
+            handleProductSelect(updatedProduct);
           }
         }}
         onRemove={(productId: string) => {
           const product = selectedProducts.find(p => p.id === productId);
           if (product) {
-            handleProductSelect({ ...product, quantity: 0 });
+            const updatedProduct = { ...product, quantity: 0 };
+            handleProductSelect(updatedProduct);
           }
         }}
         onCheckout={onCheckout}
