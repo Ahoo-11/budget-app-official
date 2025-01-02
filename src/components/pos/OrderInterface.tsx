@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { ProductGrid } from "./ProductGrid";
 import { OrderCart } from "./OrderCart";
 import { ServiceGrid } from "./ServiceGrid";
@@ -11,7 +11,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export const OrderInterface = ({ sourceId }: { sourceId: string }) => {
-  const [activeTab, setActiveTab] = useState<"products" | "services">("products");
+  const [activeTab, setActiveTab] = useState<"products" | "services" | "income">("products");
   const { handleCheckout } = useCheckoutManager();
   const {
     bills,
@@ -104,6 +104,53 @@ export const OrderInterface = ({ sourceId }: { sourceId: string }) => {
     handleProductSelect(billProduct);
   }, [handleProductSelect, sourceId]);
 
+  const handleTabChange = useCallback(async (tab: "products" | "services" | "income") => {
+    if (tab === "income") {
+      try {
+        // If no active bill, create one
+        if (!activeBillId) {
+          console.log('Creating new bill for income tab...');
+          const newBillId = await handleNewBill();
+          if (!newBillId) {
+            console.error('Failed to create new bill');
+            return; // Don't switch tab if bill creation fails
+          }
+          console.log('New bill created, ID:', newBillId);
+          
+          // Wait for state to update
+          await new Promise(resolve => setTimeout(resolve, 100));
+          
+          // Verify the bill was created
+          if (!activeBillId) {
+            console.error('Bill created but activeBillId not set');
+            return;
+          }
+        } else {
+          console.log('Using existing active bill:', activeBillId);
+        }
+      } catch (error) {
+        console.error('Error handling income tab:', error);
+        return;
+      }
+    }
+    setActiveTab(tab);
+  }, [activeBillId, handleNewBill]);
+
+  // Ensure we have an active bill when in income tab
+  useEffect(() => {
+    const ensureActiveBill = async () => {
+      if (activeTab === "income" && !activeBillId) {
+        console.log('No active bill in income tab, creating one...');
+        const newBillId = await handleNewBill();
+        if (newBillId) {
+          console.log('Created new bill in effect, ID:', newBillId);
+        }
+      }
+    };
+
+    ensureActiveBill();
+  }, [activeTab, activeBillId, handleNewBill]);
+
   return (
     <div className="flex h-full">
       <div className="w-2/3 p-4 overflow-auto">
@@ -115,7 +162,7 @@ export const OrderInterface = ({ sourceId }: { sourceId: string }) => {
                   ? "bg-primary text-primary-foreground"
                   : "bg-secondary"
               }`}
-              onClick={() => setActiveTab("products")}
+              onClick={() => handleTabChange("products")}
             >
               Products
             </button>
@@ -125,9 +172,19 @@ export const OrderInterface = ({ sourceId }: { sourceId: string }) => {
                   ? "bg-primary text-primary-foreground"
                   : "bg-secondary"
               }`}
-              onClick={() => setActiveTab("services")}
+              onClick={() => handleTabChange("services")}
             >
               Services
+            </button>
+            <button
+              className={`px-4 py-2 rounded ${
+                activeTab === "income"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-secondary"
+              }`}
+              onClick={() => handleTabChange("income")}
+            >
+              Income
             </button>
           </div>
           <BillActions
@@ -144,11 +201,14 @@ export const OrderInterface = ({ sourceId }: { sourceId: string }) => {
             sourceId={sourceId}
             onProductSelect={handleProductUpdate}
           />
-        ) : (
+        ) : activeTab === "services" ? (
           <ServiceGrid
             sourceId={sourceId}
             onSelect={handleServiceUpdate}
           />
+        ) : (
+          // Add income tab content here
+          <div>Income tab content</div>
         )}
       </div>
 
