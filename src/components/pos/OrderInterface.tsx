@@ -7,6 +7,8 @@ import { Product } from "@/types/product";
 import { useCheckoutManager } from "./checkout/CheckoutManager";
 import { useBillManagement } from "@/hooks/useBillManagement";
 import { BillActions } from "./BillActions";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 export const OrderInterface = ({ sourceId }: { sourceId: string }) => {
   const [activeTab, setActiveTab] = useState<"products" | "services">("products");
@@ -23,19 +25,37 @@ export const OrderInterface = ({ sourceId }: { sourceId: string }) => {
     refetchBills,
   } = useBillManagement(sourceId);
 
+  // Fetch default "Walk-in Customer" payer
+  const { data: defaultPayer } = useQuery({
+    queryKey: ['default-payer'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('payers')
+        .select('id')
+        .eq('name', 'Walk-in Customer')
+        .single();
+      
+      if (error) throw error;
+      return data;
+    }
+  });
+
   const onCheckout = useCallback(
     async (payerId: string | null) => {
       if (!activeBillId) return;
       
-      console.log('Starting checkout with payerId:', payerId);
-      const success = await handleCheckout(activeBillId, selectedProducts, payerId);
+      // Use default payer if none selected
+      const finalPayerId = payerId || defaultPayer?.id || null;
+      console.log('Starting checkout with payerId:', finalPayerId);
+      
+      const success = await handleCheckout(activeBillId, selectedProducts, finalPayerId);
       
       if (success) {
         refetchBills();
         handleNewBill();
       }
     },
-    [activeBillId, selectedProducts, handleCheckout, refetchBills, handleNewBill]
+    [activeBillId, selectedProducts, handleCheckout, refetchBills, handleNewBill, defaultPayer]
   );
 
   const handleProductUpdate = useCallback((product: Product) => {
@@ -128,7 +148,7 @@ export const OrderInterface = ({ sourceId }: { sourceId: string }) => {
             const updatedProduct: BillProduct = {
               ...product,
               quantity,
-              source_id: sourceId // Ensure source_id is set
+              source_id: sourceId
             };
             handleProductSelect(updatedProduct);
           }
@@ -139,7 +159,7 @@ export const OrderInterface = ({ sourceId }: { sourceId: string }) => {
             const updatedProduct: BillProduct = {
               ...product,
               quantity: 0,
-              source_id: sourceId // Ensure source_id is set
+              source_id: sourceId
             };
             handleProductSelect(updatedProduct);
           }
@@ -147,6 +167,7 @@ export const OrderInterface = ({ sourceId }: { sourceId: string }) => {
         onCheckout={onCheckout}
         isSubmitting={isSubmitting}
         activeBillId={activeBillId}
+        defaultPayerId={defaultPayer?.id}
       />
     </div>
   );

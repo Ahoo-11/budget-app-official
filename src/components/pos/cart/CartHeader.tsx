@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Calendar } from "lucide-react";
 import { format } from "date-fns";
-import { PayerSelector } from "../payer/PayerSelector";
+import { PayerSelector } from "../../PayerSelector";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 
@@ -10,15 +10,22 @@ interface CartHeaderProps {
   date: Date;
   onPayerSelect: (payerId: string) => void;
   onDateChange: (date: Date) => void;
+  defaultPayerId?: string;
 }
 
-export const CartHeader = ({ selectedPayerId, date, onPayerSelect, onDateChange }: CartHeaderProps) => {
+export const CartHeader = ({ 
+  selectedPayerId, 
+  date, 
+  onPayerSelect, 
+  onDateChange,
+  defaultPayerId 
+}: CartHeaderProps) => {
   return (
     <div className="p-4 space-y-4">
       <div className="flex gap-2">
         <div className="flex-1">
           <PayerSelector
-            selectedPayerId={selectedPayerId}
+            selectedPayer={selectedPayerId || defaultPayerId || ''}
             setSelectedPayer={onPayerSelect}
           />
         </div>

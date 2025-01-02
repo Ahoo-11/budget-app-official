@@ -13,6 +13,7 @@ interface OrderCartProps {
   onCheckout: (payerId?: string) => void;
   isSubmitting?: boolean;
   activeBillId?: string;
+  defaultPayerId?: string;
 }
 
 export const OrderCart = ({
@@ -22,6 +23,7 @@ export const OrderCart = ({
   onCheckout,
   isSubmitting = false,
   activeBillId,
+  defaultPayerId,
 }: OrderCartProps) => {
   const { toast } = useToast();
   const {
@@ -37,7 +39,7 @@ export const OrderCart = ({
   } = useBillUpdates(activeBillId, items);
 
   const handleCheckout = () => {
-    onCheckout(selectedPayerId || undefined);
+    onCheckout(selectedPayerId || defaultPayerId);
   };
 
   const handleCancelBill = async () => {
@@ -70,10 +72,11 @@ export const OrderCart = ({
   return (
     <div className="bg-white h-full flex flex-col border rounded-lg">
       <CartHeader
-        selectedPayerId={selectedPayerId}
+        selectedPayerId={selectedPayerId || defaultPayerId || ''}
         date={date}
         onPayerSelect={handlePayerSelect}
         onDateChange={handleDateChange}
+        defaultPayerId={defaultPayerId}
       />
 
       <div className="border-t p-4">
