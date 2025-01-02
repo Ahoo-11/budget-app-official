@@ -133,12 +133,41 @@ export const useCheckoutManager = () => {
 
       if (verifyError) {
         console.error('Error verifying bill status:', verifyError);
+        throw verifyError;
+      }
+
+      if (verifyBill?.status !== 'completed') {
+        console.error('Bill status not updated correctly:', verifyBill);
+        throw new Error('Bill status not updated to completed');
       }
 
       // Refresh queries
-      queryClient.invalidateQueries({ queryKey: ['bills'] });
-      queryClient.invalidateQueries({ queryKey: ['products'] });
-      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      await Promise.all([
+        queryClient.invalidateQueries({ 
+          queryKey: ['bills', updatedBill.source_id],
+          refetchType: 'all'
+        }),
+        queryClient.refetchQueries({ 
+          queryKey: ['bills', updatedBill.source_id],
+          type: 'all'
+        }),
+        queryClient.invalidateQueries({ queryKey: ['products'] }),
+        queryClient.invalidateQueries({ queryKey: ['transactions'] })
+      ]);
+
+      // Double check that the bill is no longer active
+      const { data: checkBill, error: checkError } = await supabase
+        .from('bills')
+        .select('status')
+        .eq('id', billId)
+        .single();
+
+      if (checkError) {
+        console.error('Error checking bill status:', checkError);
+      } else if (checkBill.status !== 'completed') {
+        console.error('Bill status not updated correctly:', checkBill);
+        throw new Error('Bill status not updated to completed');
+      }
 
       toast({
         title: "Success",
