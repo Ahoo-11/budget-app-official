@@ -29,9 +29,14 @@ export const useBillUpdates = (activeBillId: string | undefined, items: BillProd
   const finalTotal = subtotal + gstAmount - discount;
 
   const updateBillInSupabase = async (updates: any) => {
-    if (!activeBillId) return;
+    if (!activeBillId) {
+      console.warn('No active bill ID provided for update');
+      return;
+    }
 
     try {
+      console.log('Updating bill:', { activeBillId, updates });
+      
       const { error } = await supabase
         .from('bills')
         .update({
@@ -40,7 +45,10 @@ export const useBillUpdates = (activeBillId: string | undefined, items: BillProd
         })
         .eq('id', activeBillId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating bill:', error);
+        throw error;
+      }
     } catch (error) {
       console.error('Error updating bill:', error);
       toast({
@@ -52,6 +60,8 @@ export const useBillUpdates = (activeBillId: string | undefined, items: BillProd
   };
 
   const handlePayerSelect = async (payerId: string) => {
+    if (!activeBillId) return;
+    
     setSelectedPayerId(payerId);
     await updateBillInSupabase({ 
       payer_id: payerId,
@@ -65,6 +75,8 @@ export const useBillUpdates = (activeBillId: string | undefined, items: BillProd
   };
 
   const handleDateChange = async (newDate: Date) => {
+    if (!activeBillId) return;
+    
     setDate(newDate);
     await updateBillInSupabase({ 
       date: newDate.toISOString(),
@@ -78,6 +90,8 @@ export const useBillUpdates = (activeBillId: string | undefined, items: BillProd
   };
 
   const handleDiscountChange = async (newDiscount: number) => {
+    if (!activeBillId) return;
+    
     setDiscount(newDiscount);
     const newTotal = subtotal + gstAmount - newDiscount;
     await updateBillInSupabase({
@@ -94,15 +108,19 @@ export const useBillUpdates = (activeBillId: string | undefined, items: BillProd
   useEffect(() => {
     if (!activeBillId || items.length === 0) return;
     
-    updateBillInSupabase({
-      items: serializeBillItems(items),
-      subtotal,
-      gst: gstAmount,
-      total: finalTotal,
-      discount,
-      payer_id: selectedPayerId,
-      date: date.toISOString()
-    });
+    const updateBill = async () => {
+      await updateBillInSupabase({
+        items: serializeBillItems(items),
+        subtotal,
+        gst: gstAmount,
+        total: finalTotal,
+        discount,
+        payer_id: selectedPayerId,
+        date: date.toISOString()
+      });
+    };
+
+    updateBill();
   }, [items, subtotal, gstAmount, finalTotal, activeBillId]);
 
   useEffect(() => {
