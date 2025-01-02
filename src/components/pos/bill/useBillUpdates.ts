@@ -18,6 +18,21 @@ export const useBillUpdates = (activeBillId: string | undefined, items: BillProd
     if (!activeBillId) return;
 
     try {
+      // Ensure payer_id is never an empty string
+      if (updates.payer_id === "") {
+        const { data } = await supabase
+          .from('payers')
+          .select('id')
+          .eq('name', 'Walk-in Customer')
+          .single();
+        
+        if (data) {
+          updates.payer_id = data.id;
+        } else {
+          delete updates.payer_id; // Remove payer_id if no default found
+        }
+      }
+
       const { error } = await supabase
         .from('bills')
         .update({
@@ -90,6 +105,37 @@ export const useBillUpdates = (activeBillId: string | undefined, items: BillProd
       date: date.toISOString()
     });
   }, [items, subtotal, gstAmount, finalTotal, activeBillId]);
+
+  useEffect(() => {
+    const loadBillData = async () => {
+      if (!activeBillId) return;
+
+      try {
+        const { data: bill, error } = await supabase
+          .from('bills')
+          .select('*')
+          .eq('id', activeBillId)
+          .single();
+
+        if (error) throw error;
+
+        if (bill) {
+          setDiscount(bill.discount || 0);
+          setDate(new Date(bill.date));
+          setSelectedPayerId(bill.payer_id || "");
+        }
+      } catch (error) {
+        console.error('Error loading bill:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load bill data",
+          variant: "destructive",
+        });
+      }
+    };
+
+    loadBillData();
+  }, [activeBillId]);
 
   return {
     discount,

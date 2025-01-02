@@ -69,7 +69,28 @@ export const fetchActiveBills = async (sourceId: string): Promise<Bill[]> => {
   }));
 };
 
+const getDefaultPayer = async () => {
+  const { data, error } = await supabase
+    .from('payers')
+    .select('id')
+    .eq('name', 'Walk-in Customer')
+    .single();
+
+  if (error) {
+    console.error('Error fetching default payer:', error);
+    return null;
+  }
+
+  return data?.id;
+};
+
 export const createNewBill = async (sourceId: string, userId: string) => {
+  const defaultPayerId = await getDefaultPayer();
+  
+  if (!defaultPayerId) {
+    console.error('Default payer not found');
+  }
+
   const { data, error } = await supabase
     .from('bills')
     .insert({
@@ -81,6 +102,7 @@ export const createNewBill = async (sourceId: string, userId: string) => {
       total: 0,
       gst: 0,
       discount: 0,
+      payer_id: defaultPayerId || null,
     })
     .select()
     .single();
