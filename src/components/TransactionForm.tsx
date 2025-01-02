@@ -1,25 +1,14 @@
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Loader2, CalendarIcon } from "lucide-react";
-import { format } from "date-fns";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Service } from "@/types/service";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TransactionStatus } from "@/types/transaction";
+import { BasicTransactionInfo } from "./transaction/form/BasicTransactionInfo";
+import { DateSelector } from "./transaction/form/DateSelector";
+import { StatusSelector } from "./transaction/form/StatusSelector";
+import { DocumentUpload } from "./transaction/form/DocumentUpload";
 
 interface TransactionFormProps {
   description: string;
@@ -73,27 +62,15 @@ export const TransactionForm = ({
     setAmount(service.price.toString());
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file && onDocumentUpload) {
-      await onDocumentUpload(file);
-    }
-  };
-
   return (
-    <>
-      <div>
-        <label className="block text-sm font-medium mb-2">Description</label>
-        <Input
-          type="text"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          className="w-full p-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-success/20"
-          placeholder="Enter description"
-          required
-          disabled={isSubmitting}
-        />
-      </div>
+    <div className="space-y-6">
+      <BasicTransactionInfo
+        description={description}
+        setDescription={setDescription}
+        amount={amount}
+        setAmount={setAmount}
+        isSubmitting={isSubmitting}
+      />
 
       {sourceId && (
         <Tabs defaultValue="manual" className="w-full">
@@ -103,20 +80,7 @@ export const TransactionForm = ({
           </TabsList>
           <TabsContent value="manual">
             <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">Amount</label>
-                <Input
-                  type="number"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  className="w-full p-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-success/20"
-                  placeholder="Enter amount"
-                  required
-                  min="0"
-                  step="0.01"
-                  disabled={isSubmitting}
-                />
-              </div>
+              {/* Manual entry fields are already in BasicTransactionInfo */}
             </div>
           </TabsContent>
           <TabsContent value="services">
@@ -147,70 +111,23 @@ export const TransactionForm = ({
         </Tabs>
       )}
 
-      <div>
-        <label className="block text-sm font-medium mb-2">Status</label>
-        <Select
-          value={status}
-          onValueChange={(value) => setStatus(value as TransactionStatus)}
-          disabled={isSubmitting}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Select status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="pending">Pending</SelectItem>
-            <SelectItem value="approved">Approved</SelectItem>
-            <SelectItem value="completed">Completed</SelectItem>
-            <SelectItem value="overdue">Overdue</SelectItem>
-            <SelectItem value="cancelled">Cancelled</SelectItem>
-            <SelectItem value="partially_paid">Partially Paid</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+      <StatusSelector
+        status={status}
+        setStatus={setStatus}
+        isSubmitting={isSubmitting}
+      />
 
-      <div>
-        <label className="block text-sm font-medium mb-2">Date</label>
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              className="w-full justify-start text-left font-normal"
-              disabled={isSubmitting}
-            >
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              {format(date, "PPP")}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0">
-            <Calendar
-              mode="single"
-              selected={date}
-              onSelect={(date) => date && setDate(date)}
-              initialFocus
-            />
-          </PopoverContent>
-        </Popover>
-      </div>
+      <DateSelector
+        date={date}
+        setDate={setDate}
+        isSubmitting={isSubmitting}
+      />
 
-      <div>
-        <label className="block text-sm font-medium mb-2">Supporting Document</label>
-        <Input
-          type="file"
-          onChange={handleFileChange}
-          disabled={isSubmitting}
-          accept="image/*,.pdf"
-        />
-        {documentUrl && (
-          <a
-            href={documentUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm text-blue-500 hover:underline mt-2 block"
-          >
-            View current document
-          </a>
-        )}
-      </div>
+      <DocumentUpload
+        documentUrl={documentUrl}
+        onDocumentUpload={onDocumentUpload}
+        isSubmitting={isSubmitting}
+      />
 
       <Button
         type="submit"
@@ -226,6 +143,6 @@ export const TransactionForm = ({
           isEditing ? "Update Transaction" : "Add Transaction"
         )}
       </Button>
-    </>
+    </div>
   );
 };

@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { Plus } from "lucide-react";
 import {
   Dialog,
@@ -43,11 +43,9 @@ export const PayerSelector = ({ selectedPayer, setSelectedPayer }: PayerSelector
 
   const addPayer = useMutation({
     mutationFn: async (name: string) => {
-      if (!session?.user?.id) throw new Error("Must be logged in");
-      
       const { data, error } = await supabase
         .from('payers')
-        .insert([{ name, user_id: session.user.id }])
+        .insert([{ name }])
         .select()
         .single();
       
