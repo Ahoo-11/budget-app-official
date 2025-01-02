@@ -40,20 +40,32 @@ export const OrderInterface = ({ sourceId }: { sourceId: string }) => {
 
   const handleProductUpdate = useCallback((product: Product) => {
     const billProduct: BillProduct = {
-      ...product,
+      id: product.id,
+      name: product.name,
+      price: product.price,
       quantity: 1,
       type: 'product',
-      source_id: sourceId
+      source_id: sourceId,
+      category: product.category,
+      image_url: product.image_url,
+      description: product.description,
+      current_stock: product.current_stock,
+      purchase_cost: product.purchase_cost
     };
     handleProductSelect(billProduct);
   }, [handleProductSelect, sourceId]);
 
   const handleServiceUpdate = useCallback((service: Product) => {
     const billProduct: BillProduct = {
-      ...service,
+      id: service.id,
+      name: service.name,
+      price: service.price,
       quantity: 1,
       type: 'service',
-      source_id: sourceId
+      source_id: sourceId,
+      category: service.category,
+      image_url: service.image_url,
+      description: service.description
     };
     handleProductSelect(billProduct);
   }, [handleProductSelect, sourceId]);
