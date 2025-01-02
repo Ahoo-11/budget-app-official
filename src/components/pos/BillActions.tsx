@@ -20,7 +20,7 @@ interface BillActionsProps {
 export const BillActions = ({ 
   onNewBill, 
   onSwitchBill, 
-  activeBills,
+  activeBills = [],
   activeBillId,
   isSubmitting 
 }: BillActionsProps) => {

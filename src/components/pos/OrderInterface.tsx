@@ -2,7 +2,7 @@ import { useState, useCallback } from "react";
 import { ProductGrid } from "./ProductGrid";
 import { OrderCart } from "./OrderCart";
 import { ServiceGrid } from "./ServiceGrid";
-import { BillProduct } from "@/types/bill";
+import { BillProduct, Product } from "@/types/bill";
 import { useCheckoutManager } from "./checkout/CheckoutManager";
 import { useBillManagement } from "@/hooks/useBillManagement";
 import { BillActions } from "./BillActions";
@@ -37,8 +37,13 @@ export const OrderInterface = ({ sourceId }: { sourceId: string }) => {
     [activeBillId, selectedProducts, handleCheckout, refetchBills, handleNewBill]
   );
 
-  const handleProductUpdate = useCallback((product: BillProduct) => {
-    handleProductSelect(product);
+  const handleProductUpdate = useCallback((product: Product) => {
+    const billProduct: BillProduct = {
+      ...product,
+      quantity: 1,
+      type: 'product'
+    };
+    handleProductSelect(billProduct);
   }, [handleProductSelect]);
 
   return (
@@ -68,11 +73,10 @@ export const OrderInterface = ({ sourceId }: { sourceId: string }) => {
             </button>
           </div>
           <BillActions
-            bills={bills}
-            activeBillId={activeBillId}
             onNewBill={handleNewBill}
             onSwitchBill={handleSwitchBill}
-            onUpdateStatus={handleUpdateBillStatus}
+            activeBills={bills}
+            activeBillId={activeBillId}
             isSubmitting={isSubmitting}
           />
         </div>
@@ -85,16 +89,28 @@ export const OrderInterface = ({ sourceId }: { sourceId: string }) => {
         ) : (
           <ServiceGrid
             sourceId={sourceId}
-            onServiceSelect={handleProductUpdate}
+            onProductSelect={handleProductUpdate}
           />
         )}
       </div>
 
       <OrderCart
         items={selectedProducts}
-        onUpdateItem={handleProductSelect}
+        onUpdateQuantity={(productId: string, quantity: number) => {
+          const product = selectedProducts.find(p => p.id === productId);
+          if (product) {
+            handleProductSelect({ ...product, quantity });
+          }
+        }}
+        onRemove={(productId: string) => {
+          const product = selectedProducts.find(p => p.id === productId);
+          if (product) {
+            handleProductSelect({ ...product, quantity: 0 });
+          }
+        }}
         onCheckout={onCheckout}
-        sourceId={sourceId}
+        isSubmitting={isSubmitting}
+        activeBillId={activeBillId}
       />
     </div>
   );
