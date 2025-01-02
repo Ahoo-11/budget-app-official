@@ -65,7 +65,9 @@ export const OrderInterface = ({ sourceId }: { sourceId: string }) => {
       source_id: sourceId,
       category: service.category || null,
       image_url: service.image_url || null,
-      description: service.description || null
+      description: service.description || null,
+      current_stock: 0,
+      purchase_cost: null
     };
     handleProductSelect(billProduct);
   }, [handleProductSelect, sourceId]);
@@ -123,14 +125,22 @@ export const OrderInterface = ({ sourceId }: { sourceId: string }) => {
         onUpdateQuantity={(productId: string, quantity: number) => {
           const product = selectedProducts.find(p => p.id === productId);
           if (product) {
-            const updatedProduct = { ...product, quantity };
+            const updatedProduct: BillProduct = {
+              ...product,
+              quantity,
+              source_id: sourceId // Ensure source_id is set
+            };
             handleProductSelect(updatedProduct);
           }
         }}
         onRemove={(productId: string) => {
           const product = selectedProducts.find(p => p.id === productId);
           if (product) {
-            const updatedProduct = { ...product, quantity: 0 };
+            const updatedProduct: BillProduct = {
+              ...product,
+              quantity: 0,
+              source_id: sourceId // Ensure source_id is set
+            };
             handleProductSelect(updatedProduct);
           }
         }}

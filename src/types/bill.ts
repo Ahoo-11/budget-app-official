@@ -19,13 +19,13 @@ export interface BillProduct {
   name: string;
   price: number;
   quantity: number;
-  type?: 'product' | 'service';
-  source_id?: string;
-  category?: string | null;
-  image_url?: string | null;
-  description?: string | null;
+  type: 'product' | 'service';
+  source_id: string;  // Changed from optional to required
+  category: string | null;
+  image_url: string | null;
+  description: string | null;
   current_stock?: number;
-  purchase_cost?: number | null;
+  purchase_cost: number | null;
 }
 
 export interface BillItemJson {
