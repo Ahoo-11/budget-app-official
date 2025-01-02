@@ -10,7 +10,7 @@ export const useCheckoutManager = () => {
   const handleCheckout = async (
     billId: string,
     items: BillProduct[],
-    customerId: string | null = null
+    payerId: string | null = null
   ) => {
     if (!billId || items.length === 0) {
       toast({
@@ -22,7 +22,7 @@ export const useCheckoutManager = () => {
     }
 
     try {
-      console.log('Starting checkout:', { billId, items, customerId });
+      console.log('Starting checkout:', { billId, items, payerId });
       
       // Get current user
       const { data: { user } } = await supabase.auth.getUser();
@@ -56,7 +56,7 @@ export const useCheckoutManager = () => {
           subtotal,
           gst: gstAmount,
           total,
-          customer_id: customerId,
+          payer_id: payerId,
           updated_at: new Date().toISOString(),
         })
         .eq('id', billId)
@@ -75,7 +75,7 @@ export const useCheckoutManager = () => {
           description: `POS Sale - Bill #${billId}`,
           date: new Date().toISOString(),
           user_id: user.id,
-          customer_id: customerId,
+          payer_id: payerId,
           created_by_name: user.email
         });
 

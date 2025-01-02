@@ -1,115 +1,101 @@
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { Product } from "@/types/product";
-import { Service } from "@/types/service";
-import { BillProduct } from "@/types/bill";
+import { useState, useCallback } from "react";
+import { ProductGrid } from "./ProductGrid";
 import { OrderCart } from "./OrderCart";
-import { OrderContent } from "./OrderContent";
-import { BillActions } from "./BillActions";
+import { ServiceGrid } from "./ServiceGrid";
+import { BillProduct } from "@/types/bill";
 import { useCheckoutManager } from "./checkout/CheckoutManager";
 import { useBillManagement } from "@/hooks/useBillManagement";
+import { BillActions } from "./BillActions";
 
-interface OrderInterfaceProps {
-  sourceId: string;
-}
-
-export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
-  const { 
+export const OrderInterface = ({ sourceId }: { sourceId: string }) => {
+  const [activeTab, setActiveTab] = useState<"products" | "services">("products");
+  const { handleCheckout } = useCheckoutManager();
+  const {
     bills,
     activeBillId,
     selectedProducts,
     isSubmitting,
-    setSelectedProducts,
     handleNewBill,
     handleSwitchBill,
     handleProductSelect,
     handleUpdateBillStatus,
+    refetchBills,
   } = useBillManagement(sourceId);
 
-  const { handleCheckout } = useCheckoutManager();
-
-  const { data: products = [] } = useQuery({
-    queryKey: ['products', sourceId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .eq('source_id', sourceId)
-        .order('name');
+  const onCheckout = useCallback(
+    async (payerId: string | null) => {
+      if (!activeBillId) return;
       
-      if (error) throw error;
-      return data as Product[];
-    }
-  });
-
-  const handleServiceSelect = (service: Service) => {
-    setSelectedProducts(prev => {
-      const serviceProduct: BillProduct = {
-        id: service.id,
-        name: service.name,
-        price: service.price,
-        quantity: 1,
-        type: 'service',
-        source_id: service.source_id,
-        description: service.description
-      };
+      console.log('Starting checkout with payerId:', payerId);
+      const success = await handleCheckout(activeBillId, selectedProducts, payerId);
       
-      const existing = prev.find(p => p.id === service.id && p.type === 'service');
-      if (existing) {
-        return prev.map(p => 
-          p.id === service.id && p.type === 'service'
-            ? { ...p, quantity: p.quantity + 1 }
-            : p
-        );
+      if (success) {
+        refetchBills();
+        handleNewBill();
       }
-      return [...prev, serviceProduct];
-    });
-  };
+    },
+    [activeBillId, selectedProducts, handleCheckout, refetchBills, handleNewBill]
+  );
+
+  const handleProductUpdate = useCallback((product: BillProduct) => {
+    handleProductSelect(product);
+  }, [handleProductSelect]);
 
   return (
-    <div className="space-y-4">
-      <BillActions
-        activeBills={bills}
-        onNewBill={handleNewBill}
-        onSwitchBill={handleSwitchBill}
-        activeBillId={activeBillId}
-        isSubmitting={isSubmitting}
-      />
-
-      <div className="grid grid-cols-12 gap-6">
-        <div className="col-span-7">
-          <OrderContent
-            products={products}
-            sourceId={sourceId}
-            onProductSelect={handleProductSelect}
-            onServiceSelect={handleServiceSelect}
-          />
-        </div>
-
-        <div className="col-span-5">
-          <OrderCart
-            items={selectedProducts}
+    <div className="flex h-full">
+      <div className="w-2/3 p-4 overflow-auto">
+        <div className="flex justify-between items-center mb-4">
+          <div className="flex space-x-4">
+            <button
+              className={`px-4 py-2 rounded ${
+                activeTab === "products"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-secondary"
+              }`}
+              onClick={() => setActiveTab("products")}
+            >
+              Products
+            </button>
+            <button
+              className={`px-4 py-2 rounded ${
+                activeTab === "services"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-secondary"
+              }`}
+              onClick={() => setActiveTab("services")}
+            >
+              Services
+            </button>
+          </div>
+          <BillActions
+            bills={bills}
             activeBillId={activeBillId}
-            onUpdateQuantity={(productId, quantity) => {
-              setSelectedProducts(prev =>
-                prev.map(p => p.id === productId ? { ...p, quantity } : p)
-              );
-            }}
-            onRemove={(productId) => {
-              setSelectedProducts(prev => prev.filter(p => p.id !== productId));
-            }}
-            onCheckout={async (customerId?: string) => {
-              if (!activeBillId) return;
-              
-              const success = await handleCheckout(activeBillId, selectedProducts, customerId || null);
-              if (success) {
-                await handleUpdateBillStatus(activeBillId, 'completed');
-              }
-            }}
+            onNewBill={handleNewBill}
+            onSwitchBill={handleSwitchBill}
+            onUpdateStatus={handleUpdateBillStatus}
             isSubmitting={isSubmitting}
           />
         </div>
+
+        {activeTab === "products" ? (
+          <ProductGrid
+            sourceId={sourceId}
+            onProductSelect={handleProductUpdate}
+          />
+        ) : (
+          <ServiceGrid
+            sourceId={sourceId}
+            onServiceSelect={handleProductUpdate}
+          />
+        )}
       </div>
+
+      <OrderCart
+        items={selectedProducts}
+        onUpdateItem={handleProductSelect}
+        onCheckout={onCheckout}
+        sourceId={sourceId}
+      />
     </div>
   );
 };
