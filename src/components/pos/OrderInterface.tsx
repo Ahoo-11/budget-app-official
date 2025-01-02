@@ -25,7 +25,7 @@ export const OrderInterface = ({ sourceId }: { sourceId: string }) => {
     refetchBills,
   } = useBillManagement(sourceId);
 
-  // Fetch default "Walk-in Customer" payer
+  // Fetch default "Walk-in Customer" payer using exact name match
   const { data: defaultPayer } = useQuery({
     queryKey: ['default-payer'],
     queryFn: async () => {
