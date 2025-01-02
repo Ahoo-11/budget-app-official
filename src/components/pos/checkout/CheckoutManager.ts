@@ -12,7 +12,10 @@ export const useCheckoutManager = () => {
     items: BillProduct[],
     payerId: string | null = null
   ) => {
+    console.log('🚀 Starting checkout process:', { billId, items, payerId });
+    
     if (!billId || items.length === 0) {
+      console.error('❌ Checkout failed: No items or invalid bill ID');
       toast({
         title: "Error",
         description: "No items selected for checkout",
@@ -22,11 +25,12 @@ export const useCheckoutManager = () => {
     }
 
     try {
-      console.log('Starting checkout process:', { billId, items, payerId });
-      
       // Get current user
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("User not authenticated");
+      if (!user) {
+        console.error('❌ Checkout failed: User not authenticated');
+        throw new Error("User not authenticated");
+      }
 
       // Calculate totals
       const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
@@ -34,9 +38,9 @@ export const useCheckoutManager = () => {
       const gstAmount = subtotal * gstRate;
       const total = subtotal + gstAmount;
 
-      console.log('Calculated totals:', { subtotal, gstAmount, total });
+      console.log('💰 Calculated totals:', { subtotal, gstAmount, total });
 
-      // Prepare items for storage by converting to plain objects
+      // Prepare items for storage
       const serializedItems = items.map(item => ({
         id: item.id,
         name: item.name,
@@ -49,7 +53,7 @@ export const useCheckoutManager = () => {
         description: item.description
       }));
 
-      console.log('Updating bill status to completed...');
+      console.log('📝 Updating bill status to completed...');
 
       // Update bill status and totals
       const { error: billError, data: updatedBill } = await supabase
@@ -68,13 +72,12 @@ export const useCheckoutManager = () => {
         .single();
 
       if (billError) {
-        console.error('Error updating bill:', billError);
+        console.error('❌ Error updating bill:', billError);
         throw billError;
       }
 
-      console.log('Bill updated successfully:', updatedBill);
+      console.log('✅ Bill updated successfully:', updatedBill);
 
-      // Create transaction for the sale
       const { error: transactionError } = await supabase
         .from('transactions')
         .insert({
@@ -129,19 +132,20 @@ export const useCheckoutManager = () => {
         .eq('id', billId)
         .single();
         
-      console.log('Final bill status verification:', verifyBill);
+      console.log('🔍 Final bill status verification:', verifyBill);
 
       if (verifyError) {
-        console.error('Error verifying bill status:', verifyError);
+        console.error('⚠️ Error verifying bill status:', verifyError);
         throw verifyError;
       }
 
       if (verifyBill?.status !== 'completed') {
-        console.error('Bill status not updated correctly:', verifyBill);
+        console.error('❌ Bill status not updated correctly:', verifyBill);
         throw new Error('Bill status not updated to completed');
       }
 
       // Refresh queries
+      console.log('🔄 Invalidating and refetching queries...');
       await Promise.all([
         queryClient.invalidateQueries({ 
           queryKey: ['bills', updatedBill.source_id],
@@ -163,9 +167,9 @@ export const useCheckoutManager = () => {
         .single();
 
       if (checkError) {
-        console.error('Error checking bill status:', checkError);
+        console.error('⚠️ Error checking bill status:', checkError);
       } else if (checkBill.status !== 'completed') {
-        console.error('Bill status not updated correctly:', checkBill);
+        console.error('❌ Bill status not updated correctly:', checkBill);
         throw new Error('Bill status not updated to completed');
       }
 
@@ -176,7 +180,7 @@ export const useCheckoutManager = () => {
 
       return true;
     } catch (error) {
-      console.error('Checkout error:', error);
+      console.error('❌ Checkout error:', error);
       toast({
         title: "Error",
         description: "Failed to complete checkout",

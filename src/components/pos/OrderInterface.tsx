@@ -25,10 +25,15 @@ export const OrderInterface = ({ sourceId }: { sourceId: string }) => {
     refetchBills,
   } = useBillManagement(sourceId);
 
+  console.log('🧾 Current bills:', bills);
+  console.log('📄 Active bill ID:', activeBillId);
+  console.log('🛍️ Selected products:', selectedProducts);
+
   // Fetch default "Walk-in Customer" payer using exact name match
   const { data: defaultPayer } = useQuery({
     queryKey: ['default-payer'],
     queryFn: async () => {
+      console.log('🔍 Fetching default payer...');
       const { data, error } = await supabase
         .from('payers')
         .select('id')
@@ -36,21 +41,28 @@ export const OrderInterface = ({ sourceId }: { sourceId: string }) => {
         .single();
       
       if (error) throw error;
+      console.log('👤 Default payer:', data);
       return data;
     }
   });
 
   const onCheckout = useCallback(
     async (payerId: string | null) => {
-      if (!activeBillId) return;
+      console.log('🚀 Checkout initiated with payerId:', payerId);
+      if (!activeBillId) {
+        console.error('❌ No active bill ID for checkout');
+        return;
+      }
       
       // Use default payer if none selected
       const finalPayerId = payerId || defaultPayer?.id || null;
-      console.log('Starting checkout with payerId:', finalPayerId);
+      console.log('👤 Using payer ID for checkout:', finalPayerId);
       
       const success = await handleCheckout(activeBillId, selectedProducts, finalPayerId);
+      console.log('✅ Checkout success:', success);
       
       if (success) {
+        console.log('🔄 Refetching bills...');
         refetchBills();
         handleNewBill();
       }
