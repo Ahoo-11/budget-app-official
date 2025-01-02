@@ -5,6 +5,7 @@ import { useBillUpdates } from "./bill/useBillUpdates";
 import { CartHeader } from "./cart/CartHeader";
 import { CartItems } from "./cart/CartItems";
 import { CartFooter } from "./cart/CartFooter";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface OrderCartProps {
   items: BillProduct[];
@@ -14,6 +15,7 @@ interface OrderCartProps {
   isSubmitting?: boolean;
   activeBillId?: string;
   defaultPayerId?: string;
+  setSelectedProducts: (products: BillProduct[]) => void;
 }
 
 export const OrderCart = ({
@@ -24,8 +26,10 @@ export const OrderCart = ({
   isSubmitting = false,
   activeBillId,
   defaultPayerId,
+  setSelectedProducts,
 }: OrderCartProps) => {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const {
     discount,
     date,
@@ -53,12 +57,16 @@ export const OrderCart = ({
 
       if (error) throw error;
 
+      // Clear the current bill's data
+      setSelectedProducts([]);
+      
+      // Invalidate the bills query to refresh the list
+      queryClient.invalidateQueries({ queryKey: ['bills'] });
+
       toast({
         title: "Bill cancelled",
         description: "The bill has been successfully cancelled.",
       });
-
-      window.location.reload();
     } catch (error) {
       console.error('Error cancelling bill:', error);
       toast({

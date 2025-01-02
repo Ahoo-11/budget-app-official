@@ -8,6 +8,7 @@ import { BillListItem } from "./bills/BillListItem";
 import { BillBulkActions } from "./bills/BillBulkActions";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface BillActionsProps {
   onNewBill: () => void;
@@ -15,6 +16,7 @@ interface BillActionsProps {
   activeBills: Bill[];
   activeBillId: string | null;
   isSubmitting: boolean;
+  setSelectedProducts: (products: any[]) => void;
 }
 
 export const BillActions = ({ 
@@ -22,9 +24,11 @@ export const BillActions = ({
   onSwitchBill, 
   activeBills = [],
   activeBillId,
-  isSubmitting 
+  isSubmitting,
+  setSelectedProducts
 }: BillActionsProps) => {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [selectedBills, setSelectedBills] = useState<string[]>([]);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   
@@ -57,13 +61,24 @@ export const BillActions = ({
 
       if (error) throw error;
 
+      // Clear selected products if active bill is being deleted
+      if (selectedBills.includes(activeBillId || '')) {
+        setSelectedProducts([]);
+      }
+
+      // Clear selected bills
+      setSelectedBills([]);
+      
+      // Close the sheet
+      setIsSheetOpen(false);
+
+      // Invalidate the bills query to force a refetch
+      queryClient.invalidateQueries({ queryKey: ['bills'] });
+
       toast({
         title: "Bills deleted",
         description: `Successfully deleted ${selectedBills.length} ${selectedBills.length === 1 ? 'bill' : 'bills'}.`,
       });
-
-      setSelectedBills([]);
-      window.location.reload();
     } catch (error) {
       console.error('Error deleting bills:', error);
       toast({

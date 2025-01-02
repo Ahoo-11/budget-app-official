@@ -11,7 +11,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export const OrderInterface = ({ sourceId }: { sourceId: string }) => {
-  const [activeTab, setActiveTab] = useState<"products" | "services" | "income">("products");
+  const [activeTab, setActiveTab] = useState<"products" | "services">("products");
   const { handleCheckout } = useCheckoutManager();
   const {
     bills,
@@ -23,6 +23,7 @@ export const OrderInterface = ({ sourceId }: { sourceId: string }) => {
     handleProductSelect,
     handleUpdateBillStatus,
     refetchBills,
+    setSelectedProducts
   } = useBillManagement(sourceId);
 
   console.log('🧾 Current bills:', bills);
@@ -104,52 +105,9 @@ export const OrderInterface = ({ sourceId }: { sourceId: string }) => {
     handleProductSelect(billProduct);
   }, [handleProductSelect, sourceId]);
 
-  const handleTabChange = useCallback(async (tab: "products" | "services" | "income") => {
-    if (tab === "income") {
-      try {
-        // If no active bill, create one
-        if (!activeBillId) {
-          console.log('Creating new bill for income tab...');
-          const newBillId = await handleNewBill();
-          if (!newBillId) {
-            console.error('Failed to create new bill');
-            return; // Don't switch tab if bill creation fails
-          }
-          console.log('New bill created, ID:', newBillId);
-          
-          // Wait for state to update
-          await new Promise(resolve => setTimeout(resolve, 100));
-          
-          // Verify the bill was created
-          if (!activeBillId) {
-            console.error('Bill created but activeBillId not set');
-            return;
-          }
-        } else {
-          console.log('Using existing active bill:', activeBillId);
-        }
-      } catch (error) {
-        console.error('Error handling income tab:', error);
-        return;
-      }
-    }
+  const handleTabChange = useCallback((tab: "products" | "services") => {
     setActiveTab(tab);
-  }, [activeBillId, handleNewBill]);
-
-  // Ensure we have an active bill when in income tab
-  useEffect(() => {
-    const ensureActiveBill = async () => {
-      if (activeTab === "income" && !activeBillId) {
-        console.log('No active bill in income tab, creating one...');
-        const newBillId = await handleNewBill();
-        if (newBillId) {
-          console.log('Created new bill in effect, ID:', newBillId);
-        }
-      }
-    };
-
-    ensureActiveBill();
-  }, [activeTab, activeBillId, handleNewBill]);
+  }, []);
 
   return (
     <div className="flex h-full">
@@ -160,7 +118,7 @@ export const OrderInterface = ({ sourceId }: { sourceId: string }) => {
               className={`px-4 py-2 rounded ${
                 activeTab === "products"
                   ? "bg-primary text-primary-foreground"
-                  : "bg-secondary"
+                  : "bg-muted"
               }`}
               onClick={() => handleTabChange("products")}
             >
@@ -170,29 +128,20 @@ export const OrderInterface = ({ sourceId }: { sourceId: string }) => {
               className={`px-4 py-2 rounded ${
                 activeTab === "services"
                   ? "bg-primary text-primary-foreground"
-                  : "bg-secondary"
+                  : "bg-muted"
               }`}
               onClick={() => handleTabChange("services")}
             >
               Services
             </button>
-            <button
-              className={`px-4 py-2 rounded ${
-                activeTab === "income"
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-secondary"
-              }`}
-              onClick={() => handleTabChange("income")}
-            >
-              Income
-            </button>
           </div>
           <BillActions
             onNewBill={handleNewBill}
             onSwitchBill={handleSwitchBill}
-            activeBills={bills || []}
+            activeBills={bills}
             activeBillId={activeBillId}
             isSubmitting={isSubmitting}
+            setSelectedProducts={setSelectedProducts}
           />
         </div>
 
@@ -201,14 +150,11 @@ export const OrderInterface = ({ sourceId }: { sourceId: string }) => {
             sourceId={sourceId}
             onProductSelect={handleProductUpdate}
           />
-        ) : activeTab === "services" ? (
+        ) : (
           <ServiceGrid
             sourceId={sourceId}
             onSelect={handleServiceUpdate}
           />
-        ) : (
-          // Add income tab content here
-          <div>Income tab content</div>
         )}
       </div>
 
@@ -240,6 +186,7 @@ export const OrderInterface = ({ sourceId }: { sourceId: string }) => {
         isSubmitting={isSubmitting}
         activeBillId={activeBillId}
         defaultPayerId={defaultPayer?.id}
+        setSelectedProducts={setSelectedProducts}
       />
     </div>
   );
