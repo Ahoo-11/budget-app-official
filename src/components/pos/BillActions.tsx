@@ -27,7 +27,13 @@ export const BillActions = ({
   const { toast } = useToast();
   const [selectedBills, setSelectedBills] = useState<string[]>([]);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  
+  console.log('📋 Active bills in BillActions:', activeBills);
+  console.log('🎯 Current active bill ID:', activeBillId);
+  
   const uncompletedBills = activeBills.filter(bill => bill.status === 'active');
+  console.log('📝 Uncompleted bills:', uncompletedBills);
+  
   const isAllSelected = uncompletedBills.length > 0 && selectedBills.length === uncompletedBills.length;
 
   const handleSelectAll = (checked: boolean) => {

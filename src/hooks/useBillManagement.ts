@@ -15,17 +15,26 @@ export const useBillManagement = (sourceId: string) => {
     handleUpdateBillStatus
   );
 
+  console.log('🔄 useBillManagement - sourceId:', sourceId);
+  console.log('📄 useBillManagement - activeBillId:', activeBillId);
+
   const { data: bills = [] } = useQuery({
     queryKey: ['bills', sourceId],
     queryFn: async () => {
+      console.log('🔍 Fetching bills for source:', sourceId);
       const { data, error } = await supabase
         .from('bills')
         .select('*')
         .eq('source_id', sourceId)
-        .in('status', ['active', 'on-hold'])
+        .in('status', ['active'])
         .order('created_at', { ascending: false });
       
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Error fetching bills:', error);
+        throw error;
+      }
+      
+      console.log('📦 Fetched bills data:', data);
       
       return (data || []).map(bill => ({
         ...bill,
@@ -45,7 +54,7 @@ export const useBillManagement = (sourceId: string) => {
         status: bill.status as 'active' | 'on-hold' | 'completed'
       })) as Bill[];
     },
-    refetchInterval: 5000 // Refresh every 5 seconds to keep bills in sync
+    refetchInterval: 5000 // Refresh every 5 seconds
   });
 
   return {
@@ -58,6 +67,9 @@ export const useBillManagement = (sourceId: string) => {
     handleSwitchBill,
     handleProductSelect,
     handleUpdateBillStatus,
-    refetchBills: () => queryClient.invalidateQueries({ queryKey: ['bills', sourceId] })
+    refetchBills: () => {
+      console.log('🔄 Manually refetching bills...');
+      queryClient.invalidateQueries({ queryKey: ['bills', sourceId] });
+    }
   };
 };
