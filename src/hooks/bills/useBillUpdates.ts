@@ -35,31 +35,22 @@ export const useBillUpdates = (activeBillId: string | undefined, items: BillProd
     }
 
     try {
-      console.log('Attempting to update bill:', { activeBillId, updates });
+      console.log('Updating bill:', { activeBillId, updates });
       
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('bills')
         .update({
           ...updates,
           updated_at: new Date().toISOString()
         })
-        .eq('id', activeBillId)
-        .select()
-        .single();
+        .eq('id', activeBillId);
 
       if (error) {
-        console.error('Supabase error updating bill:', error);
-        toast({
-          title: "Error",
-          description: "Failed to update bill: " + error.message,
-          variant: "destructive",
-        });
-        return;
+        console.error('Error updating bill:', error);
+        throw error;
       }
-
-      console.log('Bill updated successfully:', data);
     } catch (error) {
-      console.error('Exception updating bill:', error);
+      console.error('Error updating bill:', error);
       toast({
         title: "Error",
         description: "Failed to update bill",
@@ -115,11 +106,9 @@ export const useBillUpdates = (activeBillId: string | undefined, items: BillProd
   };
 
   useEffect(() => {
+    if (!activeBillId || items.length === 0) return;
+    
     const updateBill = async () => {
-      if (!activeBillId || items.length === 0) return;
-      
-      console.log('Updating bill from effect:', { activeBillId, items });
-      
       await updateBillInSupabase({
         items: serializeBillItems(items),
         subtotal,
@@ -139,32 +128,21 @@ export const useBillUpdates = (activeBillId: string | undefined, items: BillProd
       if (!activeBillId) return;
 
       try {
-        console.log('Loading bill data:', activeBillId);
-        
         const { data: bill, error } = await supabase
           .from('bills')
           .select('*')
           .eq('id', activeBillId)
           .maybeSingle();
 
-        if (error) {
-          console.error('Error loading bill:', error);
-          toast({
-            title: "Error",
-            description: "Failed to load bill data",
-            variant: "destructive",
-          });
-          return;
-        }
+        if (error) throw error;
 
         if (bill) {
-          console.log('Loaded bill data:', bill);
           setDiscount(bill.discount || 0);
           setDate(new Date(bill.date));
           setSelectedPayerId(bill.payer_id || "");
         }
       } catch (error) {
-        console.error('Exception loading bill:', error);
+        console.error('Error loading bill:', error);
         toast({
           title: "Error",
           description: "Failed to load bill data",
