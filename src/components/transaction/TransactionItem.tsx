@@ -11,6 +11,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useTransactions } from "@/hooks/useTransactions";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface TransactionItemProps {
   transaction: Transaction;
@@ -20,6 +22,25 @@ interface TransactionItemProps {
 
 export const TransactionItem = ({ transaction, onDelete, onEdit }: TransactionItemProps) => {
   const { updateTransaction } = useTransactions();
+  const [payerName, setPayerName] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchPayerName = async () => {
+      if (transaction.payer_id) {
+        const { data, error } = await supabase
+          .from("payers")
+          .select("name")
+          .eq("id", transaction.payer_id)
+          .single();
+
+        if (!error && data) {
+          setPayerName(data.name);
+        }
+      }
+    };
+
+    fetchPayerName();
+  }, [transaction.payer_id]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -42,7 +63,7 @@ export const TransactionItem = ({ transaction, onDelete, onEdit }: TransactionIt
     if (newStatus === "overdue") return; // Can't set overdue status directly
     await updateTransaction({
       ...transaction,
-      status: newStatus as Transaction["status"]
+      status: newStatus as Transaction["status"],
     });
   };
 
@@ -63,6 +84,11 @@ export const TransactionItem = ({ transaction, onDelete, onEdit }: TransactionIt
 
         <div>
           <div className="font-medium">{transaction.description}</div>
+          {payerName && (
+            <div className="text-sm text-muted-foreground">
+              Payer: {payerName}
+            </div>
+          )}
           <div className="text-sm text-muted-foreground">
             {format(new Date(transaction.date), "PPP")}
           </div>
@@ -108,11 +134,11 @@ export const TransactionItem = ({ transaction, onDelete, onEdit }: TransactionIt
               transaction.type === "income" ? "text-success" : "text-destructive"
             }`}
           >
-            ${transaction.amount.toFixed(2)}
+            MVR {transaction.amount.toFixed(2)}
           </div>
           {transaction.remaining_amount !== null && (
             <div className="text-sm text-muted-foreground">
-              Remaining: ${transaction.remaining_amount?.toFixed(2)}
+              Remaining: MVR {transaction.remaining_amount?.toFixed(2)}
             </div>
           )}
         </div>
