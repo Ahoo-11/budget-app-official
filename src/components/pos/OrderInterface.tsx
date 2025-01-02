@@ -2,7 +2,8 @@ import { useState, useCallback } from "react";
 import { ProductGrid } from "./ProductGrid";
 import { OrderCart } from "./OrderCart";
 import { ServiceGrid } from "./ServiceGrid";
-import { BillProduct, Product } from "@/types/bill";
+import { BillProduct } from "@/types/bill";
+import { Product } from "@/types/product";
 import { useCheckoutManager } from "./checkout/CheckoutManager";
 import { useBillManagement } from "@/hooks/useBillManagement";
 import { BillActions } from "./BillActions";
@@ -41,10 +42,21 @@ export const OrderInterface = ({ sourceId }: { sourceId: string }) => {
     const billProduct: BillProduct = {
       ...product,
       quantity: 1,
-      type: 'product'
+      type: 'product',
+      source_id: sourceId
     };
     handleProductSelect(billProduct);
-  }, [handleProductSelect]);
+  }, [handleProductSelect, sourceId]);
+
+  const handleServiceUpdate = useCallback((service: Product) => {
+    const billProduct: BillProduct = {
+      ...service,
+      quantity: 1,
+      type: 'service',
+      source_id: sourceId
+    };
+    handleProductSelect(billProduct);
+  }, [handleProductSelect, sourceId]);
 
   return (
     <div className="flex h-full">
@@ -75,7 +87,7 @@ export const OrderInterface = ({ sourceId }: { sourceId: string }) => {
           <BillActions
             onNewBill={handleNewBill}
             onSwitchBill={handleSwitchBill}
-            activeBills={bills}
+            activeBills={bills || []}
             activeBillId={activeBillId}
             isSubmitting={isSubmitting}
           />
@@ -89,7 +101,7 @@ export const OrderInterface = ({ sourceId }: { sourceId: string }) => {
         ) : (
           <ServiceGrid
             sourceId={sourceId}
-            onProductSelect={handleProductUpdate}
+            onSelect={handleServiceUpdate}
           />
         )}
       </div>

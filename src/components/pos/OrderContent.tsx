@@ -29,7 +29,7 @@ export const OrderContent = ({ products, sourceId, onProductSelect, onServiceSel
             <TabsTrigger value="services">Services</TabsTrigger>
           </TabsList>
           <TabsContent value="products" className="h-full">
-            <ProductGrid products={products} onSelect={onProductSelect} />
+            <ProductGrid sourceId={sourceId} onProductSelect={onProductSelect} />
           </TabsContent>
           <TabsContent value="services" className="h-full">
             <ServiceGrid sourceId={sourceId} onSelect={onServiceSelect} />
