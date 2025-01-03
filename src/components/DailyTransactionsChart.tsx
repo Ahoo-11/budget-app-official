@@ -62,7 +62,7 @@ export const DailyTransactionsChart = ({
           <p className="text-sm font-medium">{format(parseISO(label), "MMM dd, yyyy")}</p>
           {payload.map((entry: any) => (
             <p key={entry.name} className="text-sm" style={{ color: entry.color }}>
-              {entry.name}: ${entry.value.toFixed(2)}
+              {entry.name}: MVR {entry.value.toFixed(2)}
             </p>
           ))}
         </div>

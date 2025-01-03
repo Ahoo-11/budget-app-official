@@ -59,6 +59,7 @@ export const TransactionForm = ({
 
   const handleServiceSelect = (service: Service) => {
     setDescription(service.name);
+    // Service price already includes GST, so we can set it directly
     setAmount(service.price.toString());
   };
 

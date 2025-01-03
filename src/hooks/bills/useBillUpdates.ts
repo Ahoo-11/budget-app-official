@@ -17,7 +17,30 @@ const serializeBillItems = (items: BillProduct[]) => {
   }));
 };
 
-export const useBillUpdates = (activeBillId: string | undefined, items: BillProduct[]) => {
+interface BillUpdate {
+  items?: ReturnType<typeof serializeBillItems>;
+  subtotal?: number;
+  gst?: number;
+  total?: number;
+  discount?: number;
+  payer_id?: string;
+  date?: string;
+  updated_at?: string;
+}
+
+interface UseBillUpdatesReturn {
+  discount: number;
+  date: Date;
+  selectedPayerId: string;
+  subtotal: number;
+  gstAmount: number;
+  finalTotal: number;
+  handlePayerSelect: (payerId: string) => Promise<void>;
+  handleDateChange: (newDate: Date) => Promise<void>;
+  handleDiscountChange: (newDiscount: number) => Promise<void>;
+}
+
+export const useBillUpdates = (activeBillId: string | undefined, items: BillProduct[]): UseBillUpdatesReturn => {
   const [discount, setDiscount] = useState<number>(0);
   const [date, setDate] = useState<Date>(new Date());
   const [selectedPayerId, setSelectedPayerId] = useState<string>("");
@@ -25,10 +48,11 @@ export const useBillUpdates = (activeBillId: string | undefined, items: BillProd
 
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const gstRate = 0.08; // 8% GST
-  const gstAmount = subtotal * gstRate;
-  const finalTotal = subtotal + gstAmount - discount;
+  const discountedTotal = subtotal - discount; // First apply discount
+  const gstAmount = (discountedTotal * gstRate); // Calculate 8% of the discounted total
+  const finalTotal = discountedTotal + gstAmount; // Add GST to get final total
 
-  const updateBillInSupabase = async (updates: any) => {
+  const updateBillInSupabase = async (updates: BillUpdate) => {
     if (!activeBillId) {
       console.warn('No active bill ID provided for update');
       return;
@@ -93,13 +117,16 @@ export const useBillUpdates = (activeBillId: string | undefined, items: BillProd
     if (!activeBillId) return;
     
     setDiscount(newDiscount);
-    const newTotal = subtotal + gstAmount - newDiscount;
+    const discountedTotal = subtotal - newDiscount;
+    const newGstAmount = discountedTotal * gstRate;
+    const newTotal = discountedTotal + newGstAmount;
+    
     await updateBillInSupabase({
       discount: newDiscount,
       total: newTotal,
       items: serializeBillItems(items),
       subtotal,
-      gst: gstAmount,
+      gst: newGstAmount,
       date: date.toISOString(),
       payer_id: selectedPayerId
     });
@@ -121,7 +148,7 @@ export const useBillUpdates = (activeBillId: string | undefined, items: BillProd
     };
 
     updateBill();
-  }, [items, subtotal, gstAmount, finalTotal, activeBillId]);
+  }, [items, subtotal, gstAmount, finalTotal, activeBillId, discount, selectedPayerId, date]);
 
   useEffect(() => {
     const loadBillData = async () => {
@@ -152,7 +179,7 @@ export const useBillUpdates = (activeBillId: string | undefined, items: BillProd
     };
 
     loadBillData();
-  }, [activeBillId]);
+  }, [activeBillId, toast]);
 
   return {
     discount,

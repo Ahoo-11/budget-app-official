@@ -81,8 +81,12 @@ export const useTransactions = (source_id?: string) => {
 
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      // Invalidate both general and source-specific queries
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      if (data.source_id) {
+        queryClient.invalidateQueries({ queryKey: ['transactions', data.source_id] });
+      }
       toast({
         title: "Success",
         description: "Transaction added successfully",
@@ -118,8 +122,12 @@ export const useTransactions = (source_id?: string) => {
         throw new Error(error.message);
       }
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      // Invalidate both general and source-specific queries
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      if (data.source_id) {
+        queryClient.invalidateQueries({ queryKey: ['transactions', data.source_id] });
+      }
       toast({
         title: "Success",
         description: "Transaction updated successfully",
@@ -145,8 +153,12 @@ export const useTransactions = (source_id?: string) => {
         throw new Error(error.message);
       }
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      // Invalidate both general and source-specific queries
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      if (data.source_id) {
+        queryClient.invalidateQueries({ queryKey: ['transactions', data.source_id] });
+      }
       toast({
         title: "Success",
         description: "Transaction deleted successfully",

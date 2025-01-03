@@ -1,5 +1,6 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { calculateGSTFromTotal } from "@/utils/gst";
 
 interface BasicTransactionInfoProps {
   description: string;
@@ -16,6 +17,14 @@ export const BasicTransactionInfo = ({
   setAmount,
   isSubmitting
 }: BasicTransactionInfoProps) => {
+  const handleAmountChange = (value: string) => {
+    // Remove any non-numeric characters except decimal point
+    const cleanValue = value.replace(/[^\d.]/g, '');
+    setAmount(cleanValue);
+  };
+
+  const gstInfo = amount ? calculateGSTFromTotal(parseFloat(amount)) : null;
+
   return (
     <div className="space-y-4">
       <div>
@@ -32,18 +41,24 @@ export const BasicTransactionInfo = ({
       </div>
 
       <div>
-        <Label>Amount</Label>
+        <Label>Amount (MVR)</Label>
         <Input
           type="number"
           value={amount}
-          onChange={(e) => setAmount(e.target.value)}
+          onChange={(e) => handleAmountChange(e.target.value)}
           className="w-full"
-          placeholder="Enter amount"
+          placeholder="Enter final amount (including 8% GST)"
           required
           min="0"
           step="0.01"
           disabled={isSubmitting}
         />
+        {amount && !isNaN(parseFloat(amount)) && parseFloat(amount) > 0 && (
+          <div className="mt-2 text-sm text-muted-foreground">
+            <div>Base Amount: MVR {gstInfo?.baseAmount.toFixed(2)}</div>
+            <div>GST (8%): MVR {gstInfo?.gstAmount.toFixed(2)}</div>
+          </div>
+        )}
       </div>
     </div>
   );

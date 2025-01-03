@@ -34,8 +34,9 @@ export const QuickItemForm = ({ sourceId, onSuccess }: QuickItemFormProps) => {
           name,
           current_stock: parseFloat(quantity),
           purchase_cost: parseFloat(purchaseCost),
-          price: type === "product" ? parseFloat(price) : parseFloat(purchaseCost), // For inventory items, price = purchase cost
-          category: type === "product" ? "Product" : "Inventory",
+          price: type === "product" ? parseFloat(price) : parseFloat(purchaseCost),
+          category: type === "product" ? "Product" : "inventory",
+          subcategory: type === "product" ? "Product" : "Inventory Item"
         })
         .select()
         .single();

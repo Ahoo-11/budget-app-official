@@ -58,7 +58,7 @@ export const TransactionTypeDistribution = ({
               fill="#8884d8"
               dataKey="value"
               label={({ name, value }) =>
-                `${name}: $${value.toFixed(2)}`
+                `${name}: MVR ${value.toFixed(2)}`
               }
             >
               {data.map((entry, index) => (
@@ -69,7 +69,7 @@ export const TransactionTypeDistribution = ({
               ))}
             </Pie>
             <Tooltip
-              formatter={(value: number) => [`$${value.toFixed(2)}`, "Amount"]}
+              formatter={(value: number) => [`MVR ${value.toFixed(2)}`, "Amount"]}
             />
             <Legend />
           </PieChart>

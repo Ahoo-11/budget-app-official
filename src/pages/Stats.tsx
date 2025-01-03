@@ -41,7 +41,7 @@ const Stats = () => {
               <Card className="p-6">
                 <h3 className="text-lg font-semibold mb-2">Total Income</h3>
                 <p className="text-2xl text-success">
-                  $
+                  MVR{" "}
                   {transactions
                     .filter((t) => t.type === "income")
                     .reduce((sum, t) => sum + Number(t.amount), 0)
@@ -51,7 +51,7 @@ const Stats = () => {
               <Card className="p-6">
                 <h3 className="text-lg font-semibold mb-2">Total Expenses</h3>
                 <p className="text-2xl text-danger">
-                  $
+                  MVR{" "}
                   {transactions
                     .filter((t) => t.type === "expense")
                     .reduce((sum, t) => sum + Number(t.amount), 0)
@@ -61,7 +61,7 @@ const Stats = () => {
               <Card className="p-6">
                 <h3 className="text-lg font-semibold mb-2">Net Balance</h3>
                 <p className="text-2xl">
-                  $
+                  MVR{" "}
                   {transactions
                     .reduce(
                       (sum, t) =>

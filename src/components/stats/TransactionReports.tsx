@@ -120,7 +120,7 @@ export const TransactionReports = ({
                       : "text-danger"
                   }`}
                 >
-                  {transaction.type === "income" ? "+" : "-"}$
+                  {transaction.type === "income" ? "+" : "-"}MVR{" "}
                   {Math.abs(Number(transaction.amount)).toFixed(2)}
                 </TableCell>
               </TableRow>

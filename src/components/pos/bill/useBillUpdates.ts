@@ -11,8 +11,8 @@ export const useBillUpdates = (activeBillId: string | undefined, items: BillProd
 
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const gstRate = 0.08; // 8% GST
-  const gstAmount = subtotal * gstRate;
-  const finalTotal = subtotal + gstAmount - discount;
+  const gstAmount = (subtotal * gstRate) / (1 + gstRate); // Calculate GST from GST-inclusive total
+  const finalTotal = subtotal - discount; // Subtotal already includes GST
 
   const updateBillInSupabase = async (updates: any) => {
     if (!activeBillId) return;
@@ -80,7 +80,7 @@ export const useBillUpdates = (activeBillId: string | undefined, items: BillProd
 
   const handleDiscountChange = async (newDiscount: number) => {
     setDiscount(newDiscount);
-    const newTotal = subtotal + gstAmount - newDiscount;
+    const newTotal = subtotal - newDiscount;
     await updateBillInSupabase({
       discount: newDiscount,
       total: newTotal,

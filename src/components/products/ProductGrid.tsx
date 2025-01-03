@@ -21,7 +21,7 @@ interface ProductGridProps {
 export const ProductGrid = ({ sourceId, onProductClick }: ProductGridProps) => {
   const [isAddingProduct, setIsAddingProduct] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  
+
   const { data: products, isLoading } = useQuery({
     queryKey: ['products', sourceId],
     queryFn: async () => {
@@ -29,8 +29,9 @@ export const ProductGrid = ({ sourceId, onProductClick }: ProductGridProps) => {
         .from('products')
         .select('*')
         .eq('source_id', sourceId)
+        .neq('category', 'inventory')
         .order('created_at', { ascending: false });
-      
+
       if (error) throw error;
       return data;
     }

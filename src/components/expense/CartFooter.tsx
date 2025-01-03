@@ -14,9 +14,9 @@ export const CartFooter = ({ total, isSubmitting, onSubmit }: CartFooterProps) =
   const [discount, setDiscount] = useState<number>(0);
   
   const gstRate = 0.08; // 8% GST
-  const gstAmount = total * gstRate;
   const subtotal = total;
-  const finalTotal = subtotal + gstAmount - discount;
+  const gstAmount = (subtotal * gstRate) / (1 + gstRate); // Calculate GST from GST-inclusive total
+  const finalTotal = subtotal - discount; // Total already includes GST
 
   return (
     <div className="space-y-4 pt-4 border-t">
