@@ -72,6 +72,8 @@ export const fetchActiveBills = async (sourceId: string): Promise<Bill[]> => {
 };
 
 const getDefaultPayer = async () => {
+  console.log('🔍 Fetching default payer...');
+  
   const { data, error } = await supabase
     .from('payers')
     .select('id')
@@ -79,31 +81,40 @@ const getDefaultPayer = async () => {
     .single();
 
   if (error) {
-    console.error('Error fetching default payer:', error);
+    console.error('❌ Error fetching default payer:', error);
     return null;
   }
 
-  return data?.id;
+  if (!data) {
+    console.log('⚠️ No default payer found');
+    return null;
+  }
+
+  console.log('✅ Default payer found:', data.id);
+  return data.id;
 };
 
 export const createNewBill = async (sourceId: string, userId: string) => {
-  const defaultPayerId = await getDefaultPayer();
-  
-  if (!defaultPayerId) {
-    console.error('Default payer not found');
-  }
+  console.log('📝 Creating new bill...');
+  console.log('Source ID:', sourceId);
+  console.log('User ID:', userId);
 
+  const defaultPayerId = await getDefaultPayer();
+  console.log('Default Payer ID:', defaultPayerId);
+  
   const billData = {
     source_id: sourceId,
     user_id: userId,
-    status: 'active',
+    status: 'active' as const,
     items: [],
     subtotal: 0,
     total: 0,
     gst: 0,
     discount: 0,
-    payer_id: defaultPayerId || null,
+    payer_id: defaultPayerId,
   };
+
+  console.log('📋 Bill data to insert:', billData);
 
   const { data, error } = await supabase
     .from('bills')
@@ -111,7 +122,12 @@ export const createNewBill = async (sourceId: string, userId: string) => {
     .select()
     .single();
 
-  if (error) throw error;
+  if (error) {
+    console.error('❌ Error creating bill:', error);
+    throw error;
+  }
+
+  console.log('✅ Bill created successfully:', data);
   return data;
 };
 
