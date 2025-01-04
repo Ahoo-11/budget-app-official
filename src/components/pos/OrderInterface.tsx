@@ -1,9 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useTypes } from "@/hooks/useTypes";
+import { Card } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 export function OrderInterface({ sourceId }: { sourceId: string }) {
-  const { types, isTypeEnabled } = useTypes(sourceId);
+  const { types, isTypeEnabled, toggleType } = useTypes(sourceId);
 
   const { data: typeSettings = [] } = useQuery({
     queryKey: ["type-settings", sourceId],
@@ -19,27 +22,33 @@ export function OrderInterface({ sourceId }: { sourceId: string }) {
   });
 
   return (
-    <div>
-      <h2 className="text-lg font-bold">Order Interface</h2>
-      <div>
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold">Income Types</h2>
+      <div className="grid gap-4">
         {types.map((type) => (
-          isTypeEnabled(type.id) && (
-            <div key={type.id} className="type-item">
-              <h3>{type.name}</h3>
-              <p>{type.description}</p>
+          <Card key={type.id} className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <h3 className="text-lg font-medium">{type.name}</h3>
+                {type.description && (
+                  <p className="text-sm text-muted-foreground">
+                    {type.description}
+                  </p>
+                )}
+              </div>
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id={`type-${type.id}`}
+                  checked={isTypeEnabled(type.id)}
+                  onCheckedChange={(checked) => toggleType(type.id, checked)}
+                />
+                <Label htmlFor={`type-${type.id}`}>
+                  {isTypeEnabled(type.id) ? "Enabled" : "Disabled"}
+                </Label>
+              </div>
             </div>
-          )
+          </Card>
         ))}
-      </div>
-      <div>
-        <h3>Type Settings</h3>
-        <ul>
-          {typeSettings.map((setting) => (
-            <li key={setting.id}>
-              Type ID: {setting.type_id}, Enabled: {setting.is_enabled ? 'Yes' : 'No'}
-            </li>
-          ))}
-        </ul>
       </div>
     </div>
   );
