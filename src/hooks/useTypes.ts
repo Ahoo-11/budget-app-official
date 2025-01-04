@@ -90,6 +90,38 @@ export const useTypes = (sourceId?: string) => {
     return setting ? setting.is_enabled : true;
   };
 
+  // Toggle type enabled/disabled status
+  const toggleType = async (typeId: string, isEnabled: boolean) => {
+    if (!sourceId) return;
+
+    try {
+      const { error } = await supabase
+        .from("type_settings")
+        .upsert({
+          source_id: sourceId,
+          type_id: typeId,
+          is_enabled: isEnabled,
+        });
+
+      if (error) throw error;
+
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ["type-settings", sourceId] });
+
+      toast({
+        title: "Success",
+        description: `Type ${isEnabled ? "enabled" : "disabled"} successfully`,
+      });
+    } catch (error) {
+      console.error("Error toggling type:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to update type settings",
+      });
+    }
+  };
+
   return {
     types,
     isLoadingTypes,
@@ -100,5 +132,9 @@ export const useTypes = (sourceId?: string) => {
     subcategoriesError,
     isTypeEnabled,
     getSubcategories,
+    toggleType,
+    // Backward compatibility
+    incomeTypes: types,
+    isIncomeTypeEnabled: isTypeEnabled,
   };
 };

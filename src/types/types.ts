@@ -24,3 +24,6 @@ export interface TypeSubcategory {
   created_at: string;
   updated_at: string;
 }
+
+// Backward compatibility type alias
+export type IncomeType = Type;
