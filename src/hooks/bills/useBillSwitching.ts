@@ -19,36 +19,26 @@ export const useBillSwitching = (
   useEffect(() => {
     const initializeActiveBill = async () => {
       try {
+        // Use maybeSingle() instead of single() to handle no results gracefully
         const { data, error } = await supabase
           .from('bills')
-          .select('id')
+          .select('*')
           .eq('source_id', sourceId)
           .eq('status', 'active')
           .order('created_at', { ascending: false })
           .limit(1)
-          .single();
+          .maybeSingle();
 
         if (error) {
-          if (error.code !== 'PGRST116') { // Not found error
-            console.error('Error fetching active bill:', error);
-          }
+          console.error('Error fetching active bill:', error);
           return;
         }
 
         if (data) {
           console.log('Found existing active bill:', data.id);
           setActiveBillId(data.id);
-          // Fetch bill items
-          const { data: billData } = await supabase
-            .from('bills')
-            .select('*')
-            .eq('id', data.id)
-            .single();
-            
-          if (billData) {
-            const billItems = deserializeBillItems(billData.items);
-            setSelectedProducts(billItems);
-          }
+          const billItems = deserializeBillItems(data.items);
+          setSelectedProducts(billItems);
         }
       } catch (error) {
         console.error('Error initializing active bill:', error);
