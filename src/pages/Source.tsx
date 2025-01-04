@@ -12,10 +12,12 @@ import { InventoryManager } from "@/components/inventory/InventoryManager";
 import { ServiceGrid } from "@/components/pos/ServiceGrid";
 import { useToast } from "@/hooks/use-toast";
 import { IncomeTypeSettings } from "@/components/source/IncomeTypeSettings";
+import { useIncomeTypes } from "@/hooks/useIncomeTypes";
 
 const Source = () => {
   const { sourceId } = useParams();
   const { toast } = useToast();
+  const { incomeTypes, isLoadingTypes, isIncomeTypeEnabled } = useIncomeTypes(sourceId!);
 
   const { data: source, isLoading, error } = useQuery({
     queryKey: ['source', sourceId],
@@ -49,7 +51,7 @@ const Source = () => {
     retry: 1
   });
 
-  if (isLoading) {
+  if (isLoading || isLoadingTypes) {
     return (
       <div className="animate-pulse">
         <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
@@ -70,54 +72,81 @@ const Source = () => {
 
   return (
     <div className="flex flex-col h-full">
-      <Tabs defaultValue="income" className="h-full">
+      <Tabs defaultValue="types" className="h-full">
         <TabsList className="w-full justify-start border-b rounded-none px-4 bg-background">
-          <TabsTrigger value="income">Income</TabsTrigger>
-          <TabsTrigger value="expense">Expense</TabsTrigger>
-          <TabsTrigger value="inventory">Inventory</TabsTrigger>
-          <TabsTrigger value="products">Products</TabsTrigger>
-          <TabsTrigger value="services">Services</TabsTrigger>
-          <TabsTrigger value="categories">Categories</TabsTrigger>
-          <TabsTrigger value="suppliers">Suppliers</TabsTrigger>
-          <TabsTrigger value="settings">Settings</TabsTrigger>
+          <TabsTrigger value="types">Types</TabsTrigger>
         </TabsList>
 
         <div className="flex-1 overflow-auto">
-          <TabsContent value="income" className="h-full m-0 p-0">
-            <OrderInterface sourceId={sourceId!} />
-          </TabsContent>
+          <TabsContent value="types" className="m-0">
+            <Tabs defaultValue="products-section" orientation="vertical" className="h-full">
+              <div className="flex h-full">
+                <TabsList className="w-48 h-full flex-col items-stretch border-r">
+                  <div className="px-2 py-3 font-medium text-sm text-muted-foreground">
+                    Products & Services
+                  </div>
+                  <TabsTrigger value="products-section" className="justify-start">Products</TabsTrigger>
+                  <TabsTrigger value="inventory-section" className="justify-start">Inventory</TabsTrigger>
+                  <TabsTrigger value="services-section" className="justify-start">Services</TabsTrigger>
+                  
+                  <div className="px-2 py-3 font-medium text-sm text-muted-foreground mt-4">
+                    Income Types
+                  </div>
+                  {incomeTypes.map((type) => (
+                    isIncomeTypeEnabled(type.id) && (
+                      <TabsTrigger 
+                        key={type.id} 
+                        value={`income-${type.id}`}
+                        className="justify-start"
+                      >
+                        {type.name}
+                      </TabsTrigger>
+                    )
+                  ))}
 
-          <TabsContent value="expense" className="m-0">
-            <ExpenseInterface sourceId={sourceId!} />
-          </TabsContent>
+                  <div className="px-2 py-3 font-medium text-sm text-muted-foreground mt-4">
+                    Management
+                  </div>
+                  <TabsTrigger value="categories-section" className="justify-start">Categories</TabsTrigger>
+                  <TabsTrigger value="suppliers-section" className="justify-start">Suppliers</TabsTrigger>
+                  <TabsTrigger value="settings-section" className="justify-start">Settings</TabsTrigger>
+                </TabsList>
 
-          <TabsContent value="inventory" className="m-0">
-            <InventoryManager sourceId={sourceId!} />
-          </TabsContent>
+                <div className="flex-1 p-6">
+                  <TabsContent value="products-section">
+                    <ProductGrid sourceId={sourceId!} />
+                  </TabsContent>
 
-          <TabsContent value="products" className="m-0">
-            <ProductGrid sourceId={sourceId!} />
-          </TabsContent>
+                  <TabsContent value="inventory-section">
+                    <InventoryManager sourceId={sourceId!} />
+                  </TabsContent>
 
-          <TabsContent value="services" className="m-0">
-            <ServiceGrid sourceId={sourceId!} onSelect={() => {}} />
-          </TabsContent>
+                  <TabsContent value="services-section">
+                    <ServiceGrid sourceId={sourceId!} onSelect={() => {}} />
+                  </TabsContent>
 
-          <TabsContent value="categories" className="m-0">
-            <CategoryManager sourceId={sourceId!} />
-          </TabsContent>
+                  {incomeTypes.map((type) => (
+                    <TabsContent key={type.id} value={`income-${type.id}`}>
+                      <OrderInterface sourceId={sourceId!} />
+                    </TabsContent>
+                  ))}
 
-          <TabsContent value="suppliers" className="m-0">
-            <SupplierManager />
-          </TabsContent>
+                  <TabsContent value="categories-section">
+                    <CategoryManager sourceId={sourceId!} />
+                  </TabsContent>
 
-          <TabsContent value="settings" className="m-0 p-4">
-            <div className="max-w-4xl mx-auto space-y-8">
-              <div>
-                <h2 className="text-2xl font-bold mb-4">Income Type Settings</h2>
-                <IncomeTypeSettings sourceId={sourceId!} />
+                  <TabsContent value="suppliers-section">
+                    <SupplierManager />
+                  </TabsContent>
+
+                  <TabsContent value="settings-section">
+                    <div className="max-w-4xl space-y-8">
+                      <IncomeTypeSettings sourceId={sourceId!} />
+                    </div>
+                  </TabsContent>
+                </div>
               </div>
-            </div>
+            </Tabs>
           </TabsContent>
         </div>
       </Tabs>
