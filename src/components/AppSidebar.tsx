@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Plus, Settings2, LogOut } from "lucide-react";
+import { Plus, Settings2, LogOut, Menu } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
