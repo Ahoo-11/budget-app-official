@@ -6,6 +6,7 @@ import { OrderContent } from "./OrderContent";
 import { Product } from "@/types/product";
 import { Service } from "@/types/service";
 import { useBillProducts } from "@/hooks/bills/useBillProducts";
+import { BillProduct } from "@/types/bill";
 
 interface OrderInterfaceProps {
   sourceId: string;
@@ -17,20 +18,26 @@ export function OrderInterface({ sourceId }: OrderInterfaceProps) {
   const { data: products = [] } = useQuery({
     queryKey: ["products", sourceId],
     queryFn: async () => {
+      if (!sourceId) return [];
+      
       const { data, error } = await supabase
         .from("products")
         .select("*")
         .eq("source_id", sourceId)
-        .order("name");
+        .neq("category", "inventory")
+        .order("created_at", { ascending: false });
       
       if (error) throw error;
       return data as Product[];
     },
+    enabled: !!sourceId
   });
 
   const { data: services = [] } = useQuery({
     queryKey: ["services", sourceId],
     queryFn: async () => {
+      if (!sourceId) return [];
+      
       const { data, error } = await supabase
         .from("services")
         .select("*")
@@ -40,14 +47,22 @@ export function OrderInterface({ sourceId }: OrderInterfaceProps) {
       if (error) throw error;
       return data as Service[];
     },
+    enabled: !!sourceId
   });
 
   const handleServiceSelect = (service: Service) => {
-    handleProductSelect({
-      ...service,
+    const billProduct: Omit<BillProduct, "quantity"> = {
+      id: service.id,
+      name: service.name,
+      price: service.price,
       type: 'service',
       source_id: sourceId,
-    });
+      category: service.category,
+      description: service.description,
+      current_stock: 0,
+      purchase_cost: 0,
+    };
+    handleProductSelect(billProduct);
   };
 
   return (
@@ -57,7 +72,11 @@ export function OrderInterface({ sourceId }: OrderInterfaceProps) {
           products={products}
           services={services}
           sourceId={sourceId}
-          onProductSelect={handleProductSelect}
+          onProductSelect={product => handleProductSelect({
+            ...product,
+            current_stock: product.current_stock || 0,
+            purchase_cost: product.purchase_cost || 0,
+          })}
           onServiceSelect={handleServiceSelect}
         />
       </div>

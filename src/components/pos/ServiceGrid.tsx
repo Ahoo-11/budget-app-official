@@ -1,28 +1,13 @@
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { Service } from "@/types/service";
 
 interface ServiceGridProps {
   sourceId: string;
-  onSelect?: (service: Service) => void;  // Made optional with ?
+  services: Service[];
+  onSelect: (service: Service) => void;
 }
 
-export const ServiceGrid = ({ sourceId, onSelect }: ServiceGridProps) => {
-  const { data: services = [] } = useQuery({
-    queryKey: ['services', sourceId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('services')
-        .select('*')
-        .eq('source_id', sourceId)
-        .order('name');
-      
-      if (error) throw error;
-      return data as Service[];
-    }
-  });
-
-  if (!services.length) {
+export const ServiceGrid = ({ sourceId, services, onSelect }: ServiceGridProps) => {
+  if (!services?.length) {
     return (
       <div className="text-center py-8 text-muted-foreground">
         No services found
@@ -36,7 +21,7 @@ export const ServiceGrid = ({ sourceId, onSelect }: ServiceGridProps) => {
         <div
           key={service.id}
           className="cursor-pointer p-4 border rounded-lg hover:bg-gray-50"
-          onClick={() => onSelect?.(service)}  // Use optional chaining
+          onClick={() => onSelect(service)}
         >
           <h3 className="font-medium text-sm">{service.name}</h3>
           <p className="text-sm text-muted-foreground">MVR {service.price.toFixed(2)}</p>

@@ -16,7 +16,7 @@ interface OrderCartProps {
 }
 
 export const OrderCart = ({
-  items = [], // Provide default empty array
+  items = [],
   onUpdateQuantity,
   onRemove,
   sourceId,
@@ -34,7 +34,7 @@ export const OrderCart = ({
     handlePayerSelect,
     handleDateChange,
     handleDiscountChange
-  } = useBillUpdates(undefined, items || []); // Ensure items is never undefined
+  } = useBillUpdates(undefined, items);
 
   const handleCheckout = async () => {
     try {
@@ -65,10 +65,7 @@ export const OrderCart = ({
         description: "Bill created successfully",
       });
 
-      // Clear the cart
       setSelectedProducts([]);
-      
-      // Invalidate bills query
       queryClient.invalidateQueries({ queryKey: ['bills'] });
 
     } catch (error) {
@@ -79,6 +76,10 @@ export const OrderCart = ({
         variant: "destructive",
       });
     }
+  };
+
+  const handleCancelBill = () => {
+    setSelectedProducts([]);
   };
 
   return (
@@ -108,6 +109,7 @@ export const OrderCart = ({
           finalTotal={finalTotal}
           onDiscountChange={handleDiscountChange}
           onCheckout={handleCheckout}
+          onCancelBill={handleCancelBill}
         />
       )}
     </div>

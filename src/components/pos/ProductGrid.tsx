@@ -1,39 +1,23 @@
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { Product } from "@/types/product";
 
 interface ProductGridProps {
   sourceId: string;
-  onProductSelect: (product: Product) => void;
+  products: Product[];
+  onSelect: (product: Product) => void;
 }
 
-export const ProductGrid = ({ sourceId, onProductSelect }: ProductGridProps) => {
-  const { data: products, isLoading } = useQuery({
-    queryKey: ['products', sourceId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .eq('source_id', sourceId)
-        .neq('category', 'inventory')  
-        .order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      return data;
-    }
-  });
-
-  if (isLoading) {
-    return <div>Loading products...</div>;
+export const ProductGrid = ({ sourceId, products, onSelect }: ProductGridProps) => {
+  if (!products?.length) {
+    return <div>No products found</div>;
   }
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-4">
-      {products?.map((product) => (
+      {products.map((product) => (
         <div
           key={product.id}
           className="cursor-pointer p-4 border rounded-lg hover:bg-gray-50"
-          onClick={() => onProductSelect(product)}
+          onClick={() => onSelect(product)}
         >
           <div className="aspect-square relative mb-2">
             {product.image_url ? (
