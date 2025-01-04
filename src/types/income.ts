@@ -14,6 +14,7 @@ export interface IncomeFormData {
   current_stock?: number;
   minimum_stock?: number;
   unit_of_measure?: string;
+  source?: string;
 }
 
 export interface QuickIncomeFormData {

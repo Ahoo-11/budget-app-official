@@ -32,6 +32,8 @@ export const QuickIncomeForm = ({ sourceId, onSuccess }: QuickIncomeFormProps) =
     amount: 0,
     date: new Date(),
     source: "",
+    source_id: sourceId,
+    is_recurring: false
   });
 
   // Filter out disabled income types
@@ -63,6 +65,8 @@ export const QuickIncomeForm = ({ sourceId, onSuccess }: QuickIncomeFormProps) =
         amount: 0,
         date: new Date(),
         source: "",
+        source_id: sourceId,
+        is_recurring: false
       });
     } catch (error) {
       console.error("Error adding income:", error);

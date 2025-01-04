@@ -84,7 +84,7 @@ export const useTransactions = (source_id?: string) => {
     onSuccess: (data) => {
       // Invalidate both general and source-specific queries
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
-      if (data.source_id) {
+      if (data?.source_id) {
         queryClient.invalidateQueries({ queryKey: ['transactions', data.source_id] });
       }
       toast({
@@ -113,19 +113,23 @@ export const useTransactions = (source_id?: string) => {
         user_id: session?.user?.id
       };
 
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('transactions')
         .update(cleanTransaction)
-        .eq('id', id);
+        .eq('id', id)
+        .select()
+        .single();
 
       if (error) {
         throw new Error(error.message);
       }
+
+      return data;
     },
     onSuccess: (data) => {
       // Invalidate both general and source-specific queries
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
-      if (data.source_id) {
+      if (data?.source_id) {
         queryClient.invalidateQueries({ queryKey: ['transactions', data.source_id] });
       }
       toast({
