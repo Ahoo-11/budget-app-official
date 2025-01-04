@@ -148,19 +148,23 @@ export const useTransactions = (source_id?: string) => {
 
   const deleteTransactionMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('transactions')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .select()
+        .single();
       
       if (error) {
         throw new Error(error.message);
       }
+
+      return data;
     },
     onSuccess: (data) => {
       // Invalidate both general and source-specific queries
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
-      if (data.source_id) {
+      if (data?.source_id) {
         queryClient.invalidateQueries({ queryKey: ['transactions', data.source_id] });
       }
       toast({

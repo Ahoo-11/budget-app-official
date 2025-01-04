@@ -40,6 +40,7 @@ export const IncomeForm = ({
     amount: initialData?.amount || 0,
     date: initialData?.date || new Date(),
     source: initialData?.source || "",
+    source_id: sourceId, // Add this line
     remarks: initialData?.remarks || "",
     is_recurring: initialData?.is_recurring || false,
     tags: initialData?.tags || [],
@@ -47,6 +48,7 @@ export const IncomeForm = ({
     minimum_stock: initialData?.minimum_stock,
     unit_of_measure: initialData?.unit_of_measure,
   });
+
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [tags, setTags] = useState<string[]>(formData.tags || []);
   const [newTag, setNewTag] = useState("");
