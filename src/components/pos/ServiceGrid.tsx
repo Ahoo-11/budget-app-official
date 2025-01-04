@@ -4,7 +4,7 @@ import { Service } from "@/types/service";
 
 interface ServiceGridProps {
   sourceId: string;
-  onSelect: (service: Service) => void;
+  onSelect?: (service: Service) => void;  // Made optional with ?
 }
 
 export const ServiceGrid = ({ sourceId, onSelect }: ServiceGridProps) => {
@@ -36,7 +36,7 @@ export const ServiceGrid = ({ sourceId, onSelect }: ServiceGridProps) => {
         <div
           key={service.id}
           className="cursor-pointer p-4 border rounded-lg hover:bg-gray-50"
-          onClick={() => onSelect(service)}
+          onClick={() => onSelect?.(service)}  // Use optional chaining
         >
           <h3 className="font-medium text-sm">{service.name}</h3>
           <p className="text-sm text-muted-foreground">MVR {service.price.toFixed(2)}</p>
