@@ -1,8 +1,43 @@
+export interface IncomeFormData {
+  id?: string;
+  source_id: string;
+  income_type_id?: string;
+  subcategory_id?: string;
+  name: string;
+  remarks?: string;
+  amount: number;
+  date: Date;
+  is_recurring: boolean;
+  tags?: string[];
+  photo_url?: string;
+  current_stock?: number;
+  minimum_stock?: number;
+  unit_of_measure?: string;
+}
+
+export interface QuickIncomeFormData {
+  source_id: string;
+  income_type_id?: string;
+  name: string;
+  amount: number;
+  date: Date;
+  is_recurring?: boolean;
+}
+
 export interface IncomeType {
   id: string;
   name: string;
-  description: string | null;
+  description?: string;
   is_enabled: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface IncomeSubcategory {
+  id: string;
+  income_type_id: string;
+  name: string;
+  description?: string;
   created_at: string;
   updated_at: string;
 }
@@ -14,40 +49,4 @@ export interface IncomeTypeSettings {
   is_enabled: boolean;
   created_at: string;
   updated_at: string;
-}
-
-export interface IncomeSubcategory {
-  id: string;
-  income_type_id: string;
-  name: string;
-  description: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface IncomeFormData {
-  photo?: File;
-  name: string;
-  remarks?: string;
-  income_type_id: string;
-  subcategory_id: string;
-  amount: number;
-  date: Date;
-  source: string;
-  tags?: string[];
-  is_recurring: boolean;
-  // Additional fields for Product Sales
-  current_stock?: number;
-  minimum_stock?: number;
-  unit_of_measure?: string;
-}
-
-// Quick add form data with minimal required fields
-export interface QuickIncomeFormData {
-  name: string;
-  income_type_id: string;
-  subcategory_id: string;
-  amount: number;
-  date: Date;
-  source: string;
 }

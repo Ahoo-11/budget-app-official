@@ -148,6 +148,91 @@ export type Database = {
           },
         ]
       }
+      income_entries: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string | null
+          current_stock: number | null
+          date: string
+          id: string
+          income_type_id: string | null
+          is_recurring: boolean | null
+          minimum_stock: number | null
+          name: string
+          photo_url: string | null
+          remarks: string | null
+          source_id: string | null
+          subcategory_id: string | null
+          tags: string[] | null
+          unit_of_measure: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          created_by?: string | null
+          current_stock?: number | null
+          date: string
+          id?: string
+          income_type_id?: string | null
+          is_recurring?: boolean | null
+          minimum_stock?: number | null
+          name: string
+          photo_url?: string | null
+          remarks?: string | null
+          source_id?: string | null
+          subcategory_id?: string | null
+          tags?: string[] | null
+          unit_of_measure?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          current_stock?: number | null
+          date?: string
+          id?: string
+          income_type_id?: string | null
+          is_recurring?: boolean | null
+          minimum_stock?: number | null
+          name?: string
+          photo_url?: string | null
+          remarks?: string | null
+          source_id?: string | null
+          subcategory_id?: string | null
+          tags?: string[] | null
+          unit_of_measure?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "income_entries_income_type_id_fkey"
+            columns: ["income_type_id"]
+            isOneToOne: false
+            referencedRelation: "income_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "income_entries_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "sources"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "income_entries_subcategory_id_fkey"
+            columns: ["subcategory_id"]
+            isOneToOne: false
+            referencedRelation: "income_subcategories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       income_subcategories: {
         Row: {
           created_at: string

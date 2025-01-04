@@ -28,6 +28,7 @@ export const serializeBillItems = (items: BillProduct[]): Json => {
     category: item.category,
     image_url: item.image_url,
     description: item.description,
+    income_type_id: item.income_type_id,
   }));
 };
 
@@ -47,6 +48,7 @@ export const deserializeBillItems = (items: Json): BillProduct[] => {
       category: item.category as string | null | undefined,
       image_url: item.image_url as string | null | undefined,
       description: item.description as string | null | undefined,
+      income_type_id: item.income_type_id as string | null | undefined,
       current_stock: 0,
       purchase_cost: null,
     }));
