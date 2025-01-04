@@ -41,7 +41,7 @@ export const OrderInterface = ({ sourceId }: { sourceId: string }) => {
     queryKey: ['enabledIncomeTypes', sourceId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('source_income_types')
+        .from('income_type_settings')
         .select(`
           income_type:income_types (
             id,
@@ -50,10 +50,10 @@ export const OrderInterface = ({ sourceId }: { sourceId: string }) => {
           )
         `)
         .eq('source_id', sourceId)
-        .eq('enabled', true);
+        .eq('is_enabled', true);
       
       if (error) throw error;
-      return (data as SourceIncomeType[])?.map(d => d.income_type) || [];
+      return data?.map(d => d.income_type) || [];
     }
   });
 

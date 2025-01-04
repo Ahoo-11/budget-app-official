@@ -23,7 +23,7 @@ export const useIncomeEntries = ({ sourceId }: UseIncomeEntriesProps) => {
           subcategory:income_subcategories(name)
         `)
         .eq("source_id", sourceId)
-        .order("date", { ascending: false }) as { data: any[] | null; error: any };
+        .order("date", { ascending: false });
 
       if (error) throw error;
       return data || [];
@@ -64,6 +64,7 @@ export const useIncomeEntries = ({ sourceId }: UseIncomeEntriesProps) => {
           source_id: sourceId,
           photo_url: photoUrl,
           created_by: (await supabase.auth.getUser()).data.user?.id,
+          date: rest.date.toISOString(), // Convert Date to ISO string
         });
 
       if (error) throw error;
@@ -117,6 +118,7 @@ export const useIncomeEntries = ({ sourceId }: UseIncomeEntriesProps) => {
           ...rest,
           photo_url: photoUrl,
           updated_by: (await supabase.auth.getUser()).data.user?.id,
+          date: rest.date ? rest.date.toISOString() : undefined, // Convert Date to ISO string if present
         })
         .eq("id", id);
 

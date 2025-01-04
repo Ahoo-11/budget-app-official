@@ -9,6 +9,7 @@ export interface IncomeFormData {
   date: Date;
   is_recurring: boolean;
   tags?: string[];
+  photo?: File;
   photo_url?: string;
   current_stock?: number;
   minimum_stock?: number;
@@ -18,10 +19,12 @@ export interface IncomeFormData {
 export interface QuickIncomeFormData {
   source_id: string;
   income_type_id?: string;
+  subcategory_id?: string;
   name: string;
   amount: number;
   date: Date;
-  is_recurring?: boolean;
+  is_recurring: boolean;
+  source?: string;
 }
 
 export interface IncomeType {
