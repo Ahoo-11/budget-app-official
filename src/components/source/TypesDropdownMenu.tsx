@@ -17,6 +17,20 @@ export const TypesDropdownMenu = () => {
   // Filter types based on source settings
   const enabledTypes = incomeTypes.filter((type) => isIncomeTypeEnabled(type.id));
 
+  // Map income type names to their respective routes
+  const getTypeRoute = (typeName: string) => {
+    const routeMap: { [key: string]: string } = {
+      "Products": "products",
+      "Services": "services",
+      "Inventory": "inventory",
+      "Employment Income": "employment",
+      "Gifts and Grants": "gifts",
+      "Investment Income": "investment",
+      "Other Income": "other"
+    };
+    return routeMap[typeName] || typeName.toLowerCase().replace(/\s+/g, '-');
+  };
+
   return (
     <NavigationMenu>
       <NavigationMenuList>
@@ -27,7 +41,7 @@ export const TypesDropdownMenu = () => {
               {enabledTypes.map((type) => (
                 <ListItem 
                   key={type.id}
-                  href={`income/${type.id}`} 
+                  href={`income/${getTypeRoute(type.name)}`} 
                   title={type.name}
                 >
                   {type.description || `Manage ${type.name.toLowerCase()}`}
