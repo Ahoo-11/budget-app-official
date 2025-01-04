@@ -89,7 +89,6 @@ export const EmploymentIncome = ({ sourceId }: EmploymentIncomeProps) => {
           <IncomeForm
             sourceId={sourceId}
             onSuccess={() => setIsAddingIncome(false)}
-            incomeType="Employment Income"
           />
         </DialogContent>
       </Dialog>
@@ -105,9 +104,8 @@ export const EmploymentIncome = ({ sourceId }: EmploymentIncomeProps) => {
           {editingIncome && (
             <IncomeForm
               sourceId={sourceId}
-              income={editingIncome}
+              initialData={editingIncome}
               onSuccess={() => setEditingIncome(null)}
-              incomeType="Employment Income"
             />
           )}
         </DialogContent>
