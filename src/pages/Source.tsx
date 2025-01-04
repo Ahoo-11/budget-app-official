@@ -120,32 +120,21 @@ const Source = () => {
             </TabsList>
           </div>
         </div>
+
+        <div className="flex-1 overflow-auto p-4">
+          <Routes>
+            <Route path="/" element={<OrderInterface sourceId={sourceId!} />} />
+            <Route path="products" element={<ProductGrid sourceId={sourceId!} />} />
+            <Route path="services" element={<ServiceGrid sourceId={sourceId!} />} />
+            <Route path="income/employment" element={<EmploymentIncome sourceId={sourceId!} />} />
+            <Route path="income/gifts" element={<GiftsIncome sourceId={sourceId!} />} />
+            <Route path="categories" element={<CategoryManager sourceId={sourceId!} />} />
+            <Route path="suppliers" element={<SupplierManager />} />
+            <Route path="settings" element={<IncomeTypeSettings sourceId={sourceId!} />} />
+            <Route path="expense" element={<ExpenseInterface sourceId={sourceId!} />} />
+          </Routes>
+        </div>
       </Tabs>
-
-      <div className="flex-1 overflow-auto">
-        <Routes>
-          <Route path="products" element={<ProductGrid sourceId={sourceId!} />} />
-          <Route path="services" element={<ServiceGrid sourceId={sourceId!} />} />
-          <Route path="income/employment" element={<EmploymentIncome sourceId={sourceId!} />} />
-          <Route path="income/gifts" element={<GiftsIncome sourceId={sourceId!} />} />
-          <Route path="categories" element={<CategoryManager sourceId={sourceId!} />} />
-          <Route path="suppliers" element={<SupplierManager />} />
-          <Route path="settings" element={<IncomeTypeSettings sourceId={sourceId!} />} />
-          <Route path="*" element={
-            <Tabs defaultValue="income" className="h-full">
-              <div className="flex-1 overflow-auto">
-                <TabsContent value="income" className="h-full m-0 p-0">
-                  <OrderInterface sourceId={sourceId!} />
-                </TabsContent>
-
-                <TabsContent value="expense" className="m-0">
-                  <ExpenseInterface sourceId={sourceId!} />
-                </TabsContent>
-              </div>
-            </Tabs>
-          } />
-        </Routes>
-      </div>
     </div>
   );
 };
