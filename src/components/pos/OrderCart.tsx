@@ -1,7 +1,7 @@
 import { BillProduct } from "@/types/bill";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import { useBillUpdates } from "./bill/useBillUpdates";
+import { useBillUpdates } from "@/hooks/bills/useBillUpdates";
 import { CartHeader } from "./cart/CartHeader";
 import { CartItems } from "./cart/CartItems";
 import { CartFooter } from "./cart/CartFooter";
@@ -11,21 +11,15 @@ interface OrderCartProps {
   items: BillProduct[];
   onUpdateQuantity: (productId: string, quantity: number) => void;
   onRemove: (productId: string) => void;
-  onCheckout: (payerId?: string) => void;
-  isSubmitting?: boolean;
-  activeBillId?: string;
-  defaultPayerId?: string;
+  sourceId: string;
   setSelectedProducts: (products: BillProduct[]) => void;
 }
 
 export const OrderCart = ({
-  items,
+  items = [], // Provide default empty array
   onUpdateQuantity,
   onRemove,
-  onCheckout,
-  isSubmitting = false,
-  activeBillId,
-  defaultPayerId,
+  sourceId,
   setSelectedProducts,
 }: OrderCartProps) => {
   const { toast } = useToast();
@@ -40,38 +34,48 @@ export const OrderCart = ({
     handlePayerSelect,
     handleDateChange,
     handleDiscountChange
-  } = useBillUpdates(activeBillId, items);
+  } = useBillUpdates(undefined, items || []); // Ensure items is never undefined
 
-  const handleCheckout = () => {
-    onCheckout(selectedPayerId || defaultPayerId);
-  };
-
-  const handleCancelBill = async () => {
-    if (!activeBillId) return;
-
+  const handleCheckout = async () => {
     try {
-      const { error } = await supabase
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const { data: bill, error: billError } = await supabase
         .from('bills')
-        .delete()
-        .eq('id', activeBillId);
+        .insert({
+          source_id: sourceId,
+          user_id: user.id,
+          status: 'pending',
+          items,
+          subtotal,
+          discount,
+          gst: gstAmount,
+          total: finalTotal,
+          date,
+          payer_id: selectedPayerId
+        })
+        .select()
+        .single();
 
-      if (error) throw error;
+      if (billError) throw billError;
 
-      // Clear the current bill's data
+      toast({
+        title: "Success",
+        description: "Bill created successfully",
+      });
+
+      // Clear the cart
       setSelectedProducts([]);
       
-      // Invalidate the bills query to refresh the list
+      // Invalidate bills query
       queryClient.invalidateQueries({ queryKey: ['bills'] });
 
-      toast({
-        title: "Bill cancelled",
-        description: "The bill has been successfully cancelled.",
-      });
     } catch (error) {
-      console.error('Error cancelling bill:', error);
+      console.error('Error creating bill:', error);
       toast({
         title: "Error",
-        description: "Failed to cancel the bill. Please try again.",
+        description: "Failed to create bill",
         variant: "destructive",
       });
     }
@@ -80,11 +84,10 @@ export const OrderCart = ({
   return (
     <div className="bg-white h-full flex flex-col border rounded-lg">
       <CartHeader
-        selectedPayerId={selectedPayerId || defaultPayerId || ''}
+        selectedPayerId={selectedPayerId}
         date={date}
         onPayerSelect={handlePayerSelect}
         onDateChange={handleDateChange}
-        defaultPayerId={defaultPayerId}
       />
 
       <div className="border-t p-4">
@@ -103,10 +106,8 @@ export const OrderCart = ({
           gstAmount={gstAmount}
           discount={discount}
           finalTotal={finalTotal}
-          isSubmitting={isSubmitting}
           onDiscountChange={handleDiscountChange}
           onCheckout={handleCheckout}
-          onCancelBill={handleCancelBill}
         />
       )}
     </div>

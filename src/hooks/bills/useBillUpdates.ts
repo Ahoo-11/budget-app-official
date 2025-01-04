@@ -40,7 +40,7 @@ interface UseBillUpdatesReturn {
   handleDiscountChange: (newDiscount: number) => Promise<void>;
 }
 
-export const useBillUpdates = (activeBillId: string | undefined, items: BillProduct[]): UseBillUpdatesReturn => {
+export const useBillUpdates = (activeBillId: string | undefined, items: BillProduct[] = []): UseBillUpdatesReturn => {
   const [discount, setDiscount] = useState<number>(0);
   const [date, setDate] = useState<Date>(new Date());
   const [selectedPayerId, setSelectedPayerId] = useState<string>("");
