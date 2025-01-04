@@ -43,7 +43,7 @@ export const OrderCart = ({
 
       const { error: billError } = await supabase
         .from('bills')
-        .insert({
+        .insert([{
           source_id: sourceId,
           user_id: user.id,
           status: 'pending',
@@ -54,7 +54,7 @@ export const OrderCart = ({
           total: finalTotal,
           date,
           payer_id: selectedPayerId
-        });
+        }]);
 
       if (billError) throw billError;
 
