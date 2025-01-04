@@ -81,13 +81,15 @@ export const useIncomeTypes = (sourceId?: string) => {
     if (!sourceId) return;
 
     try {
-      // First check if a setting already exists
-      const { data: existingSettings } = await supabase
+      // First check if a setting already exists using maybeSingle()
+      const { data: existingSettings, error: fetchError } = await supabase
         .from("income_type_settings")
         .select("*")
         .eq("source_id", sourceId)
         .eq("income_type_id", incomeTypeId)
-        .single();
+        .maybeSingle();
+
+      if (fetchError) throw fetchError;
 
       if (existingSettings) {
         // Update existing setting
