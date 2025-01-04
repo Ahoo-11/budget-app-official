@@ -76,58 +76,6 @@ export const useTypes = (sourceId?: string) => {
     },
   });
 
-  // Toggle type setting for a source
-  const toggleType = async (typeId: string, enabled: boolean) => {
-    if (!sourceId) return;
-
-    try {
-      const { data: existingSettings, error: fetchError } = await supabase
-        .from("type_settings")
-        .select("*")
-        .eq("source_id", sourceId)
-        .eq("type_id", typeId)
-        .maybeSingle();
-
-      if (fetchError) throw fetchError;
-
-      if (existingSettings) {
-        const { error } = await supabase
-          .from("type_settings")
-          .update({ is_enabled: enabled })
-          .eq("source_id", sourceId)
-          .eq("type_id", typeId);
-
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from("type_settings")
-          .insert({
-            source_id: sourceId,
-            type_id: typeId,
-            is_enabled: enabled,
-          });
-
-        if (error) throw error;
-      }
-
-      queryClient.invalidateQueries({ 
-        queryKey: ["type-settings", sourceId] 
-      });
-
-      toast({
-        title: "Success",
-        description: `Type ${enabled ? "enabled" : "disabled"} successfully`,
-      });
-    } catch (error) {
-      console.error("Error toggling type:", error);
-      toast({
-        title: "Error",
-        description: "Failed to update type setting",
-        variant: "destructive",
-      });
-    }
-  };
-
   // Get subcategories for a specific type
   const getSubcategories = (typeId: string) => {
     return subcategories.filter((sub) => sub.type_id === typeId);
@@ -151,7 +99,6 @@ export const useTypes = (sourceId?: string) => {
     isLoadingSubcategories,
     subcategoriesError,
     isTypeEnabled,
-    toggleType,
     getSubcategories,
   };
 };

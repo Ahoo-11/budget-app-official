@@ -1,5 +1,5 @@
 import { Link, useParams } from "react-router-dom";
-import { useIncomeTypes } from "@/hooks/useIncomeTypes";
+import { useTypes } from "@/hooks/useTypes";
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -12,12 +12,12 @@ import { forwardRef } from "react";
 
 export const TypesDropdownMenu = () => {
   const { sourceId } = useParams();
-  const { incomeTypes, isIncomeTypeEnabled } = useIncomeTypes(sourceId);
+  const { types, isTypeEnabled } = useTypes(sourceId);
 
   // Filter types based on source settings
-  const enabledTypes = incomeTypes.filter((type) => isIncomeTypeEnabled(type.id));
+  const enabledTypes = types.filter((type) => isTypeEnabled(type.id));
 
-  // Map income type names to their respective routes
+  // Map type names to their respective routes
   const getTypeRoute = (typeName: string) => {
     const routeMap: { [key: string]: string } = {
       "Products": "products",
