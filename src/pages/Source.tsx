@@ -9,7 +9,7 @@ import { CategoryManager } from "@/components/source/CategoryManager";
 import { SupplierManager } from "@/components/source/SupplierManager";
 import { ExpenseInterface } from "@/components/expense/ExpenseInterface";
 import { InventoryManager } from "@/components/inventory/InventoryManager";
-import { RecurringTransactions } from "@/components/source/RecurringTransactions";
+import { ServiceGrid } from "@/components/pos/ServiceGrid";
 import { useToast } from "@/hooks/use-toast";
 import { IncomeTypeSettings } from "@/components/source/IncomeTypeSettings";
 
@@ -74,9 +74,9 @@ const Source = () => {
         <TabsList className="w-full justify-start border-b rounded-none px-4 bg-background">
           <TabsTrigger value="income">Income</TabsTrigger>
           <TabsTrigger value="expense">Expense</TabsTrigger>
-          <TabsTrigger value="recurring">Recurring</TabsTrigger>
           <TabsTrigger value="inventory">Inventory</TabsTrigger>
           <TabsTrigger value="products">Products</TabsTrigger>
+          <TabsTrigger value="services">Services</TabsTrigger>
           <TabsTrigger value="categories">Categories</TabsTrigger>
           <TabsTrigger value="suppliers">Suppliers</TabsTrigger>
           <TabsTrigger value="settings">Settings</TabsTrigger>
@@ -91,16 +91,16 @@ const Source = () => {
             <ExpenseInterface sourceId={sourceId!} />
           </TabsContent>
 
-          <TabsContent value="recurring" className="m-0">
-            <RecurringTransactions sourceId={sourceId!} />
-          </TabsContent>
-
           <TabsContent value="inventory" className="m-0">
             <InventoryManager sourceId={sourceId!} />
           </TabsContent>
 
           <TabsContent value="products" className="m-0">
             <ProductGrid sourceId={sourceId!} />
+          </TabsContent>
+
+          <TabsContent value="services" className="m-0">
+            <ServiceGrid sourceId={sourceId!} onSelect={() => {}} />
           </TabsContent>
 
           <TabsContent value="categories" className="m-0">
@@ -117,7 +117,6 @@ const Source = () => {
                 <h2 className="text-2xl font-bold mb-4">Income Type Settings</h2>
                 <IncomeTypeSettings sourceId={sourceId!} />
               </div>
-              {/* Add other settings sections here */}
             </div>
           </TabsContent>
         </div>
