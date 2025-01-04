@@ -3,7 +3,6 @@ import {
   NavigationMenu,
   NavigationMenuContent,
   NavigationMenuItem,
-  NavigationMenuLink,
   NavigationMenuList,
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
@@ -58,7 +57,7 @@ export function TypesDropdownMenu() {
         <NavigationMenuItem>
           <NavigationMenuTrigger>Types</NavigationMenuTrigger>
           <NavigationMenuContent>
-            <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
+            <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px] bg-background border rounded-md shadow-lg">
               {/* Product-related items */}
               <ListItem
                 title="Products"
@@ -89,15 +88,6 @@ export function TypesDropdownMenu() {
                   {type.description || `Manage ${type.name.toLowerCase()}`}
                 </ListItem>
               ))}
-
-              {/* Settings Link */}
-              <ListItem
-                title="Income Type Settings"
-                href={`/source/${sourceId}/settings#income-types`}
-                className="col-span-2 bg-muted/50"
-              >
-                Enable or disable income types
-              </ListItem>
             </ul>
           </NavigationMenuContent>
         </NavigationMenuItem>

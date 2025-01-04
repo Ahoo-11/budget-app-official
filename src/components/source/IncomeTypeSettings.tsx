@@ -29,6 +29,22 @@ export const IncomeTypeSettings = ({ sourceId }: IncomeTypeSettingsProps) => {
   const isLoading = isLoadingTypes || isLoadingSettings || isLoadingSubcategories;
   const error = typesError || settingsError || subcategoriesError;
 
+  // Add static types for Products and Services
+  const staticTypes = [
+    {
+      id: 'products',
+      name: 'Products',
+      description: 'Enable or disable product management',
+    },
+    {
+      id: 'services',
+      name: 'Services',
+      description: 'Enable or disable service management',
+    },
+  ];
+
+  const allTypes = [...staticTypes, ...incomeTypes];
+
   if (error) {
     return (
       <Alert variant="destructive">
@@ -74,7 +90,7 @@ export const IncomeTypeSettings = ({ sourceId }: IncomeTypeSettingsProps) => {
             </Card>
           ))
         ) : (
-          incomeTypes.map((incomeType) => {
+          allTypes.map((incomeType) => {
             const isEnabled = isIncomeTypeEnabled(incomeType.id);
             const subcategories = getSubcategories(incomeType.id);
 
