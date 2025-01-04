@@ -16,6 +16,8 @@ import { TypesDropdownMenu } from "@/components/source/TypesDropdownMenu";
 import { Routes, Route, useLocation, useNavigate } from "react-router-dom";
 import { EmploymentIncome } from "@/components/income/EmploymentIncome";
 
+type TabValue = 'income' | 'expense' | 'products' | 'services' | 'employment' | 'gifts' | 'investments' | 'other';
+
 const Source = () => {
   const { sourceId } = useParams();
   const { toast } = useToast();
@@ -74,18 +76,19 @@ const Source = () => {
   }
 
   // Helper function to determine active tab
-  const getActiveTab = () => {
+  const getActiveTab = (): TabValue => {
     if (location.pathname.includes('/products')) return 'products';
     if (location.pathname.includes('/services')) return 'services';
     if (location.pathname.includes('/income/employment')) return 'employment';
     if (location.pathname.includes('/income/gifts')) return 'gifts';
     if (location.pathname.includes('/income/investments')) return 'investments';
     if (location.pathname.includes('/income/other')) return 'other';
+    if (location.pathname.includes('/expense')) return 'expense';
     return 'income';
   };
 
   // Navigation handler
-  const handleTabChange = (value: string) => {
+  const handleTabChange = (value: TabValue) => {
     switch (value) {
       case 'products':
         navigate(`/source/${sourceId}/products`);
@@ -95,6 +98,9 @@ const Source = () => {
         break;
       case 'employment':
         navigate(`/source/${sourceId}/income/employment`);
+        break;
+      case 'expense':
+        navigate(`/source/${sourceId}/expense`);
         break;
       default:
         navigate(`/source/${sourceId}`);
