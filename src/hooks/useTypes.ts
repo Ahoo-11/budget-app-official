@@ -83,15 +83,35 @@ export const useTypes = (sourceId?: string) => {
     if (!sourceId) return;
 
     try {
-      const { error } = await supabase
+      // First, check if a setting already exists
+      const { data: existingSettings } = await supabase
         .from("type_settings")
-        .upsert({
-          source_id: sourceId,
-          type_id: typeId,
-          is_enabled: isEnabled,
-        });
+        .select("*")
+        .eq("source_id", sourceId)
+        .eq("type_id", typeId)
+        .single();
 
-      if (error) throw error;
+      if (existingSettings) {
+        // Update existing setting
+        const { error: updateError } = await supabase
+          .from("type_settings")
+          .update({ is_enabled: isEnabled })
+          .eq("source_id", sourceId)
+          .eq("type_id", typeId);
+
+        if (updateError) throw updateError;
+      } else {
+        // Insert new setting
+        const { error: insertError } = await supabase
+          .from("type_settings")
+          .insert({
+            source_id: sourceId,
+            type_id: typeId,
+            is_enabled: isEnabled,
+          });
+
+        if (insertError) throw insertError;
+      }
 
       await queryClient.invalidateQueries({ queryKey: ["type-settings", sourceId] });
 
