@@ -20,7 +20,7 @@ export const IncomeTypeSelector = ({
     isIncomeTypeEnabled,
   } = useIncomeTypes(sourceId);
 
-  // Only show enabled income types
+  // Only show enabled income types for this source
   const enabledTypes = incomeTypes.filter((type) => isIncomeTypeEnabled(type.id));
 
   if (isLoadingTypes) {

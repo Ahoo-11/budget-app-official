@@ -29,22 +29,6 @@ export const IncomeTypeSettings = ({ sourceId }: IncomeTypeSettingsProps) => {
   const isLoading = isLoadingTypes || isLoadingSettings || isLoadingSubcategories;
   const error = typesError || settingsError || subcategoriesError;
 
-  // Add static types for Products and Services
-  const staticTypes = [
-    {
-      id: 'products',
-      name: 'Products',
-      description: 'Enable or disable product management',
-    },
-    {
-      id: 'services',
-      name: 'Services',
-      description: 'Enable or disable service management',
-    },
-  ];
-
-  const allTypes = [...staticTypes, ...incomeTypes];
-
   if (error) {
     return (
       <Alert variant="destructive">
@@ -63,10 +47,10 @@ export const IncomeTypeSettings = ({ sourceId }: IncomeTypeSettingsProps) => {
         <div className="space-y-1">
           <h2 className="text-2xl font-bold flex items-center gap-2">
             <Settings2 className="h-5 w-5" />
-            Income Types
+            Income Types Visibility
           </h2>
           <p className="text-sm text-muted-foreground">
-            Enable or disable income types for this source
+            Enable or disable income types for this source. Disabled types will be hidden from menus and filters.
           </p>
         </div>
       </div>
@@ -90,7 +74,7 @@ export const IncomeTypeSettings = ({ sourceId }: IncomeTypeSettingsProps) => {
             </Card>
           ))
         ) : (
-          allTypes.map((incomeType) => {
+          incomeTypes.map((incomeType) => {
             const isEnabled = isIncomeTypeEnabled(incomeType.id);
             const subcategories = getSubcategories(incomeType.id);
 
@@ -107,7 +91,7 @@ export const IncomeTypeSettings = ({ sourceId }: IncomeTypeSettingsProps) => {
                     <div className="flex items-center gap-2">
                       <h3 className="font-semibold">{incomeType.name}</h3>
                       <Badge variant={isEnabled ? "default" : "secondary"}>
-                        {isEnabled ? "Enabled" : "Disabled"}
+                        {isEnabled ? "Visible" : "Hidden"}
                       </Badge>
                     </div>
                     {incomeType.description && (
@@ -125,7 +109,7 @@ export const IncomeTypeSettings = ({ sourceId }: IncomeTypeSettingsProps) => {
                       }
                     />
                     <Label htmlFor={`enable-${incomeType.id}`} className="sr-only">
-                      {isEnabled ? "Enabled" : "Disabled"}
+                      {isEnabled ? "Visible" : "Hidden"}
                     </Label>
                   </div>
                 </div>
