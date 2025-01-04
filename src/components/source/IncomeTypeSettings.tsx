@@ -5,7 +5,8 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Settings2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface IncomeTypeSettingsProps {
   sourceId: string;
@@ -44,7 +45,10 @@ export const IncomeTypeSettings = ({ sourceId }: IncomeTypeSettingsProps) => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="space-y-1">
-          <h2 className="text-2xl font-bold">Income Types</h2>
+          <h2 className="text-2xl font-bold flex items-center gap-2">
+            <Settings2 className="h-5 w-5" />
+            Income Types
+          </h2>
           <p className="text-sm text-muted-foreground">
             Enable or disable income types for this source
           </p>
@@ -53,7 +57,6 @@ export const IncomeTypeSettings = ({ sourceId }: IncomeTypeSettingsProps) => {
 
       <div className="grid gap-4">
         {isLoading ? (
-          // Loading skeletons
           Array.from({ length: 3 }).map((_, index) => (
             <Card key={index} className="p-4">
               <div className="flex items-center justify-between mb-4">
@@ -76,12 +79,23 @@ export const IncomeTypeSettings = ({ sourceId }: IncomeTypeSettingsProps) => {
             const subcategories = getSubcategories(incomeType.id);
 
             return (
-              <Card key={incomeType.id} className="p-4">
+              <Card 
+                key={incomeType.id} 
+                className={cn(
+                  "p-4 transition-colors",
+                  isEnabled ? "border-primary/50" : "opacity-70"
+                )}
+              >
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <h3 className="font-semibold">{incomeType.name}</h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-semibold">{incomeType.name}</h3>
+                      <Badge variant={isEnabled ? "default" : "secondary"}>
+                        {isEnabled ? "Enabled" : "Disabled"}
+                      </Badge>
+                    </div>
                     {incomeType.description && (
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-sm text-muted-foreground mt-1">
                         {incomeType.description}
                       </p>
                     )}
@@ -94,19 +108,21 @@ export const IncomeTypeSettings = ({ sourceId }: IncomeTypeSettingsProps) => {
                         toggleIncomeType(incomeType.id, checked)
                       }
                     />
-                    <Label htmlFor={`enable-${incomeType.id}`}>
+                    <Label htmlFor={`enable-${incomeType.id}`} className="sr-only">
                       {isEnabled ? "Enabled" : "Disabled"}
                     </Label>
                   </div>
                 </div>
 
-                <div className="flex flex-wrap gap-2">
-                  {subcategories.map((sub) => (
-                    <Badge key={sub.id} variant="secondary">
-                      {sub.name}
-                    </Badge>
-                  ))}
-                </div>
+                {subcategories.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {subcategories.map((sub) => (
+                      <Badge key={sub.id} variant="secondary">
+                        {sub.name}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
               </Card>
             );
           })

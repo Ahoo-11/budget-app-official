@@ -3,9 +3,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { IncomeType, IncomeTypeSettings, IncomeSubcategory } from "@/types/income";
 import { useToast } from "./use-toast";
 
-// Create a service role client for debugging
-const adminClient = supabase;
-
 export const useIncomeTypes = (sourceId?: string) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -19,22 +16,16 @@ export const useIncomeTypes = (sourceId?: string) => {
     queryKey: ["income-types"],
     queryFn: async () => {
       console.log("Fetching income types...");
-      try {
-        const { data, error } = await adminClient
-          .from("income_types")
-          .select("*")
-          .order("name");
+      const { data, error } = await supabase
+        .from("income_types")
+        .select("*")
+        .order("name");
 
-        if (error) {
-          console.error("Error fetching income types:", error);
-          throw error;
-        }
-        console.log("Fetched income types:", data);
-        return (data as IncomeType[]) || [];
-      } catch (error) {
-        console.error("Error in income types query:", error);
+      if (error) {
+        console.error("Error fetching income types:", error);
         throw error;
       }
+      return (data as IncomeType[]) || [];
     },
   });
 
@@ -49,22 +40,16 @@ export const useIncomeTypes = (sourceId?: string) => {
       if (!sourceId) return [];
       
       console.log("Fetching income type settings for source:", sourceId);
-      try {
-        const { data, error } = await adminClient
-          .from("income_type_settings")
-          .select("*")
-          .eq("source_id", sourceId);
+      const { data, error } = await supabase
+        .from("income_type_settings")
+        .select("*")
+        .eq("source_id", sourceId);
 
-        if (error) {
-          console.error("Error fetching income type settings:", error);
-          throw error;
-        }
-        console.log("Fetched income type settings:", data);
-        return (data as IncomeTypeSettings[]) || [];
-      } catch (error) {
-        console.error("Error in income type settings query:", error);
+      if (error) {
+        console.error("Error fetching income type settings:", error);
         throw error;
       }
+      return (data as IncomeTypeSettings[]) || [];
     },
     enabled: !!sourceId,
   });
@@ -78,22 +63,16 @@ export const useIncomeTypes = (sourceId?: string) => {
     queryKey: ["income-subcategories"],
     queryFn: async () => {
       console.log("Fetching subcategories...");
-      try {
-        const { data, error } = await adminClient
-          .from("income_subcategories")
-          .select("*")
-          .order("name");
+      const { data, error } = await supabase
+        .from("income_subcategories")
+        .select("*")
+        .order("name");
 
-        if (error) {
-          console.error("Error fetching subcategories:", error);
-          throw error;
-        }
-        console.log("Fetched subcategories:", data);
-        return (data as IncomeSubcategory[]) || [];
-      } catch (error) {
-        console.error("Error in subcategories query:", error);
+      if (error) {
+        console.error("Error fetching subcategories:", error);
         throw error;
       }
+      return (data as IncomeSubcategory[]) || [];
     },
   });
 
@@ -103,7 +82,7 @@ export const useIncomeTypes = (sourceId?: string) => {
 
     try {
       // First check if a setting already exists
-      const { data: existingSettings } = await adminClient
+      const { data: existingSettings } = await supabase
         .from("income_type_settings")
         .select("*")
         .eq("source_id", sourceId)
@@ -112,7 +91,7 @@ export const useIncomeTypes = (sourceId?: string) => {
 
       if (existingSettings) {
         // Update existing setting
-        const { error } = await adminClient
+        const { error } = await supabase
           .from("income_type_settings")
           .update({ is_enabled: enabled })
           .eq("source_id", sourceId)
@@ -121,7 +100,7 @@ export const useIncomeTypes = (sourceId?: string) => {
         if (error) throw error;
       } else {
         // Insert new setting
-        const { error } = await adminClient
+        const { error } = await supabase
           .from("income_type_settings")
           .insert({
             source_id: sourceId,
@@ -133,7 +112,9 @@ export const useIncomeTypes = (sourceId?: string) => {
       }
 
       // Invalidate the settings query to refresh the data
-      queryClient.invalidateQueries({ queryKey: ["income-type-settings", sourceId] });
+      queryClient.invalidateQueries({ 
+        queryKey: ["income-type-settings", sourceId] 
+      });
 
       toast({
         title: "Success",
