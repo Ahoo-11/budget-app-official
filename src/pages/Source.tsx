@@ -12,6 +12,7 @@ import { InventoryManager } from "@/components/inventory/InventoryManager";
 import { ServiceGrid } from "@/components/pos/ServiceGrid";
 import { useToast } from "@/hooks/use-toast";
 import { IncomeTypeSettings } from "@/components/source/IncomeTypeSettings";
+import { TypesDropdownMenu } from "@/components/source/TypesDropdownMenu";
 
 const Source = () => {
   const { sourceId } = useParams();
@@ -74,9 +75,9 @@ const Source = () => {
         <TabsList className="w-full justify-start border-b rounded-none px-4 bg-background">
           <TabsTrigger value="income">Income</TabsTrigger>
           <TabsTrigger value="expense">Expense</TabsTrigger>
-          <TabsTrigger value="inventory">Inventory</TabsTrigger>
-          <TabsTrigger value="products">Products</TabsTrigger>
-          <TabsTrigger value="services">Services</TabsTrigger>
+          <div className="mx-1">
+            <TypesDropdownMenu />
+          </div>
           <TabsTrigger value="categories">Categories</TabsTrigger>
           <TabsTrigger value="suppliers">Suppliers</TabsTrigger>
           <TabsTrigger value="settings">Settings</TabsTrigger>
@@ -113,7 +114,7 @@ const Source = () => {
 
           <TabsContent value="settings" className="m-0 p-4">
             <div className="max-w-4xl mx-auto space-y-8">
-              <div>
+              <div id="income-types">
                 <h2 className="text-2xl font-bold mb-4">Income Type Settings</h2>
                 <IncomeTypeSettings sourceId={sourceId!} />
               </div>
