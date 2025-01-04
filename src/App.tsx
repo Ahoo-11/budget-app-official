@@ -34,32 +34,49 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session }, error }) => {
-      if (error) {
-        console.error('Error getting session:', error);
-        toast({
-          variant: "destructive",
-          title: "Authentication Error",
-          description: "There was a problem with your session. Please try logging in again.",
-        });
-      }
-      setSession(session);
-      setLoading(false);
-    });
+    let mounted = true;
 
-    // Listen for auth changes
+    async function getSession() {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('Error getting session:', error);
+          toast({
+            variant: "destructive",
+            title: "Authentication Error",
+            description: "There was a problem with your session. Please try logging in again.",
+          });
+          return;
+        }
+
+        if (mounted) {
+          setSession(session);
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('Error in getSession:', error);
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    }
+
+    getSession();
+
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      if (_event === 'SIGNED_OUT') {
-        // Clear any cached data
-        queryClient.clear();
+      if (mounted) {
+        setSession(session);
+        if (_event === 'SIGNED_OUT') {
+          queryClient.clear();
+        }
       }
     });
 
     return () => {
+      mounted = false;
       subscription.unsubscribe();
     };
   }, [toast]);

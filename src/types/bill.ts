@@ -12,6 +12,7 @@ export interface Bill {
   date: string;
   created_at: string;
   updated_at: string;
+  payer_id: string | null;
   income_type_id: string | null;
 }
 

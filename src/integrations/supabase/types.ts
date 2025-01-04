@@ -46,6 +46,7 @@ export type Database = {
           discount: number
           gst: number
           id: string
+          income_type_id: string | null
           items: Json
           payer_id: string | null
           source_id: string
@@ -61,6 +62,7 @@ export type Database = {
           discount?: number
           gst?: number
           id?: string
+          income_type_id?: string | null
           items?: Json
           payer_id?: string | null
           source_id: string
@@ -76,6 +78,7 @@ export type Database = {
           discount?: number
           gst?: number
           id?: string
+          income_type_id?: string | null
           items?: Json
           payer_id?: string | null
           source_id?: string
@@ -86,6 +89,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "bills_income_type_id_fkey"
+            columns: ["income_type_id"]
+            isOneToOne: false
+            referencedRelation: "income_types"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "bills_payer_id_fkey"
             columns: ["payer_id"]
@@ -137,6 +147,110 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      income_subcategories: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          income_type_id: string | null
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          income_type_id?: string | null
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          income_type_id?: string | null
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "income_subcategories_income_type_id_fkey"
+            columns: ["income_type_id"]
+            isOneToOne: false
+            referencedRelation: "income_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      income_type_settings: {
+        Row: {
+          created_at: string
+          id: string
+          income_type_id: string | null
+          is_enabled: boolean | null
+          source_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          income_type_id?: string | null
+          is_enabled?: boolean | null
+          source_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          income_type_id?: string | null
+          is_enabled?: boolean | null
+          source_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "income_type_settings_income_type_id_fkey"
+            columns: ["income_type_id"]
+            isOneToOne: false
+            referencedRelation: "income_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "income_type_settings_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      income_types: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_enabled: boolean | null
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       payers: {
         Row: {
