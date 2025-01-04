@@ -7,13 +7,27 @@ import { Product } from "@/types/product";
 import { Service } from "@/types/service";
 import { useBillProducts } from "@/hooks/bills/useBillProducts";
 import { BillProduct } from "@/types/bill";
+import { useBillManagement } from "@/hooks/useBillManagement";
+import { BillActions } from "./BillActions";
 
 interface OrderInterfaceProps {
   sourceId: string;
 }
 
 export function OrderInterface({ sourceId }: OrderInterfaceProps) {
-  const { selectedProducts, setSelectedProducts, handleProductSelect } = useBillProducts();
+  const { 
+    selectedProducts, 
+    setSelectedProducts, 
+    handleProductSelect 
+  } = useBillProducts();
+
+  const {
+    bills,
+    activeBillId,
+    isSubmitting,
+    handleNewBill,
+    handleSwitchBill,
+  } = useBillManagement(sourceId);
 
   const { data: products = [] } = useQuery({
     queryKey: ["products", sourceId],
@@ -66,34 +80,46 @@ export function OrderInterface({ sourceId }: OrderInterfaceProps) {
   };
 
   return (
-    <div className="flex h-full gap-4">
-      <div className="flex-1">
-        <OrderContent
-          products={products}
-          services={services}
-          sourceId={sourceId}
-          onProductSelect={product => handleProductSelect({
-            ...product,
-            current_stock: product.current_stock || 0,
-            purchase_cost: product.purchase_cost || 0,
-          })}
-          onServiceSelect={handleServiceSelect}
-        />
-      </div>
-      <div className="w-[400px]">
-        <OrderCart
-          items={selectedProducts}
-          onUpdateQuantity={(productId, quantity) => {
-            setSelectedProducts(prev =>
-              prev.map(p => p.id === productId ? { ...p, quantity } : p)
-            );
-          }}
-          onRemove={(productId) => {
-            setSelectedProducts(prev => prev.filter(p => p.id !== productId));
-          }}
-          sourceId={sourceId}
+    <div className="flex flex-col h-full">
+      <div className="flex justify-end p-4 border-b">
+        <BillActions
+          onNewBill={handleNewBill}
+          onSwitchBill={handleSwitchBill}
+          activeBills={bills}
+          activeBillId={activeBillId}
+          isSubmitting={isSubmitting}
           setSelectedProducts={setSelectedProducts}
         />
+      </div>
+      <div className="flex flex-1 gap-4 p-4 overflow-hidden">
+        <div className="flex-1 overflow-auto">
+          <OrderContent
+            products={products}
+            services={services}
+            sourceId={sourceId}
+            onProductSelect={product => handleProductSelect({
+              ...product,
+              current_stock: product.current_stock || 0,
+              purchase_cost: product.purchase_cost || 0,
+            })}
+            onServiceSelect={handleServiceSelect}
+          />
+        </div>
+        <div className="w-[400px]">
+          <OrderCart
+            items={selectedProducts}
+            onUpdateQuantity={(productId, quantity) => {
+              setSelectedProducts(prev =>
+                prev.map(p => p.id === productId ? { ...p, quantity } : p)
+              );
+            }}
+            onRemove={(productId) => {
+              setSelectedProducts(prev => prev.filter(p => p.id !== productId));
+            }}
+            sourceId={sourceId}
+            setSelectedProducts={setSelectedProducts}
+          />
+        </div>
       </div>
     </div>
   );
