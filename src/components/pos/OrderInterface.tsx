@@ -1,20 +1,39 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useTypes } from "@/hooks/useTypes";
-import { Card } from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
+import { OrderCart } from "./OrderCart";
+import { OrderContent } from "./OrderContent";
+import { ProductGrid } from "./ProductGrid";
+import { ServiceGrid } from "./ServiceGrid";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export function OrderInterface({ sourceId }: { sourceId: string }) {
-  const { types, isTypeEnabled, toggleType } = useTypes(sourceId);
+  const [activeTab, setActiveTab] = useState<"products" | "services">("products");
+  const { types, isTypeEnabled } = useTypes(sourceId);
 
-  const { data: typeSettings = [] } = useQuery({
-    queryKey: ["type-settings", sourceId],
+  const { data: products = [] } = useQuery({
+    queryKey: ["products", sourceId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("type_settings")
+        .from("products")
         .select("*")
-        .eq("source_id", sourceId);
+        .eq("source_id", sourceId)
+        .order("name");
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: services = [] } = useQuery({
+    queryKey: ["services", sourceId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("services")
+        .select("*")
+        .eq("source_id", sourceId)
+        .order("name");
 
       if (error) throw error;
       return data;
@@ -22,34 +41,22 @@ export function OrderInterface({ sourceId }: { sourceId: string }) {
   });
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold">Income Types</h2>
-      <div className="grid gap-4">
-        {types.map((type) => (
-          <Card key={type.id} className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <h3 className="text-lg font-medium">{type.name}</h3>
-                {type.description && (
-                  <p className="text-sm text-muted-foreground">
-                    {type.description}
-                  </p>
-                )}
-              </div>
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id={`type-${type.id}`}
-                  checked={isTypeEnabled(type.id)}
-                  onCheckedChange={(checked) => toggleType(type.id, checked)}
-                />
-                <Label htmlFor={`type-${type.id}`}>
-                  {isTypeEnabled(type.id) ? "Enabled" : "Disabled"}
-                </Label>
-              </div>
-            </div>
-          </Card>
-        ))}
+    <div className="flex h-full">
+      <div className="flex-1 p-4">
+        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "products" | "services")}>
+          <TabsList>
+            <TabsTrigger value="products">Products</TabsTrigger>
+            <TabsTrigger value="services">Services</TabsTrigger>
+          </TabsList>
+          <TabsContent value="products" className="mt-4">
+            <ProductGrid products={products} />
+          </TabsContent>
+          <TabsContent value="services" className="mt-4">
+            <ServiceGrid services={services} />
+          </TabsContent>
+        </Tabs>
       </div>
+      <OrderCart sourceId={sourceId} />
     </div>
   );
 }
