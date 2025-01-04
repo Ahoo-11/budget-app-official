@@ -101,13 +101,13 @@ export const createNewBill = async (sourceId: string, userId: string) => {
 
   const defaultPayerId = await getDefaultPayer();
   console.log('Default Payer ID:', defaultPayerId);
-  
-  // Create bill data object, omitting payer_id if it's null
-  const billData: Omit<Bill, 'id' | 'created_at' | 'updated_at'> = {
+
+  // Create the base bill data
+  const billData = {
     source_id: sourceId,
     user_id: userId,
     status: 'active',
-    items: [],
+    items: serializeBillItems([]), // Serialize empty array for initial bill
     subtotal: 0,
     total: 0,
     gst: 0,
