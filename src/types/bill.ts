@@ -12,6 +12,7 @@ export interface Bill {
   date: string;
   created_at: string;
   updated_at: string;
+  income_type_id: string | null;
 }
 
 export interface BillProduct {
@@ -20,12 +21,13 @@ export interface BillProduct {
   price: number;
   quantity: number;
   type: 'product' | 'service';
-  source_id: string;  // Changed from optional to required
+  source_id: string;  
   category: string | null;
   image_url: string | null;
   description: string | null;
   current_stock?: number;
   purchase_cost: number | null;
+  income_type_id: string | null;
 }
 
 export interface BillItemJson {

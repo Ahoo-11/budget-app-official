@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Home, Menu, Plus, Settings2, LogOut, BarChart } from "lucide-react";
+import { Home, Menu, Plus, Settings2, LogOut, BarChart, Briefcase, Gift, DollarSign, Package, Wrench } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -190,6 +190,78 @@ export function AppSidebar() {
             >
               <Home className="mr-2 h-4 w-4" />
               Home
+            </Button>
+          </Link>
+          <Link to="/products" onClick={() => setIsMobileMenuOpen(false)}>
+            <Button 
+              variant="ghost"
+              className={cn(
+                "w-full justify-start",
+                location.pathname === "/products" && "bg-accent text-accent-foreground font-medium"
+              )}
+            >
+              <Package className="mr-2 h-4 w-4" />
+              Products
+            </Button>
+          </Link>
+          <Link to="/services" onClick={() => setIsMobileMenuOpen(false)}>
+            <Button 
+              variant="ghost"
+              className={cn(
+                "w-full justify-start",
+                location.pathname === "/services" && "bg-accent text-accent-foreground font-medium"
+              )}
+            >
+              <Wrench className="mr-2 h-4 w-4" />
+              Services
+            </Button>
+          </Link>
+          <Link to="/income/employment" onClick={() => setIsMobileMenuOpen(false)}>
+            <Button 
+              variant="ghost"
+              className={cn(
+                "w-full justify-start",
+                location.pathname === "/income/employment" && "bg-accent text-accent-foreground font-medium"
+              )}
+            >
+              <Briefcase className="mr-2 h-4 w-4" />
+              Employment Income
+            </Button>
+          </Link>
+          <Link to="/income/gifts" onClick={() => setIsMobileMenuOpen(false)}>
+            <Button 
+              variant="ghost"
+              className={cn(
+                "w-full justify-start",
+                location.pathname === "/income/gifts" && "bg-accent text-accent-foreground font-medium"
+              )}
+            >
+              <Gift className="mr-2 h-4 w-4" />
+              Gifts & Grants
+            </Button>
+          </Link>
+          <Link to="/income/investments" onClick={() => setIsMobileMenuOpen(false)}>
+            <Button 
+              variant="ghost"
+              className={cn(
+                "w-full justify-start",
+                location.pathname === "/income/investments" && "bg-accent text-accent-foreground font-medium"
+              )}
+            >
+              <DollarSign className="mr-2 h-4 w-4" />
+              Investment Income
+            </Button>
+          </Link>
+          <Link to="/income/other" onClick={() => setIsMobileMenuOpen(false)}>
+            <Button 
+              variant="ghost"
+              className={cn(
+                "w-full justify-start",
+                location.pathname === "/income/other" && "bg-accent text-accent-foreground font-medium"
+              )}
+            >
+              <DollarSign className="mr-2 h-4 w-4" />
+              Other Income
             </Button>
           </Link>
           {userStatus === 'approved' && (

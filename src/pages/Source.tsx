@@ -11,6 +11,7 @@ import { ExpenseInterface } from "@/components/expense/ExpenseInterface";
 import { InventoryManager } from "@/components/inventory/InventoryManager";
 import { RecurringTransactions } from "@/components/source/RecurringTransactions";
 import { useToast } from "@/hooks/use-toast";
+import { IncomeTypeSettings } from "@/components/source/IncomeTypeSettings";
 
 const Source = () => {
   const { sourceId } = useParams();
@@ -78,6 +79,7 @@ const Source = () => {
           <TabsTrigger value="products">Products</TabsTrigger>
           <TabsTrigger value="categories">Categories</TabsTrigger>
           <TabsTrigger value="suppliers">Suppliers</TabsTrigger>
+          <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
 
         <div className="flex-1 overflow-auto">
@@ -107,6 +109,16 @@ const Source = () => {
 
           <TabsContent value="suppliers" className="m-0">
             <SupplierManager />
+          </TabsContent>
+
+          <TabsContent value="settings" className="m-0 p-4">
+            <div className="max-w-4xl mx-auto space-y-8">
+              <div>
+                <h2 className="text-2xl font-bold mb-4">Income Type Settings</h2>
+                <IncomeTypeSettings sourceId={sourceId!} />
+              </div>
+              {/* Add other settings sections here */}
+            </div>
           </TabsContent>
         </div>
       </Tabs>
