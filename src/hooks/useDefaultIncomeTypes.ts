@@ -7,7 +7,7 @@ export const useDefaultIncomeTypes = () => {
     queryKey: ['default-income-types'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('income_types')
+        .from('types')
         .select('*')
         .in('name', ['Product Sales', 'Service Income']);
 

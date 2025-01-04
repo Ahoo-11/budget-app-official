@@ -49,9 +49,12 @@ export const useBillManagement = (sourceId: string) => {
             category: item.category,
             image_url: item.image_url,
             description: item.description,
+            income_type_id: item.income_type_id,
+            current_stock: 0, // Default value for current_stock
+            purchase_cost: null // Default value for purchase_cost
           }))
         : [],
-      status: bill.status as 'active' | 'on-hold' | 'completed'
+      status: bill.status as 'active' | 'completed'
     })) as Bill[];
   }, [sourceId]);
 
