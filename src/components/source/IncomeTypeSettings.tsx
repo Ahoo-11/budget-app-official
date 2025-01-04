@@ -1,4 +1,5 @@
-import { useIncomeTypes } from "@/hooks/useIncomeTypes";
+// Rename to TypeSettings.tsx
+import { useTypes } from "@/hooks/useTypes";
 import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -8,23 +9,23 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, Settings2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-interface IncomeTypeSettingsProps {
+interface TypeSettingsProps {
   sourceId: string;
 }
 
-export const IncomeTypeSettings = ({ sourceId }: IncomeTypeSettingsProps) => {
+export const TypeSettings = ({ sourceId }: TypeSettingsProps) => {
   const {
-    incomeTypes,
+    types,
     isLoadingTypes,
     typesError,
     isLoadingSettings,
     settingsError,
     isLoadingSubcategories,
     subcategoriesError,
-    isIncomeTypeEnabled,
-    toggleIncomeType,
+    isTypeEnabled,
+    toggleType,
     getSubcategories,
-  } = useIncomeTypes(sourceId);
+  } = useTypes(sourceId);
 
   const isLoading = isLoadingTypes || isLoadingSettings || isLoadingSubcategories;
   const error = typesError || settingsError || subcategoriesError;
@@ -35,7 +36,7 @@ export const IncomeTypeSettings = ({ sourceId }: IncomeTypeSettingsProps) => {
         <AlertCircle className="h-4 w-4" />
         <AlertTitle>Error</AlertTitle>
         <AlertDescription>
-          Failed to load income type settings. Please try again later.
+          Failed to load type settings. Please try again later.
         </AlertDescription>
       </Alert>
     );
@@ -47,10 +48,10 @@ export const IncomeTypeSettings = ({ sourceId }: IncomeTypeSettingsProps) => {
         <div className="space-y-1">
           <h2 className="text-2xl font-bold flex items-center gap-2">
             <Settings2 className="h-5 w-5" />
-            Income Types Visibility
+            Types Visibility
           </h2>
           <p className="text-sm text-muted-foreground">
-            Enable or disable income types for this source. Disabled types will be hidden from menus and filters.
+            Enable or disable types for this source. Disabled types will be hidden from menus and filters.
           </p>
         </div>
       </div>
@@ -74,13 +75,13 @@ export const IncomeTypeSettings = ({ sourceId }: IncomeTypeSettingsProps) => {
             </Card>
           ))
         ) : (
-          incomeTypes.map((incomeType) => {
-            const isEnabled = isIncomeTypeEnabled(incomeType.id);
-            const subcategories = getSubcategories(incomeType.id);
+          types.map((type) => {
+            const isEnabled = isTypeEnabled(type.id);
+            const subcategories = getSubcategories(type.id);
 
             return (
               <Card 
-                key={incomeType.id} 
+                key={type.id} 
                 className={cn(
                   "p-4 transition-colors",
                   isEnabled ? "border-primary/50" : "opacity-70"
@@ -89,26 +90,26 @@ export const IncomeTypeSettings = ({ sourceId }: IncomeTypeSettingsProps) => {
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <div className="flex items-center gap-2">
-                      <h3 className="font-semibold">{incomeType.name}</h3>
+                      <h3 className="font-semibold">{type.name}</h3>
                       <Badge variant={isEnabled ? "default" : "secondary"}>
                         {isEnabled ? "Visible" : "Hidden"}
                       </Badge>
                     </div>
-                    {incomeType.description && (
+                    {type.description && (
                       <p className="text-sm text-muted-foreground mt-1">
-                        {incomeType.description}
+                        {type.description}
                       </p>
                     )}
                   </div>
                   <div className="flex items-center space-x-2">
                     <Switch
-                      id={`enable-${incomeType.id}`}
+                      id={`enable-${type.id}`}
                       checked={isEnabled}
                       onCheckedChange={(checked) =>
-                        toggleIncomeType(incomeType.id, checked)
+                        toggleType(type.id, checked)
                       }
                     />
-                    <Label htmlFor={`enable-${incomeType.id}`} className="sr-only">
+                    <Label htmlFor={`enable-${type.id}`} className="sr-only">
                       {isEnabled ? "Visible" : "Hidden"}
                     </Label>
                   </div>

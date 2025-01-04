@@ -11,7 +11,7 @@ import { SupplierManager } from "@/components/source/SupplierManager";
 import { ExpenseInterface } from "@/components/expense/ExpenseInterface";
 import { InventoryManager } from "@/components/inventory/InventoryManager";
 import { useToast } from "@/hooks/use-toast";
-import { IncomeTypeSettings } from "@/components/source/IncomeTypeSettings";
+import { TypeSettings } from "@/components/source/TypeSettings";
 import { TypesDropdownMenu } from "@/components/source/TypesDropdownMenu";
 import { Routes, Route, useLocation, useNavigate } from "react-router-dom";
 import { EmploymentIncome } from "@/components/income/EmploymentIncome";
@@ -136,7 +136,7 @@ const Source = () => {
             <Route path="income/inventory" element={<InventoryIncome sourceId={sourceId!} />} />
             <Route path="categories" element={<CategoryManager sourceId={sourceId!} />} />
             <Route path="suppliers" element={<SupplierManager />} />
-            <Route path="settings" element={<IncomeTypeSettings sourceId={sourceId!} />} />
+            <Route path="settings" element={<TypeSettings sourceId={sourceId!} />} />
             <Route path="expense" element={<ExpenseInterface sourceId={sourceId!} />} />
           </Routes>
         </div>

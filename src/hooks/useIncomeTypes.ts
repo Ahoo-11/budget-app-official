@@ -1,70 +1,71 @@
+// Rename to useTypes.ts
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { IncomeType, IncomeTypeSettings, IncomeSubcategory } from "@/types/income";
+import { Type, TypeSettings, TypeSubcategory } from "@/types/types";
 import { useToast } from "./use-toast";
 
-export const useIncomeTypes = (sourceId?: string) => {
+export const useTypes = (sourceId?: string) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch all income types
+  // Fetch all types
   const { 
-    data: incomeTypes = [], 
+    data: types = [], 
     isLoading: isLoadingTypes,
     error: typesError 
   } = useQuery({
-    queryKey: ["income-types"],
+    queryKey: ["types"],
     queryFn: async () => {
-      console.log("Fetching income types...");
+      console.log("Fetching types...");
       const { data, error } = await supabase
-        .from("income_types")
+        .from("types")
         .select("*")
         .order("name");
 
       if (error) {
-        console.error("Error fetching income types:", error);
+        console.error("Error fetching types:", error);
         throw error;
       }
-      return (data as IncomeType[]) || [];
+      return (data as Type[]) || [];
     },
   });
 
-  // Fetch income type settings for a specific source
+  // Fetch type settings for a specific source
   const { 
-    data: incomeTypeSettings = [], 
+    data: typeSettings = [], 
     isLoading: isLoadingSettings,
     error: settingsError 
   } = useQuery({
-    queryKey: ["income-type-settings", sourceId],
+    queryKey: ["type-settings", sourceId],
     queryFn: async () => {
       if (!sourceId) return [];
       
-      console.log("Fetching income type settings for source:", sourceId);
+      console.log("Fetching type settings for source:", sourceId);
       const { data, error } = await supabase
-        .from("income_type_settings")
+        .from("type_settings")
         .select("*")
         .eq("source_id", sourceId);
 
       if (error) {
-        console.error("Error fetching income type settings:", error);
+        console.error("Error fetching type settings:", error);
         throw error;
       }
-      return (data as IncomeTypeSettings[]) || [];
+      return (data as TypeSettings[]) || [];
     },
     enabled: !!sourceId,
   });
 
-  // Fetch subcategories for all income types
+  // Fetch subcategories for all types
   const { 
     data: subcategories = [], 
     isLoading: isLoadingSubcategories,
     error: subcategoriesError 
   } = useQuery({
-    queryKey: ["income-subcategories"],
+    queryKey: ["type-subcategories"],
     queryFn: async () => {
       console.log("Fetching subcategories...");
       const { data, error } = await supabase
-        .from("income_subcategories")
+        .from("type_subcategories")
         .select("*")
         .order("name");
 
@@ -72,90 +73,86 @@ export const useIncomeTypes = (sourceId?: string) => {
         console.error("Error fetching subcategories:", error);
         throw error;
       }
-      return (data as IncomeSubcategory[]) || [];
+      return (data as TypeSubcategory[]) || [];
     },
   });
 
-  // Toggle income type setting for a source
-  const toggleIncomeType = async (incomeTypeId: string, enabled: boolean) => {
+  // Toggle type setting for a source
+  const toggleType = async (typeId: string, enabled: boolean) => {
     if (!sourceId) return;
 
     try {
-      // First check if a setting already exists using maybeSingle()
       const { data: existingSettings, error: fetchError } = await supabase
-        .from("income_type_settings")
+        .from("type_settings")
         .select("*")
         .eq("source_id", sourceId)
-        .eq("income_type_id", incomeTypeId)
+        .eq("type_id", typeId)
         .maybeSingle();
 
       if (fetchError) throw fetchError;
 
       if (existingSettings) {
-        // Update existing setting
         const { error } = await supabase
-          .from("income_type_settings")
+          .from("type_settings")
           .update({ is_enabled: enabled })
           .eq("source_id", sourceId)
-          .eq("income_type_id", incomeTypeId);
+          .eq("type_id", typeId);
 
         if (error) throw error;
       } else {
-        // Insert new setting
         const { error } = await supabase
-          .from("income_type_settings")
+          .from("type_settings")
           .insert({
             source_id: sourceId,
-            income_type_id: incomeTypeId,
+            type_id: typeId,
             is_enabled: enabled,
           });
 
         if (error) throw error;
       }
 
-      // Invalidate the settings query to refresh the data
       queryClient.invalidateQueries({ 
-        queryKey: ["income-type-settings", sourceId] 
+        queryKey: ["type-settings", sourceId] 
       });
 
       toast({
         title: "Success",
-        description: `Income type ${enabled ? "enabled" : "disabled"} successfully`,
+        description: `Type ${enabled ? "enabled" : "disabled"} successfully`,
       });
     } catch (error) {
-      console.error("Error toggling income type:", error);
+      console.error("Error toggling type:", error);
       toast({
         title: "Error",
-        description: "Failed to update income type setting",
+        description: "Failed to update type setting",
         variant: "destructive",
       });
     }
   };
 
-  // Get subcategories for a specific income type
-  const getSubcategories = (incomeTypeId: string) => {
-    return subcategories.filter((sub) => sub.income_type_id === incomeTypeId);
+  // Get subcategories for a specific type
+  const getSubcategories = (typeId: string) => {
+    return subcategories.filter((sub) => sub.type_id === typeId);
   };
 
-  // Check if an income type is enabled for a source
-  const isIncomeTypeEnabled = (incomeTypeId: string) => {
+  // Check if a type is enabled for a source
+  const isTypeEnabled = (typeId: string) => {
     if (!sourceId) return true;
-    const setting = incomeTypeSettings.find(
-      (s) => s.income_type_id === incomeTypeId
+    const setting = typeSettings.find(
+      (s) => s.type_id === typeId
     );
-    return setting ? setting.is_enabled : true; // Default to enabled if no setting exists
+    return setting ? setting.is_enabled : true;
   };
 
   return {
-    incomeTypes,
+    types,
     isLoadingTypes,
     typesError,
     isLoadingSettings,
     settingsError,
     isLoadingSubcategories,
     subcategoriesError,
-    isIncomeTypeEnabled,
-    toggleIncomeType,
+    isTypeEnabled,
+    toggleType,
     getSubcategories,
   };
 };

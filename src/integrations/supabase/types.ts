@@ -46,13 +46,13 @@ export type Database = {
           discount: number
           gst: number
           id: string
-          income_type_id: string | null
           items: Json
           payer_id: string | null
           source_id: string
           status: string
           subtotal: number
           total: number
+          type_id: string | null
           updated_at: string
           user_id: string
         }
@@ -62,13 +62,13 @@ export type Database = {
           discount?: number
           gst?: number
           id?: string
-          income_type_id?: string | null
           items?: Json
           payer_id?: string | null
           source_id: string
           status: string
           subtotal?: number
           total?: number
+          type_id?: string | null
           updated_at?: string
           user_id: string
         }
@@ -78,22 +78,22 @@ export type Database = {
           discount?: number
           gst?: number
           id?: string
-          income_type_id?: string | null
           items?: Json
           payer_id?: string | null
           source_id?: string
           status?: string
           subtotal?: number
           total?: number
+          type_id?: string | null
           updated_at?: string
           user_id?: string
         }
         Relationships: [
           {
             foreignKeyName: "bills_income_type_id_fkey"
-            columns: ["income_type_id"]
+            columns: ["type_id"]
             isOneToOne: false
-            referencedRelation: "income_types"
+            referencedRelation: "types"
             referencedColumns: ["id"]
           },
           {
@@ -156,7 +156,6 @@ export type Database = {
           current_stock: number | null
           date: string
           id: string
-          income_type_id: string | null
           is_recurring: boolean | null
           minimum_stock: number | null
           name: string
@@ -165,6 +164,7 @@ export type Database = {
           source_id: string | null
           subcategory_id: string | null
           tags: string[] | null
+          type_id: string | null
           unit_of_measure: string | null
           updated_at: string
           updated_by: string | null
@@ -176,7 +176,6 @@ export type Database = {
           current_stock?: number | null
           date: string
           id?: string
-          income_type_id?: string | null
           is_recurring?: boolean | null
           minimum_stock?: number | null
           name: string
@@ -185,6 +184,7 @@ export type Database = {
           source_id?: string | null
           subcategory_id?: string | null
           tags?: string[] | null
+          type_id?: string | null
           unit_of_measure?: string | null
           updated_at?: string
           updated_by?: string | null
@@ -196,7 +196,6 @@ export type Database = {
           current_stock?: number | null
           date?: string
           id?: string
-          income_type_id?: string | null
           is_recurring?: boolean | null
           minimum_stock?: number | null
           name?: string
@@ -205,6 +204,7 @@ export type Database = {
           source_id?: string | null
           subcategory_id?: string | null
           tags?: string[] | null
+          type_id?: string | null
           unit_of_measure?: string | null
           updated_at?: string
           updated_by?: string | null
@@ -212,9 +212,9 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "income_entries_income_type_id_fkey"
-            columns: ["income_type_id"]
+            columns: ["type_id"]
             isOneToOne: false
-            referencedRelation: "income_types"
+            referencedRelation: "types"
             referencedColumns: ["id"]
           },
           {
@@ -228,114 +228,10 @@ export type Database = {
             foreignKeyName: "income_entries_subcategory_id_fkey"
             columns: ["subcategory_id"]
             isOneToOne: false
-            referencedRelation: "income_subcategories"
+            referencedRelation: "type_subcategories"
             referencedColumns: ["id"]
           },
         ]
-      }
-      income_subcategories: {
-        Row: {
-          created_at: string
-          description: string | null
-          id: string
-          income_type_id: string | null
-          name: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          income_type_id?: string | null
-          name: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          income_type_id?: string | null
-          name?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "income_subcategories_income_type_id_fkey"
-            columns: ["income_type_id"]
-            isOneToOne: false
-            referencedRelation: "income_types"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      income_type_settings: {
-        Row: {
-          created_at: string
-          id: string
-          income_type_id: string | null
-          is_enabled: boolean | null
-          source_id: string | null
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          income_type_id?: string | null
-          is_enabled?: boolean | null
-          source_id?: string | null
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          income_type_id?: string | null
-          is_enabled?: boolean | null
-          source_id?: string | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "income_type_settings_income_type_id_fkey"
-            columns: ["income_type_id"]
-            isOneToOne: false
-            referencedRelation: "income_types"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "income_type_settings_source_id_fkey"
-            columns: ["source_id"]
-            isOneToOne: false
-            referencedRelation: "sources"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      income_types: {
-        Row: {
-          created_at: string
-          description: string | null
-          id: string
-          is_enabled: boolean | null
-          name: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          is_enabled?: boolean | null
-          name: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          description?: string | null
-          id?: string
-          is_enabled?: boolean | null
-          name?: string
-          updated_at?: string
-        }
-        Relationships: []
       }
       payers: {
         Row: {
@@ -889,6 +785,110 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      type_settings: {
+        Row: {
+          created_at: string
+          id: string
+          is_enabled: boolean | null
+          source_id: string | null
+          type_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_enabled?: boolean | null
+          source_id?: string | null
+          type_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_enabled?: boolean | null
+          source_id?: string | null
+          type_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "income_type_settings_income_type_id_fkey"
+            columns: ["type_id"]
+            isOneToOne: false
+            referencedRelation: "types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "income_type_settings_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      type_subcategories: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          type_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          type_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          type_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "income_subcategories_income_type_id_fkey"
+            columns: ["type_id"]
+            isOneToOne: false
+            referencedRelation: "types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      types: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_enabled: boolean | null
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {
