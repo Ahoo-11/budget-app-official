@@ -9,12 +9,12 @@ import { CategoryManager } from "@/components/source/CategoryManager";
 import { SupplierManager } from "@/components/source/SupplierManager";
 import { ExpenseInterface } from "@/components/expense/ExpenseInterface";
 import { InventoryManager } from "@/components/inventory/InventoryManager";
-import { ServiceGrid } from "@/components/pos/ServiceGrid";
 import { useToast } from "@/hooks/use-toast";
 import { IncomeTypeSettings } from "@/components/source/IncomeTypeSettings";
 import { TypesDropdownMenu } from "@/components/source/TypesDropdownMenu";
 import { Routes, Route, useLocation, useNavigate } from "react-router-dom";
 import { EmploymentIncome } from "@/components/income/EmploymentIncome";
+import { GiftsIncome } from "@/components/income/GiftsIncome";
 
 type TabValue = 'income' | 'expense' | 'categories' | 'suppliers' | 'settings';
 
@@ -124,6 +124,7 @@ const Source = () => {
           <Route path="products" element={<ProductGrid sourceId={sourceId!} />} />
           <Route path="services" element={<ServiceGrid sourceId={sourceId!} />} />
           <Route path="income/employment" element={<EmploymentIncome sourceId={sourceId!} />} />
+          <Route path="income/gifts" element={<GiftsIncome sourceId={sourceId!} />} />
           <Route path="categories" element={<CategoryManager sourceId={sourceId!} />} />
           <Route path="suppliers" element={<SupplierManager />} />
           <Route path="settings" element={<IncomeTypeSettings sourceId={sourceId!} />} />
