@@ -74,24 +74,41 @@ export const fetchActiveBills = async (sourceId: string): Promise<Bill[]> => {
 const getDefaultPayer = async () => {
   console.log('🔍 Fetching default payer...');
   
-  const { data, error } = await supabase
-    .from('payers')
-    .select('id')
-    .eq('name', 'Walk-in Customer')
-    .single();
+  try {
+    const { data, error } = await supabase
+      .from('payers')
+      .select('id')
+      .eq('name', 'Walk-in Customer')
+      .single();
 
-  if (error) {
-    console.error('❌ Error fetching default payer:', error);
+    if (error) {
+      console.error('❌ Error fetching default payer:', error);
+      return null;
+    }
+
+    if (!data) {
+      console.log('⚠️ No default payer found, creating one...');
+      const { data: newPayer, error: createError } = await supabase
+        .from('payers')
+        .insert([{ name: 'Walk-in Customer' }])
+        .select()
+        .single();
+
+      if (createError) {
+        console.error('❌ Error creating default payer:', createError);
+        return null;
+      }
+
+      console.log('✅ Created default payer:', newPayer.id);
+      return newPayer.id;
+    }
+
+    console.log('✅ Found existing default payer:', data.id);
+    return data.id;
+  } catch (error) {
+    console.error('❌ Unexpected error:', error);
     return null;
   }
-
-  if (!data) {
-    console.log('⚠️ No default payer found');
-    return null;
-  }
-
-  console.log('✅ Default payer found:', data.id);
-  return data.id;
 };
 
 export const createNewBill = async (sourceId: string, userId: string) => {
@@ -99,38 +116,43 @@ export const createNewBill = async (sourceId: string, userId: string) => {
   console.log('Source ID:', sourceId);
   console.log('User ID:', userId);
 
-  const defaultPayerId = await getDefaultPayer();
-  console.log('Default Payer ID:', defaultPayerId);
+  try {
+    const defaultPayerId = await getDefaultPayer();
+    console.log('Default Payer ID:', defaultPayerId);
 
-  // Create the base bill data
-  const billData = {
-    source_id: sourceId,
-    user_id: userId,
-    status: 'active',
-    items: serializeBillItems([]), // Serialize empty array for initial bill
-    subtotal: 0,
-    total: 0,
-    gst: 0,
-    discount: 0,
-    date: new Date().toISOString(),
-    ...(defaultPayerId ? { payer_id: defaultPayerId } : {})
-  };
+    // Create the base bill data
+    const billData = {
+      source_id: sourceId,
+      user_id: userId,
+      status: 'active',
+      items: serializeBillItems([]),
+      subtotal: 0,
+      total: 0,
+      gst: 0,
+      discount: 0,
+      date: new Date().toISOString(),
+      payer_id: defaultPayerId // This will be null if no default payer exists
+    };
 
-  console.log('📋 Bill data to insert:', billData);
+    console.log('📋 Bill data to insert:', billData);
 
-  const { data, error } = await supabase
-    .from('bills')
-    .insert(billData)
-    .select()
-    .single();
+    const { data, error } = await supabase
+      .from('bills')
+      .insert(billData)
+      .select()
+      .single();
 
-  if (error) {
-    console.error('❌ Error creating bill:', error);
+    if (error) {
+      console.error('❌ Error creating bill:', error);
+      throw error;
+    }
+
+    console.log('✅ Bill created successfully:', data);
+    return data;
+  } catch (error) {
+    console.error('❌ Error in createNewBill:', error);
     throw error;
   }
-
-  console.log('✅ Bill created successfully:', data);
-  return data;
 };
 
 export const updateBillItems = async (billId: string, items: BillProduct[]) => {
