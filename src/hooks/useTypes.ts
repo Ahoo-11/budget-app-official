@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Type, TypeSettings, TypeSubcategory } from "@/types/types";
-import { useToast } from "./use-toast";
+import { useToast } from "@/components/ui/use-toast";
 
 export const useTypes = (sourceId?: string) => {
   const { toast } = useToast();
@@ -15,17 +15,13 @@ export const useTypes = (sourceId?: string) => {
   } = useQuery({
     queryKey: ["types"],
     queryFn: async () => {
-      console.log("Fetching types...");
       const { data, error } = await supabase
         .from("types")
         .select("*")
         .order("name");
 
-      if (error) {
-        console.error("Error fetching types:", error);
-        throw error;
-      }
-      return (data as Type[]) || [];
+      if (error) throw error;
+      return data as Type[];
     },
   });
 
@@ -39,17 +35,13 @@ export const useTypes = (sourceId?: string) => {
     queryFn: async () => {
       if (!sourceId) return [];
       
-      console.log("Fetching type settings for source:", sourceId);
       const { data, error } = await supabase
         .from("type_settings")
         .select("*")
         .eq("source_id", sourceId);
 
-      if (error) {
-        console.error("Error fetching type settings:", error);
-        throw error;
-      }
-      return (data as TypeSettings[]) || [];
+      if (error) throw error;
+      return data as TypeSettings[];
     },
     enabled: !!sourceId,
   });
@@ -62,17 +54,13 @@ export const useTypes = (sourceId?: string) => {
   } = useQuery({
     queryKey: ["type-subcategories"],
     queryFn: async () => {
-      console.log("Fetching subcategories...");
       const { data, error } = await supabase
         .from("type_subcategories")
         .select("*")
         .order("name");
 
-      if (error) {
-        console.error("Error fetching subcategories:", error);
-        throw error;
-      }
-      return (data as TypeSubcategory[]) || [];
+      if (error) throw error;
+      return data as TypeSubcategory[];
     },
   });
 
@@ -105,8 +93,7 @@ export const useTypes = (sourceId?: string) => {
 
       if (error) throw error;
 
-      // Invalidate queries to refresh data
-      queryClient.invalidateQueries({ queryKey: ["type-settings", sourceId] });
+      await queryClient.invalidateQueries({ queryKey: ["type-settings", sourceId] });
 
       toast({
         title: "Success",
@@ -138,3 +125,6 @@ export const useTypes = (sourceId?: string) => {
     isIncomeTypeEnabled: isTypeEnabled,
   };
 };
+
+// Re-export for backward compatibility
+export const useIncomeTypes = useTypes;

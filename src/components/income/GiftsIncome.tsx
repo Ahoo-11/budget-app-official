@@ -1,115 +1,43 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
-import { useState } from "react";
-import { IncomeForm } from "./IncomeForm";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Card } from "@/components/ui/card";
+import { useTypes } from "@/hooks/useTypes";
 
-interface GiftsIncomeProps {
-  sourceId: string;
-}
+export function GiftsIncome({ sourceId }: { sourceId: string }) {
+  const { types, isTypeEnabled } = useTypes(sourceId);
 
-export const GiftsIncome = ({ sourceId }: GiftsIncomeProps) => {
-  const [isAddingIncome, setIsAddingIncome] = useState(false);
-  const [editingIncome, setEditingIncome] = useState<any | null>(null);
-
-  const { data: incomeEntries, isLoading } = useQuery({
-    queryKey: ['income-entries', sourceId, 'gifts'],
+  const { data: entries = [] } = useQuery({
+    queryKey: ["gifts-entries", sourceId],
     queryFn: async () => {
+      const giftsType = types.find(t => t.name === "Gifts and Grants");
+      if (!giftsType || !isTypeEnabled(giftsType.id)) return [];
+
       const { data, error } = await supabase
-        .from('income_entries')
+        .from("income_entries")
         .select(`
           *,
-          income_type:income_types(name),
-          subcategory:income_subcategories(name)
+          type_subcategories (
+            name
+          )
         `)
-        .eq('source_id', sourceId)
-        .eq('income_type_id', (await supabase
-          .from('income_types')
-          .select('id')
-          .eq('name', 'Gifts and Grants')
-          .single()).data?.id)
-        .order('created_at', { ascending: false });
+        .eq("source_id", sourceId)
+        .eq("type_id", giftsType.id);
 
       if (error) throw error;
       return data;
-    }
+    },
+    enabled: types.length > 0,
   });
 
-  if (isLoading) {
-    return <div>Loading income entries...</div>;
-  }
-
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center mb-2">
-        <h3 className="text-lg font-medium">Gifts & Grants Income</h3>
-        <Button onClick={() => setIsAddingIncome(true)} size="sm">
-          <Plus className="w-4 h-4 mr-2" />
-          Add Entry
-        </Button>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {incomeEntries?.map((entry) => (
-          <Card key={entry.id} className="p-4">
-            <div className="flex justify-between items-start">
-              <div>
-                <h4 className="font-medium">{entry.name}</h4>
-                <p className="text-sm text-muted-foreground">{entry.subcategory?.name}</p>
-                <p className="text-sm font-medium mt-2">${entry.amount}</p>
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setEditingIncome(entry)}
-              >
-                Edit
-              </Button>
-            </div>
-          </Card>
+    <div>
+      <h2>Gifts and Grants Income</h2>
+      <ul>
+        {entries.map(entry => (
+          <li key={entry.id}>
+            {entry.amount} - {entry.type_subcategories?.name}
+          </li>
         ))}
-      </div>
-
-      <Dialog 
-        open={isAddingIncome} 
-        onOpenChange={setIsAddingIncome}
-      >
-        <DialogContent className="max-h-[90vh] overflow-y-auto w-[90vw] max-w-[450px] p-4">
-          <DialogHeader>
-            <DialogTitle>Add Gift/Grant Income</DialogTitle>
-          </DialogHeader>
-          <IncomeForm
-            sourceId={sourceId}
-            onSuccess={() => setIsAddingIncome(false)}
-          />
-        </DialogContent>
-      </Dialog>
-
-      <Dialog 
-        open={!!editingIncome} 
-        onOpenChange={(open) => !open && setEditingIncome(null)}
-      >
-        <DialogContent className="max-h-[90vh] overflow-y-auto w-[90vw] max-w-[450px] p-4">
-          <DialogHeader>
-            <DialogTitle>Edit Gift/Grant Income</DialogTitle>
-          </DialogHeader>
-          {editingIncome && (
-            <IncomeForm
-              sourceId={sourceId}
-              initialData={editingIncome}
-              onSuccess={() => setEditingIncome(null)}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
+      </ul>
     </div>
   );
-};
+}
