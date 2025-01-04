@@ -15,6 +15,8 @@ export const useTransactionForm = (editingTransaction?: Transaction | null) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [displayName, setDisplayName] = useState("Unknown User");
   const [status, setStatus] = useState<TransactionStatus>("pending");
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [recurringFrequency, setRecurringFrequency] = useState("");
   const session = useSession();
 
   useEffect(() => {
@@ -46,6 +48,8 @@ export const useTransactionForm = (editingTransaction?: Transaction | null) => {
       setSelectedCategory(editingTransaction.category_id || "");
       setDate(new Date(editingTransaction.date));
       setStatus(editingTransaction.status);
+      setIsRecurring(editingTransaction.is_recurring || false);
+      setRecurringFrequency(editingTransaction.recurring_frequency || "");
     }
   }, [editingTransaction]);
 
@@ -71,5 +75,9 @@ export const useTransactionForm = (editingTransaction?: Transaction | null) => {
     isSubmitting,
     setIsSubmitting,
     displayName,
+    isRecurring,
+    setIsRecurring,
+    recurringFrequency,
+    setRecurringFrequency,
   };
 };

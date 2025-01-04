@@ -34,47 +34,6 @@ export const TransactionFormWrapper = ({
   const { toast } = useToast();
   const formState = useTransactionForm(editingTransaction);
 
-  const { data: sourceTemplate } = useQuery<SourceTemplate>({
-    queryKey: ['source-template', formState.selectedSource || source_id],
-    queryFn: async () => {
-      if (!formState.selectedSource && !source_id) return { template_id: '', templates: null };
-      
-      const { data, error } = await supabase
-        .from('source_templates')
-        .select(`
-          template_id,
-          templates (
-            type,
-            config
-          )
-        `)
-        .eq('source_id', formState.selectedSource || source_id)
-        .single();
-
-      if (error) {
-        console.error('Error fetching source template:', error);
-        return { template_id: '', templates: null };
-      }
-
-      if (data?.templates?.config) {
-        const config = typeof data.templates.config === 'string' 
-          ? JSON.parse(data.templates.config) 
-          : data.templates.config;
-
-        return {
-          template_id: data.template_id,
-          templates: {
-            type: data.templates.type,
-            config: config as BusinessTemplateConfig
-          }
-        };
-      }
-
-      return { template_id: '', templates: null };
-    },
-    enabled: !!(formState.selectedSource || source_id)
-  });
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -114,6 +73,15 @@ export const TransactionFormWrapper = ({
       });
       return;
     }
+
+    if (formState.isRecurring && !formState.recurringFrequency) {
+      toast({
+        title: "Validation Error",
+        description: "Please select a frequency for recurring transactions",
+        variant: "destructive"
+      });
+      return;
+    }
     
     formState.setIsSubmitting(true);
     try {
@@ -128,7 +96,10 @@ export const TransactionFormWrapper = ({
         source_id: source_id || formState.selectedSource,
         user_id: session.user.id,
         created_by_name: formState.displayName,
-        status: formState.status
+        status: formState.status,
+        is_recurring: formState.isRecurring,
+        recurring_frequency: formState.isRecurring ? formState.recurringFrequency : null,
+        next_occurrence: formState.isRecurring ? formState.date.toISOString() : null
       };
 
       if (editingTransaction && onUpdate) {
@@ -136,8 +107,6 @@ export const TransactionFormWrapper = ({
           ...transactionData,
           id: editingTransaction.id,
           created_at: editingTransaction.created_at,
-          created_by_name: formState.displayName,
-          status: formState.status
         });
       } else {
         await onAdd(transactionData);
@@ -152,6 +121,8 @@ export const TransactionFormWrapper = ({
       formState.setSelectedCategory("");
       formState.setDate(new Date());
       formState.setStatus("pending");
+      formState.setIsRecurring(false);
+      formState.setRecurringFrequency("");
       
       if (onClose) {
         onClose();

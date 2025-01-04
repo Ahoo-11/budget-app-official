@@ -4,6 +4,7 @@ import { PayerSelector } from "../PayerSelector";
 import { CategorySelector } from "../CategorySelector";
 import { TransactionForm } from "../TransactionForm";
 import { TransactionStatus } from "@/types/transaction";
+import { RecurringTransactionFields } from "./form/RecurringTransactionFields";
 
 interface TransactionFormContentProps {
   type: "income" | "expense";
@@ -25,6 +26,10 @@ interface TransactionFormContentProps {
   isSubmitting: boolean;
   isEditing?: boolean;
   source_id?: string;
+  isRecurring: boolean;
+  setIsRecurring: (isRecurring: boolean) => void;
+  recurringFrequency: string;
+  setRecurringFrequency: (frequency: string) => void;
 }
 
 export const TransactionFormContent = ({
@@ -47,6 +52,10 @@ export const TransactionFormContent = ({
   isSubmitting,
   isEditing,
   source_id,
+  isRecurring,
+  setIsRecurring,
+  recurringFrequency,
+  setRecurringFrequency,
 }: TransactionFormContentProps) => {
   return (
     <>
@@ -64,6 +73,13 @@ export const TransactionFormContent = ({
         selectedCategory={selectedCategory}
         setSelectedCategory={setSelectedCategory}
         sourceId={source_id || selectedSource}
+      />
+      <RecurringTransactionFields
+        isRecurring={isRecurring}
+        setIsRecurring={setIsRecurring}
+        recurringFrequency={recurringFrequency}
+        setRecurringFrequency={setRecurringFrequency}
+        isSubmitting={isSubmitting}
       />
       <TransactionForm
         description={description}
