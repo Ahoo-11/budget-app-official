@@ -1,24 +1,22 @@
 import { Button } from "@/components/ui/button";
-import { Home, Menu, Plus, Settings2, LogOut, BarChart, Briefcase, Gift, DollarSign, Package, Wrench } from "lucide-react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Plus, Settings2, LogOut } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Source } from "@/types/source";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { SourceActions } from "./SourceActions";
 import { useToast } from "@/hooks/use-toast";
 import { useSession } from "@supabase/auth-helpers-react";
-import { cn } from "@/lib/utils";
+import { SidebarNav } from "./sidebar/SidebarNav";
+import { SourcesList } from "./sidebar/SourcesList";
 
 export function AppSidebar() {
   const [isAddSourceOpen, setIsAddSourceOpen] = useState(false);
   const [newSourceName, setNewSourceName] = useState("");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
-  const location = useLocation();
   const { toast } = useToast();
   const session = useSession();
 
@@ -55,7 +53,6 @@ export function AppSidebar() {
       if (!session?.user?.id || userStatus !== 'approved') return [];
       
       try {
-        // First check user's role
         const { data: userRole, error: roleError } = await supabase
           .from('user_roles')
           .select('role')
@@ -69,7 +66,6 @@ export function AppSidebar() {
 
         let query = supabase.from('sources').select('*');
 
-        // If not a controller/super_admin, only fetch permitted sources
         if (!userRole || !['controller', 'super_admin'].includes(userRole.role)) {
           const { data: permissions, error: permError } = await supabase
             .from('source_permissions')
@@ -100,7 +96,7 @@ export function AppSidebar() {
           });
           throw error;
         }
-        return data as Source[];
+        return data;
       } catch (error) {
         console.error('Error in sources query:', error);
         toast({
@@ -179,143 +175,26 @@ export function AppSidebar() {
         <h2 className="font-semibold">Expense Tracker</h2>
       </div>
       <div className="flex-1">
-        <nav className="space-y-2">
-          <Link to="/" onClick={() => setIsMobileMenuOpen(false)}>
+        <SidebarNav />
+        {userStatus === 'approved' && (
+          <>
+            <SourcesList 
+              sources={sources} 
+              onCloseMobileMenu={() => setIsMobileMenuOpen(false)} 
+            />
             <Button 
-              variant="ghost"
-              className={cn(
-                "w-full justify-start",
-                location.pathname === "/" && "bg-accent text-accent-foreground font-medium"
-              )}
+              variant="ghost" 
+              className="w-full justify-start mt-2"
+              onClick={() => {
+                setIsAddSourceOpen(true);
+                setIsMobileMenuOpen(false);
+              }}
             >
-              <Home className="mr-2 h-4 w-4" />
-              Home
+              <Plus className="mr-2 h-4 w-4" />
+              Add Source
             </Button>
-          </Link>
-          <Link to="/products" onClick={() => setIsMobileMenuOpen(false)}>
-            <Button 
-              variant="ghost"
-              className={cn(
-                "w-full justify-start",
-                location.pathname === "/products" && "bg-accent text-accent-foreground font-medium"
-              )}
-            >
-              <Package className="mr-2 h-4 w-4" />
-              Products
-            </Button>
-          </Link>
-          <Link to="/services" onClick={() => setIsMobileMenuOpen(false)}>
-            <Button 
-              variant="ghost"
-              className={cn(
-                "w-full justify-start",
-                location.pathname === "/services" && "bg-accent text-accent-foreground font-medium"
-              )}
-            >
-              <Wrench className="mr-2 h-4 w-4" />
-              Services
-            </Button>
-          </Link>
-          <Link to="/income/employment" onClick={() => setIsMobileMenuOpen(false)}>
-            <Button 
-              variant="ghost"
-              className={cn(
-                "w-full justify-start",
-                location.pathname === "/income/employment" && "bg-accent text-accent-foreground font-medium"
-              )}
-            >
-              <Briefcase className="mr-2 h-4 w-4" />
-              Employment Income
-            </Button>
-          </Link>
-          <Link to="/income/gifts" onClick={() => setIsMobileMenuOpen(false)}>
-            <Button 
-              variant="ghost"
-              className={cn(
-                "w-full justify-start",
-                location.pathname === "/income/gifts" && "bg-accent text-accent-foreground font-medium"
-              )}
-            >
-              <Gift className="mr-2 h-4 w-4" />
-              Gifts & Grants
-            </Button>
-          </Link>
-          <Link to="/income/investments" onClick={() => setIsMobileMenuOpen(false)}>
-            <Button 
-              variant="ghost"
-              className={cn(
-                "w-full justify-start",
-                location.pathname === "/income/investments" && "bg-accent text-accent-foreground font-medium"
-              )}
-            >
-              <DollarSign className="mr-2 h-4 w-4" />
-              Investment Income
-            </Button>
-          </Link>
-          <Link to="/income/other" onClick={() => setIsMobileMenuOpen(false)}>
-            <Button 
-              variant="ghost"
-              className={cn(
-                "w-full justify-start",
-                location.pathname === "/income/other" && "bg-accent text-accent-foreground font-medium"
-              )}
-            >
-              <DollarSign className="mr-2 h-4 w-4" />
-              Other Income
-            </Button>
-          </Link>
-          {userStatus === 'approved' && (
-            <>
-              {sources.map((source) => (
-                <div key={source.id} className="flex items-center">
-                  <Link 
-                    to={`/source/${source.id}`}
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="flex-1"
-                  >
-                    <Button 
-                      variant="ghost"
-                      className={cn(
-                        "w-full justify-start",
-                        location.pathname === `/source/${source.id}` && "bg-accent text-accent-foreground font-medium"
-                      )}
-                    >
-                      <Home className="mr-2 h-4 w-4" />
-                      {source.name}
-                    </Button>
-                  </Link>
-                  <SourceActions sourceId={source.id} sourceName={source.name} />
-                </div>
-              ))}
-              <Link to="/stats" onClick={() => setIsMobileMenuOpen(false)}>
-                <Button 
-                  variant="ghost"
-                  className={cn(
-                    "w-full justify-start",
-                    location.pathname === "/stats" && "bg-accent text-accent-foreground font-medium"
-                  )}
-                >
-                  <BarChart className="mr-2 h-4 w-4" />
-                  Stats
-                </Button>
-              </Link>
-              <Button 
-                variant="ghost" 
-                className={cn(
-                  "w-full justify-start",
-                  location.pathname === "/add-source" && "bg-accent text-accent-foreground font-medium"
-                )}
-                onClick={() => {
-                  setIsAddSourceOpen(true);
-                  setIsMobileMenuOpen(false);
-                }}
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                Add Source
-              </Button>
-            </>
-          )}
-        </nav>
+          </>
+        )}
       </div>
       <div className="flex items-center space-x-2">
         {userStatus === 'approved' && (
