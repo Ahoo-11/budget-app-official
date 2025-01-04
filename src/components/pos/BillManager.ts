@@ -93,19 +93,21 @@ export const createNewBill = async (sourceId: string, userId: string) => {
     console.error('Default payer not found');
   }
 
+  const billData = {
+    source_id: sourceId,
+    user_id: userId,
+    status: 'active',
+    items: [],
+    subtotal: 0,
+    total: 0,
+    gst: 0,
+    discount: 0,
+    payer_id: defaultPayerId || null,
+  };
+
   const { data, error } = await supabase
     .from('bills')
-    .insert({
-      source_id: sourceId,
-      user_id: userId,
-      status: 'active',
-      items: [],
-      subtotal: 0,
-      total: 0,
-      gst: 0,
-      discount: 0,
-      payer_id: defaultPayerId || null,
-    })
+    .insert(billData)
     .select()
     .single();
 
