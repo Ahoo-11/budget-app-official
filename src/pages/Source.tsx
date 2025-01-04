@@ -109,39 +109,17 @@ const Source = () => {
 
   return (
     <div className="flex flex-col h-full">
-      <TabsList className="w-full justify-start border-b rounded-none px-4 bg-background">
-        <TabsTrigger 
-          value="income" 
-          onClick={() => handleTabChange('income')}
-          data-state={getActiveTab() === 'income' ? 'active' : ''}
-        >
-          Income
-        </TabsTrigger>
-        <TabsTrigger 
-          value="expense" 
-          onClick={() => handleTabChange('expense')}
-          data-state={getActiveTab() === 'expense' ? 'active' : ''}
-        >
-          Expense
-        </TabsTrigger>
-        <TabsTrigger 
-          value="products" 
-          onClick={() => handleTabChange('products')}
-          data-state={getActiveTab() === 'products' ? 'active' : ''}
-        >
-          Products
-        </TabsTrigger>
-        <TabsTrigger 
-          value="services" 
-          onClick={() => handleTabChange('services')}
-          data-state={getActiveTab() === 'services' ? 'active' : ''}
-        >
-          Services
-        </TabsTrigger>
-        <div className="mx-1">
-          <TypesDropdownMenu />
-        </div>
-      </TabsList>
+      <Tabs value={getActiveTab()} onValueChange={handleTabChange}>
+        <TabsList className="w-full justify-start border-b rounded-none px-4 bg-background">
+          <TabsTrigger value="income">Income</TabsTrigger>
+          <TabsTrigger value="expense">Expense</TabsTrigger>
+          <TabsTrigger value="products">Products</TabsTrigger>
+          <TabsTrigger value="services">Services</TabsTrigger>
+          <div className="mx-1">
+            <TypesDropdownMenu />
+          </div>
+        </TabsList>
+      </Tabs>
 
       <div className="flex-1 overflow-auto">
         <Routes>
