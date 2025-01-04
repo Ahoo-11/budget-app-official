@@ -16,6 +16,9 @@ export interface Transaction {
   total_amount?: number;
   remaining_amount?: number;
   parent_transaction_id?: string;
+  is_recurring?: boolean;
+  recurring_frequency?: string;
+  next_occurrence?: string;
 }
 
 export type TransactionStatus = "pending" | "completed" | "partially_paid";

@@ -4,28 +4,20 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { CalendarIcon, ArrowUpIcon, ArrowDownIcon, PlusCircle, RepeatIcon } from "lucide-react";
-
-interface RecurringTransaction {
-  id: string;
-  description: string;
-  amount: number;
-  type: 'income' | 'expense';
-  frequency: 'daily' | 'weekly' | 'monthly' | 'yearly';
-  next_due_date: string;
-  is_fixed: boolean;
-}
+import { Transaction } from "@/types/transaction";
 
 export const RecurringTransactions = () => {
   const { data: recurringTransactions = [] } = useQuery({
     queryKey: ['recurring-transactions'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('recurring_transactions')
+        .from('transactions')
         .select('*')
-        .order('next_due_date');
+        .eq('is_recurring', true)
+        .order('next_occurrence');
       
       if (error) throw error;
-      return data as RecurringTransaction[];
+      return data as Transaction[];
     },
   });
 
@@ -62,18 +54,13 @@ export const RecurringTransactions = () => {
             
             <div className="flex items-center text-sm text-muted-foreground">
               <CalendarIcon className="w-4 h-4 mr-1" />
-              Next due: {format(new Date(transaction.next_due_date), 'PPP')}
+              Next due: {transaction.next_occurrence ? format(new Date(transaction.next_occurrence), 'PPP') : 'Not set'}
             </div>
             
             <div className="flex items-center gap-2 text-sm">
               <span className="px-2 py-1 rounded-full bg-secondary capitalize">
-                {transaction.frequency}
+                {transaction.recurring_frequency}
               </span>
-              {transaction.is_fixed && (
-                <span className="px-2 py-1 rounded-full bg-secondary">
-                  Fixed amount
-                </span>
-              )}
             </div>
             
             <div className="pt-2 border-t">
