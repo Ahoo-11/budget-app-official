@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Source as SourceType } from "@/types/source";
 import { ProductGrid } from "@/components/products/ProductGrid";
+import { ServiceGrid } from "@/components/pos/ServiceGrid";
 import { OrderInterface } from "@/components/pos/OrderInterface";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CategoryManager } from "@/components/source/CategoryManager";
@@ -108,14 +109,16 @@ const Source = () => {
     <div className="flex flex-col h-full">
       <Tabs value={getActiveTab()} onValueChange={handleTabChange} className="w-full">
         <div className="flex items-center justify-between border-b px-4">
-          <TabsList className="bg-background">
-            <TabsTrigger value="income">Income</TabsTrigger>
-            <TabsTrigger value="expense">Expense</TabsTrigger>
-            <TabsTrigger value="categories">Categories</TabsTrigger>
-            <TabsTrigger value="suppliers">Suppliers</TabsTrigger>
-            <TabsTrigger value="settings">Settings</TabsTrigger>
-          </TabsList>
-          <TypesDropdownMenu />
+          <div className="flex items-center space-x-2">
+            <TabsList className="bg-background">
+              <TabsTrigger value="income">Income</TabsTrigger>
+              <TabsTrigger value="expense">Expense</TabsTrigger>
+              <TypesDropdownMenu />
+              <TabsTrigger value="categories">Categories</TabsTrigger>
+              <TabsTrigger value="suppliers">Suppliers</TabsTrigger>
+              <TabsTrigger value="settings">Settings</TabsTrigger>
+            </TabsList>
+          </div>
         </div>
       </Tabs>
 
@@ -137,10 +140,6 @@ const Source = () => {
 
                 <TabsContent value="expense" className="m-0">
                   <ExpenseInterface sourceId={sourceId!} />
-                </TabsContent>
-
-                <TabsContent value="inventory" className="m-0">
-                  <InventoryManager sourceId={sourceId!} />
                 </TabsContent>
               </div>
             </Tabs>
