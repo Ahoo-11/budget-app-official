@@ -11,15 +11,22 @@ import { cn } from "@/lib/utils";
 import { Link, useParams } from "react-router-dom";
 import React from "react";
 
+interface ListItemProps extends React.ComponentPropsWithoutRef<"a"> {
+  title: string;
+  children: React.ReactNode;
+  href: string;
+}
+
 const ListItem = React.forwardRef<
   React.ElementRef<"a">,
-  React.ComponentPropsWithoutRef<"a">
->(({ className, title, children, ...props }, ref) => {
+  ListItemProps
+>(({ className, title, children, href, ...props }, ref) => {
   return (
     <li>
       <NavigationMenuLink asChild>
-        <a
-          ref={ref}
+        <Link
+          ref={ref as React.Ref<HTMLAnchorElement>}
+          to={href}
           className={cn(
             "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
             className
@@ -30,7 +37,7 @@ const ListItem = React.forwardRef<
           <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
             {children}
           </p>
-        </a>
+        </Link>
       </NavigationMenuLink>
     </li>
   );
@@ -56,21 +63,18 @@ export function TypesDropdownMenu() {
               <ListItem
                 title="Products"
                 href={`/source/${sourceId}/products`}
-                as={Link}
               >
                 Manage your products inventory and catalog
               </ListItem>
               <ListItem
                 title="Inventory"
                 href={`/source/${sourceId}/inventory`}
-                as={Link}
               >
                 Track and manage your inventory levels
               </ListItem>
               <ListItem
                 title="Services"
                 href={`/source/${sourceId}/services`}
-                as={Link}
               >
                 Manage your service offerings
               </ListItem>
@@ -81,7 +85,6 @@ export function TypesDropdownMenu() {
                   key={type.id}
                   title={type.name}
                   href={`/source/${sourceId}/settings#income-types`}
-                  as={Link}
                 >
                   {type.description || `Manage ${type.name.toLowerCase()}`}
                 </ListItem>
@@ -91,7 +94,6 @@ export function TypesDropdownMenu() {
               <ListItem
                 title="Income Type Settings"
                 href={`/source/${sourceId}/settings#income-types`}
-                as={Link}
                 className="col-span-2 bg-muted/50"
               >
                 Enable or disable income types
