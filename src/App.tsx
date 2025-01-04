@@ -118,14 +118,10 @@ export default function App() {
                               <Route path="/" element={<Index />} />
                               <Route path="/types" element={<Types />} />
                               <Route path="/reports" element={<Reports />} />
-                              <Route path="/source/:sourceId" element={<Source />} />
+                              <Route path="/source/:sourceId/*" element={<Source />} />
                               <Route path="/stats" element={<Stats />} />
                               <Route path="/settings" element={<AccountSettings />} />
                               <Route path="/services" element={<ServicesPage />} />
-                              <Route path="/income/employment" element={<Index />} />
-                              <Route path="/income/gifts" element={<Index />} />
-                              <Route path="/income/investments" element={<Index />} />
-                              <Route path="/income/other" element={<Index />} />
                               <Route path="*" element={<Navigate to="/" replace />} />
                             </Routes>
                           </main>

@@ -3,7 +3,6 @@ import {
   NavigationMenu,
   NavigationMenuContent,
   NavigationMenuItem,
-  NavigationMenuLink,
   NavigationMenuList,
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
@@ -24,16 +23,16 @@ export const TypesDropdownMenu = () => {
               <ListItem href="services" title="Services">
                 Manage your service offerings
               </ListItem>
-              <ListItem href="employment" title="Employment Income">
+              <ListItem href="income/employment" title="Employment Income">
                 Manage employment-related income
               </ListItem>
-              <ListItem href="investments" title="Investment Income">
+              <ListItem href="income/investments" title="Investment Income">
                 Track investment returns
               </ListItem>
-              <ListItem href="gifts" title="Gifts and Grants">
+              <ListItem href="income/gifts" title="Gifts and Grants">
                 Record gifts and grant income
               </ListItem>
-              <ListItem href="other" title="Other Income">
+              <ListItem href="income/other" title="Other Income">
                 Manage miscellaneous income
               </ListItem>
             </ul>
@@ -54,7 +53,7 @@ const ListItem = forwardRef<
   return (
     <li>
       <Link
-        to={`/source/${sourceId}/${href}`}
+        to={`${href}`}
         className={cn(
           "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
           className

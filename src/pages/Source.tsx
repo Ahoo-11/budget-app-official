@@ -13,6 +13,8 @@ import { ServiceGrid } from "@/components/pos/ServiceGrid";
 import { useToast } from "@/hooks/use-toast";
 import { IncomeTypeSettings } from "@/components/source/IncomeTypeSettings";
 import { TypesDropdownMenu } from "@/components/source/TypesDropdownMenu";
+import { Routes, Route } from "react-router-dom";
+import { EmploymentIncome } from "@/components/income/EmploymentIncome";
 
 const Source = () => {
   const { sourceId } = useParams();
@@ -84,6 +86,12 @@ const Source = () => {
         </TabsList>
 
         <div className="flex-1 overflow-auto">
+          <Routes>
+            <Route path="income/employment" element={<EmploymentIncome sourceId={sourceId!} />} />
+            <Route path="products" element={<ProductGrid sourceId={sourceId!} />} />
+            <Route path="services" element={<ServiceGrid sourceId={sourceId!} onSelect={() => {}} />} />
+          </Routes>
+
           <TabsContent value="income" className="h-full m-0 p-0">
             <OrderInterface sourceId={sourceId!} />
           </TabsContent>
@@ -94,14 +102,6 @@ const Source = () => {
 
           <TabsContent value="inventory" className="m-0">
             <InventoryManager sourceId={sourceId!} />
-          </TabsContent>
-
-          <TabsContent value="products" className="m-0">
-            <ProductGrid sourceId={sourceId!} />
-          </TabsContent>
-
-          <TabsContent value="services" className="m-0">
-            <ServiceGrid sourceId={sourceId!} onSelect={() => {}} />
           </TabsContent>
 
           <TabsContent value="categories" className="m-0">
