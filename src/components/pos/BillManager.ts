@@ -102,16 +102,18 @@ export const createNewBill = async (sourceId: string, userId: string) => {
   const defaultPayerId = await getDefaultPayer();
   console.log('Default Payer ID:', defaultPayerId);
   
-  const billData = {
+  // Create bill data object, omitting payer_id if it's null
+  const billData: Omit<Bill, 'id' | 'created_at' | 'updated_at'> = {
     source_id: sourceId,
     user_id: userId,
-    status: 'active' as const,
+    status: 'active',
     items: [],
     subtotal: 0,
     total: 0,
     gst: 0,
     discount: 0,
-    payer_id: defaultPayerId,
+    date: new Date().toISOString(),
+    ...(defaultPayerId ? { payer_id: defaultPayerId } : {})
   };
 
   console.log('📋 Bill data to insert:', billData);
