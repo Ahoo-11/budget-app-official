@@ -6,6 +6,7 @@ import { CartHeader } from "./cart/CartHeader";
 import { CartItems } from "./cart/CartItems";
 import { CartFooter } from "./cart/CartFooter";
 import { useQueryClient } from "@tanstack/react-query";
+import { serializeBillItems } from "./BillManager";
 
 interface OrderCartProps {
   items: BillProduct[];
@@ -43,18 +44,18 @@ export const OrderCart = ({
 
       const { error: billError } = await supabase
         .from('bills')
-        .insert([{
+        .insert({
           source_id: sourceId,
           user_id: user.id,
           status: 'pending',
-          items,
+          items: serializeBillItems(items),
           subtotal,
           discount,
           gst: gstAmount,
           total: finalTotal,
-          date,
+          date: date.toISOString(),
           payer_id: selectedPayerId
-        }]);
+        });
 
       if (billError) throw billError;
 
