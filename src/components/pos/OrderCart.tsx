@@ -41,7 +41,7 @@ export const OrderCart = ({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      const { data: bill, error: billError } = await supabase
+      const { error: billError } = await supabase
         .from('bills')
         .insert({
           source_id: sourceId,
@@ -54,9 +54,7 @@ export const OrderCart = ({
           total: finalTotal,
           date,
           payer_id: selectedPayerId
-        })
-        .select()
-        .single();
+        });
 
       if (billError) throw billError;
 
