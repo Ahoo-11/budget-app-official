@@ -20,7 +20,7 @@ export function useBillStatus() {
 
       toast({
         title: "Success",
-        description: `Bill ${status === 'completed' ? 'completed' : 'activated'} successfully`,
+        description: `Bill ${status === 'paid' ? 'paid' : 'activated'} successfully`,
       });
     } catch (error: any) {
       console.error('Error updating bill status:', error);

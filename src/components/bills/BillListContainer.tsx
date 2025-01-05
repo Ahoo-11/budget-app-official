@@ -62,8 +62,6 @@ export const BillListContainer = () => {
 
   const { bills } = useBillManagement(selectedSource === 'all' ? null : selectedSource);
 
-  console.log('📊 BillListContainer - bills:', bills);
-
   const pendingBills = bills.filter(bill => 
     bill.status === 'pending' || bill.status === 'partially_paid'
   );

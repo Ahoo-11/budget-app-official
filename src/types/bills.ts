@@ -17,6 +17,19 @@ export interface BillProduct {
   income_type_id?: string | null;
 }
 
+export interface BillItemJson {
+  id: string;
+  name: string;
+  price: number | string;
+  quantity: number | string;
+  type?: 'product' | 'service';
+  source_id?: string;
+  category?: string | null;
+  image_url?: string | null;
+  description?: string | null;
+  income_type_id?: string | null;
+}
+
 // Type for creating a new bill
 export type NewBillInput = Database['public']['Tables']['bills']['Insert'];
 
