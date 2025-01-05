@@ -59,7 +59,7 @@ export const fetchActiveBills = async (sourceId: string): Promise<Bill[]> => {
     .from('bills')
     .select('*')
     .eq('source_id', sourceId)
-    .in('status', ['active'])
+    .in('status', ['active', 'pending', 'partially_paid'])
     .order('created_at', { ascending: false });
 
   if (error) throw error;
@@ -67,7 +67,7 @@ export const fetchActiveBills = async (sourceId: string): Promise<Bill[]> => {
   return (data || []).map(bill => ({
     ...bill,
     items: deserializeBillItems(bill.items),
-    status: bill.status as 'active' | 'completed'
+    status: bill.status as Bill['status']
   }));
 };
 
