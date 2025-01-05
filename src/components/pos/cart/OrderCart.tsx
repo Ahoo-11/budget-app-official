@@ -82,7 +82,7 @@ export const OrderCart = ({
         throw billError;
       }
 
-      // Create transaction record for bill tracking
+      // Create transaction record (always)
       await createBillTransaction(
         sourceId,
         user.id,
