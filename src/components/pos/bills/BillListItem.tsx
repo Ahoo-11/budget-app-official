@@ -1,8 +1,9 @@
-import { Bill } from "@/types/bill";
+import { Bill } from "@/types/bills";
 import { formatCurrency } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
 import { AlertCircle, Check, Clock, DollarSign } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 interface BillListItemProps {
   bill: Bill;
@@ -21,29 +22,25 @@ export const BillListItem = ({
 }: BillListItemProps) => {
   const getStatusIcon = (status: Bill['status']) => {
     switch (status) {
-      case 'completed':
+      case 'paid':
         return <Check className="h-4 w-4 text-green-500" />;
       case 'pending':
         return <Clock className="h-4 w-4 text-yellow-500" />;
       case 'partially_paid':
         return <DollarSign className="h-4 w-4 text-blue-500" />;
-      case 'overdue':
-        return <AlertCircle className="h-4 w-4 text-red-500" />;
       default:
-        return null;
+        return <AlertCircle className="h-4 w-4 text-red-500" />;
     }
   };
 
   const getStatusColor = (status: Bill['status']) => {
     switch (status) {
-      case 'completed':
+      case 'paid':
         return 'bg-green-50 text-green-700 border-green-200';
       case 'pending':
         return 'bg-yellow-50 text-yellow-700 border-yellow-200';
       case 'partially_paid':
         return 'bg-blue-50 text-blue-700 border-blue-200';
-      case 'overdue':
-        return 'bg-red-50 text-red-700 border-red-200';
       default:
         return 'bg-gray-50 text-gray-700 border-gray-200';
     }
@@ -52,10 +49,9 @@ export const BillListItem = ({
   return (
     <div
       className={cn(
-        "p-4 border rounded-lg space-y-2 cursor-pointer transition-colors",
+        "p-4 border rounded-lg space-y-2 transition-colors",
         activeBillId === bill.id ? "bg-accent" : "hover:bg-accent/50"
       )}
-      onClick={() => onBillClick(bill.id)}
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -85,6 +81,17 @@ export const BillListItem = ({
         <span>Total</span>
         <span className="font-medium">{formatCurrency(bill.total)}</span>
       </div>
+
+      {bill.status === 'pending' && (
+        <Button
+          variant="outline"
+          size="sm"
+          className="w-full mt-2"
+          onClick={() => onBillClick(bill.id)}
+        >
+          {activeBillId === bill.id ? 'Current Bill' : 'Switch to Bill'}
+        </Button>
+      )}
     </div>
   );
 };

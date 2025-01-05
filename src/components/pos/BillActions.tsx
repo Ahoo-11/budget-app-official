@@ -2,8 +2,8 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Bill } from "@/types/bill";
-import { PauseCircle, Receipt } from "lucide-react";
+import { Bill } from "@/types/bills";
+import { PlusCircle, Receipt } from "lucide-react";
 import { BillListItem } from "./bills/BillListItem";
 import { BillBulkActions } from "./bills/BillBulkActions";
 import { supabase } from "@/integrations/supabase/client";
@@ -35,27 +35,15 @@ export const BillActions = ({
   console.log('📋 Active bills in BillActions:', activeBills);
   console.log('🎯 Current active bill ID:', activeBillId);
   
-  // Group bills by status for better organization
-  const billsByStatus = activeBills.reduce((acc, bill) => {
-    acc[bill.status] = acc[bill.status] || [];
-    acc[bill.status].push(bill);
-    return acc;
-  }, {} as Record<string, Bill[]>);
-
-  // Get active bills for the list
-  const activeBillsList = billsByStatus['active'] || [];
+  // Only show pending bills in the sidebar
+  const pendingBills = activeBills.filter(bill => bill.status === 'pending');
   
-  console.log('📝 Bills by status:', {
-    active: billsByStatus['active']?.length || 0,
-    completed: billsByStatus['completed']?.length || 0,
-    pending: billsByStatus['pending']?.length || 0,
-    partially_paid: billsByStatus['partially_paid']?.length || 0
-  });
+  console.log('📝 Pending bills:', pendingBills.length);
   
-  const isAllSelected = activeBillsList.length > 0 && selectedBills.length === activeBillsList.length;
+  const isAllSelected = pendingBills.length > 0 && selectedBills.length === pendingBills.length;
 
   const handleSelectAll = (checked: boolean) => {
-    setSelectedBills(checked ? activeBillsList.map(bill => bill.id) : []);
+    setSelectedBills(checked ? pendingBills.map(bill => bill.id) : []);
   };
 
   const handleSelectBill = (billId: string, isSelected: boolean) => {
@@ -93,7 +81,7 @@ export const BillActions = ({
         title: "Bills deleted",
         description: `Successfully deleted ${selectedBills.length} ${selectedBills.length === 1 ? 'bill' : 'bills'}.`,
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting bills:', error);
       toast({
         title: "Error",
@@ -108,11 +96,6 @@ export const BillActions = ({
     setIsSheetOpen(false);
   };
 
-  const handleHoldAndNew = () => {
-    if (isSubmitting) return;
-    onNewBill();
-  };
-
   return (
     <div className="flex justify-end gap-2">
       <TooltipProvider>
@@ -121,15 +104,15 @@ export const BillActions = ({
             <Button
               variant="outline"
               size="icon"
-              onClick={handleHoldAndNew}
+              onClick={onNewBill}
               className="h-9 w-9"
               disabled={isSubmitting}
             >
-              <PauseCircle className="h-4 w-4" />
+              <PlusCircle className="h-4 w-4" />
             </Button>
           </TooltipTrigger>
           <TooltipContent>
-            <p>Hold & New Bill</p>
+            <p>New Bill</p>
           </TooltipContent>
         </Tooltip>
 
@@ -143,16 +126,16 @@ export const BillActions = ({
                   className="h-9 w-9 relative"
                 >
                   <Receipt className="h-4 w-4" />
-                  {activeBillsList.length > 0 && (
+                  {pendingBills.length > 0 && (
                     <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground rounded-full w-4 h-4 text-xs flex items-center justify-center">
-                      {activeBillsList.length}
+                      {pendingBills.length}
                     </span>
                   )}
                 </Button>
               </SheetTrigger>
               <SheetContent>
                 <SheetHeader>
-                  <SheetTitle>Active Bills</SheetTitle>
+                  <SheetTitle>Pending Bills</SheetTitle>
                 </SheetHeader>
                 <div className="mt-4">
                   <BillBulkActions
@@ -160,10 +143,10 @@ export const BillActions = ({
                     onSelectAll={handleSelectAll}
                     isAllSelected={isAllSelected}
                     onDeleteSelected={handleDeleteSelected}
-                    totalBills={activeBillsList.length}
+                    totalBills={pendingBills.length}
                   />
                   <div className="mt-4 space-y-4">
-                    {activeBillsList.map((bill) => (
+                    {pendingBills.map((bill) => (
                       <BillListItem
                         key={bill.id}
                         bill={bill}
@@ -179,7 +162,7 @@ export const BillActions = ({
             </Sheet>
           </TooltipTrigger>
           <TooltipContent>
-            <p>Active Bills</p>
+            <p>Pending Bills</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
