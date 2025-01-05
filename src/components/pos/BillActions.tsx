@@ -36,13 +36,13 @@ export const BillActions = ({
   console.log('🎯 Current active bill ID:', activeBillId);
   
   // Filter to show only bills with status 'active'
-  const uncompletedBills = activeBills.filter(bill => bill.status === 'active');
-  console.log('📝 Uncompleted bills:', uncompletedBills);
+  const activeBillsList = activeBills.filter(bill => bill.status === 'active');
+  console.log('📝 Active bills:', activeBillsList);
   
-  const isAllSelected = uncompletedBills.length > 0 && selectedBills.length === uncompletedBills.length;
+  const isAllSelected = activeBillsList.length > 0 && selectedBills.length === activeBillsList.length;
 
   const handleSelectAll = (checked: boolean) => {
-    setSelectedBills(checked ? uncompletedBills.map(bill => bill.id) : []);
+    setSelectedBills(checked ? activeBillsList.map(bill => bill.id) : []);
   };
 
   const handleSelectBill = (billId: string, isSelected: boolean) => {
@@ -130,9 +130,9 @@ export const BillActions = ({
                   className="h-9 w-9 relative"
                 >
                   <Receipt className="h-4 w-4" />
-                  {uncompletedBills.length > 0 && (
+                  {activeBillsList.length > 0 && (
                     <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground rounded-full w-4 h-4 text-xs flex items-center justify-center">
-                      {uncompletedBills.length}
+                      {activeBillsList.length}
                     </span>
                   )}
                 </Button>
@@ -147,10 +147,10 @@ export const BillActions = ({
                     onSelectAll={handleSelectAll}
                     isAllSelected={isAllSelected}
                     onDeleteSelected={handleDeleteSelected}
-                    totalBills={uncompletedBills.length}
+                    totalBills={activeBillsList.length}
                   />
                   <div className="mt-4 space-y-4">
-                    {uncompletedBills.map((bill) => (
+                    {activeBillsList.map((bill) => (
                       <BillListItem
                         key={bill.id}
                         bill={bill}
