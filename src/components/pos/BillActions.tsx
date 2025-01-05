@@ -35,6 +35,7 @@ export const BillActions = ({
   console.log('📋 Active bills in BillActions:', activeBills);
   console.log('🎯 Current active bill ID:', activeBillId);
   
+  // Filter to show only bills with status 'active'
   const uncompletedBills = activeBills.filter(bill => bill.status === 'active');
   console.log('📝 Uncompleted bills:', uncompletedBills);
   

@@ -26,7 +26,7 @@ export const useBillManagement = (sourceId: string) => {
       .from('bills')
       .select('*')
       .eq('source_id', sourceId)
-      .eq('status', 'active')
+      .eq('status', 'active')  // Only fetch active bills
       .order('created_at', { ascending: false });
     
     if (error) {
@@ -105,12 +105,6 @@ export const useBillManagement = (sourceId: string) => {
     };
   }, [sourceId, handleRealtimeUpdate]);
 
-  const refetchBills = useCallback(async () => {
-    console.log('🔄 Manually refetching bills...');
-    const updatedBills = await fetchBills();
-    queryClient.setQueryData(['bills', sourceId], updatedBills);
-  }, [fetchBills, queryClient, sourceId]);
-
   return {
     bills,
     activeBillId,
@@ -121,6 +115,6 @@ export const useBillManagement = (sourceId: string) => {
     handleSwitchBill,
     handleProductSelect,
     handleUpdateBillStatus,
-    refetchBills
+    refetchBills: fetchBills
   };
 };
