@@ -119,7 +119,7 @@ export const OrderCart = ({
           description: `POS Sale`,
           amount: finalTotal,
           type: 'income',
-          date: date,
+          date: date.toISOString(), // Convert Date to ISO string
           payer_id: selectedPayerId,
           status: status === 'completed' ? 'completed' : 'pending',
           created_by_name: user.email
