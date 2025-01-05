@@ -3,7 +3,8 @@ import { BillProduct } from "@/types/bill";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
-import { createPosTransaction, completePosTransaction } from "@/services/posTransactions";
+import { supabase } from "@/integrations/supabase/client";
+import { createPosTransaction } from "@/services/posTransactions";
 
 export const useCartManager = (
   sourceId: string,
@@ -49,7 +50,12 @@ export const useCartManager = (
       for (const item of items) {
         if (item.type === 'product' && item.current_stock !== undefined) {
           const newStock = item.current_stock - item.quantity;
-          await updateProductStock(item.id, newStock);
+          const { error } = await supabase
+            .from('products')
+            .update({ current_stock: newStock })
+            .eq('id', item.id);
+
+          if (error) throw error;
         }
       }
 
@@ -90,13 +96,4 @@ export const useCartManager = (
     handleCheckout,
     handleCancelBill,
   };
-};
-
-const updateProductStock = async (productId: string, newStock: number) => {
-  const { error } = await supabase
-    .from('products')
-    .update({ current_stock: newStock })
-    .eq('id', productId);
-
-  if (error) throw error;
 };

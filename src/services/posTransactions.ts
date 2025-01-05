@@ -30,6 +30,7 @@ export const createPosTransaction = async (
       discount,
       gst,
       total,
+      created_by_name: 'POS System'
     })
     .select()
     .single();
@@ -56,15 +57,15 @@ export const completePosTransaction = async (
   return data;
 };
 
-export const fetchActivePosTransactions = async (sourceId: string) => {
+export const fetchActivePosTransactions = async (sourceId: string): Promise<PosTransaction[]> => {
   const { data, error } = await supabase
     .from('transactions')
     .select('*')
     .eq('source_id', sourceId)
     .eq('type', 'pos_sale')
-    .eq('status', 'active')
+    .in('status', ['active', 'pending'])
     .order('created_at', { ascending: false });
 
   if (error) throw error;
-  return data as PosTransaction[];
+  return data as unknown as PosTransaction[];
 };
