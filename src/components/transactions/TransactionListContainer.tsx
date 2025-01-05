@@ -28,6 +28,7 @@ const TransactionListContainer = () => {
       const { data, error } = await supabase
         .from('bills')
         .select('*')
+        .eq('status', 'completed')  // Only fetch completed bills
         .order('created_at', { ascending: false });
       
       if (error) {
@@ -91,7 +92,7 @@ const TransactionListContainer = () => {
             Recent Activity
           </h1>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Keep track of your recent expenses, income, and bills with our beautiful and intuitive
+            Keep track of your recent expenses, income, and completed bills with our beautiful and intuitive
             interface.
           </p>
         </header>
@@ -110,7 +111,7 @@ const TransactionListContainer = () => {
                 Transactions ({filteredTransactions.length})
               </TabsTrigger>
               <TabsTrigger value="bills">
-                Bills ({filteredBills.length})
+                Completed Bills ({filteredBills.length})
               </TabsTrigger>
             </TabsList>
             
@@ -140,7 +141,7 @@ const TransactionListContainer = () => {
                 ))}
                 {filteredBills.length === 0 && (
                   <div className="text-center py-6 text-muted-foreground">
-                    No bills found
+                    No completed bills found
                   </div>
                 )}
               </div>
