@@ -16,6 +16,7 @@ export const useBillSwitching = (
   const session = useSession();
   const queryClient = useQueryClient();
 
+  // Initialize active bill on mount
   useEffect(() => {
     const initializeActiveBill = async () => {
       try {
@@ -82,10 +83,12 @@ export const useBillSwitching = (
       if (error) throw error;
 
       console.log('✨ Created new bill:', newBill);
+      
+      // Set the new bill as active
       setActiveBillId(newBill.id);
 
       // Force an immediate refetch of bills
-      queryClient.invalidateQueries({ queryKey: ['bills', sourceId] });
+      await queryClient.invalidateQueries({ queryKey: ['bills', sourceId] });
 
       toast({
         title: "Success",
@@ -114,6 +117,7 @@ export const useBillSwitching = (
 
       if (error) throw error;
 
+      // Set the selected bill as active
       setActiveBillId(billId);
 
       // Set the products from the bill
