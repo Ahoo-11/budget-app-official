@@ -23,7 +23,7 @@ export const createPosTransaction = async (
       items: items,
       amount: total,
       paid_amount: paidAmount,
-      status: 'active',
+      status: 'pending',
       date: new Date().toISOString(),
       payer_id: payerId,
       subtotal,
@@ -63,7 +63,7 @@ export const fetchActivePosTransactions = async (sourceId: string): Promise<PosT
     .select('*')
     .eq('source_id', sourceId)
     .eq('type', 'pos_sale')
-    .in('status', ['active', 'pending'])
+    .in('status', ['pending', 'partially_paid'])
     .order('created_at', { ascending: false });
 
   if (error) throw error;

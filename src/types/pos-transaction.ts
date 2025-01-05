@@ -1,6 +1,5 @@
 import { BillProduct } from "./bill";
-
-export type PosTransactionStatus = 'active' | 'pending' | 'completed' | 'partially_paid';
+import { TransactionStatus } from "./transaction";
 
 export interface PosTransaction {
   id: string;
@@ -14,7 +13,7 @@ export interface PosTransaction {
   gst: number;
   total: number;
   paid_amount: number;
-  status: PosTransactionStatus;
+  status: TransactionStatus;
   date: string;
   payer_id?: string | null;
   created_by_name?: string;
