@@ -84,14 +84,15 @@ export const useTypes = (sourceId?: string) => {
 
     try {
       // First, check if a setting already exists
-      const { data: existingSettings } = await supabase
+      const { data: existingSettings, error: checkError } = await supabase
         .from("type_settings")
         .select("*")
         .eq("source_id", sourceId)
-        .eq("type_id", typeId)
-        .single();
+        .eq("type_id", typeId);
 
-      if (existingSettings) {
+      if (checkError) throw checkError;
+
+      if (existingSettings && existingSettings.length > 0) {
         // Update existing setting
         const { error: updateError } = await supabase
           .from("type_settings")

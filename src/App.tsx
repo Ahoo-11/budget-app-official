@@ -42,10 +42,15 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
         
         if (error) {
           console.error('Error getting session:', error);
+          // Clear the session if there's an auth error
+          if (error.message.includes('Invalid Refresh Token')) {
+            await supabase.auth.signOut();
+            queryClient.clear();
+          }
           toast({
             variant: "destructive",
             title: "Authentication Error",
-            description: "There was a problem with your session. Please try logging in again.",
+            description: "Please sign in again to continue.",
           });
           return;
         }
@@ -66,12 +71,15 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (mounted) {
-        setSession(session);
+        if (_event === 'TOKEN_REFRESHED') {
+          console.log('Token refreshed successfully');
+        }
         if (_event === 'SIGNED_OUT') {
           queryClient.clear();
         }
+        setSession(session);
       }
     });
 
