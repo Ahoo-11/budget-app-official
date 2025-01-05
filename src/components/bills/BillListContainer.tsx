@@ -37,7 +37,7 @@ const BillList = ({ bills }: { bills: Bill[] }) => {
               <p className="text-sm">
                 Status: <span className={cn(
                   "px-2 py-1 rounded-full text-xs",
-                  bill.status === 'completed' ? "bg-success/10 text-success" : "bg-primary/10 text-primary"
+                  bill.status === 'paid' ? "bg-success/10 text-success" : "bg-primary/10 text-primary"
                 )}>{bill.status}</span>
               </p>
               {bill.payer_name && (
@@ -64,7 +64,9 @@ export const BillListContainer = () => {
 
   console.log('📊 BillListContainer - bills:', bills);
 
-  const pendingBills = bills.filter(bill => bill.status === 'pending' || bill.status === 'partially_paid');
+  const pendingBills = bills.filter(bill => 
+    bill.status === 'pending' || bill.status === 'partially_paid'
+  );
   const paidBills = bills.filter(bill => bill.status === 'paid');
 
   const filterBillsByDate = (billList: Bill[]) => {

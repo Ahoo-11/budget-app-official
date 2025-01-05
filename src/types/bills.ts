@@ -17,9 +17,6 @@ export interface BillProduct {
   income_type_id?: string | null;
 }
 
-// This is what we store in the database
-export type BillItemJson = BillProduct;
-
 // Type for creating a new bill
 export type NewBillInput = Database['public']['Tables']['bills']['Insert'];
 
@@ -28,6 +25,6 @@ export type BillRow = Database['public']['Tables']['bills']['Row'];
 
 // Type for a bill after being fetched and processed
 export interface Bill extends Omit<BillRow, 'items'> {
-  items: BillItemJson[];
+  items: BillProduct[];
   payer_name?: string;
 }

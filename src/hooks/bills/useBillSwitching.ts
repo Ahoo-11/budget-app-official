@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { BillProduct, NewBillInput } from "@/types/bills";
+import { BillProduct, BillStatus } from "@/types/bills";
 import { useSession } from "@supabase/auth-helpers-react";
 
 export function useBillSwitching(
@@ -34,9 +34,8 @@ export function useBillSwitching(
       if (existingBills && existingBills.length > 0) {
         const activeBill = existingBills[0];
         setActiveBillId(activeBill.id);
-        if (Array.isArray(activeBill.items)) {
-          setSelectedProducts(activeBill.items as BillProduct[]);
-        }
+        const items = activeBill.items as unknown as BillProduct[];
+        setSelectedProducts(items);
         console.log('Found existing active bill:', activeBill.id);
       } else {
         await createNewBill();
@@ -54,14 +53,14 @@ export function useBillSwitching(
   const createNewBill = async () => {
     if (!sourceId || !session?.user?.id) return null;
 
-    const newBill: NewBillInput = {
+    const newBill = {
       source_id: sourceId,
       user_id: session.user.id,
       items: [],
       subtotal: 0,
       gst: 0,
       total: 0,
-      status: 'active',
+      status: 'active' as BillStatus,
       paid_amount: 0,
       date: new Date().toISOString(),
     };
@@ -130,9 +129,8 @@ export function useBillSwitching(
 
       if (bill) {
         setActiveBillId(bill.id);
-        if (Array.isArray(bill.items)) {
-          setSelectedProducts(bill.items as BillProduct[]);
-        }
+        const items = bill.items as unknown as BillProduct[];
+        setSelectedProducts(items);
         toast({
           title: "Switched bill",
           description: `Now viewing bill #${bill.id.slice(0, 8)}`,
