@@ -12,6 +12,8 @@ export const useTransactions = (source_id?: string) => {
   const { data: transactions = [], isLoading } = useQuery({
     queryKey: ['transactions', source_id],
     queryFn: async () => {
+      console.log('Fetching transactions for source:', source_id);
+      
       let query = supabase
         .from('transactions')
         .select('*')
@@ -26,18 +28,25 @@ export const useTransactions = (source_id?: string) => {
           .eq('user_id', session?.user?.id)
           .single();
 
+        console.log('User role:', userRole);
+
         if (userRole?.role === 'controller' || userRole?.role === 'super_admin') {
           // Controller and super_admin can access all sources
+          console.log('User is controller/super_admin, fetching all transactions');
         } else {
           const { data: permissions } = await supabase
             .from('source_permissions')
             .select('source_id')
             .eq('user_id', session?.user?.id);
 
+          console.log('User permissions:', permissions);
+
           if (permissions && permissions.length > 0) {
             const sourceIds = permissions.map(p => p.source_id);
             query = query.in('source_id', sourceIds);
+            console.log('Filtering by source IDs:', sourceIds);
           } else {
+            console.log('No source permissions found, returning empty array');
             return [];
           }
         }
@@ -46,6 +55,7 @@ export const useTransactions = (source_id?: string) => {
       const { data, error } = await query;
       
       if (error) {
+        console.error('Error fetching transactions:', error);
         toast({
           title: "Error fetching transactions",
           description: error.message,
@@ -53,6 +63,8 @@ export const useTransactions = (source_id?: string) => {
         });
         throw error;
       }
+
+      console.log('Fetched transactions:', data);
       return data as Transaction[];
     },
     enabled: !!session?.user?.id
