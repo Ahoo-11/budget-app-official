@@ -4,7 +4,6 @@ import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { createPosTransaction } from "@/services/posTransactions";
 
 export const useCartManager = (
   sourceId: string,
@@ -34,34 +33,64 @@ export const useCartManager = (
       const gstAmount = subtotal * gstRate;
       const total = subtotal + gstAmount;
 
-      // Create transaction
-      await createPosTransaction(
-        sourceId,
-        session.user.id,
-        items,
-        subtotal,
-        0, // discount
-        gstAmount,
-        total,
-        paidAmount
-      );
+      // Create bill
+      const { error: billError } = await supabase
+        .from('bills')
+        .insert({
+          source_id: sourceId,
+          user_id: session.user.id,
+          status: 'pending',
+          items: items.map(item => ({
+            id: item.id,
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity,
+            type: item.type,
+            source_id: sourceId,
+            category: item.category,
+            image_url: item.image_url,
+            description: item.description
+          })),
+          subtotal,
+          gst: gstAmount,
+          total,
+          paid_amount: paidAmount,
+          date: new Date().toISOString(),
+        });
 
-      // Update stock levels
+      if (billError) throw billError;
+
+      // Update stock levels for products
       for (const item of items) {
         if (item.type === 'product' && item.current_stock !== undefined) {
           const newStock = item.current_stock - item.quantity;
-          const { error } = await supabase
+          
+          const { error: stockError } = await supabase
             .from('products')
             .update({ current_stock: newStock })
             .eq('id', item.id);
 
-          if (error) throw error;
+          if (stockError) throw stockError;
+
+          // Create stock movement record
+          const { error: movementError } = await supabase
+            .from('stock_movements')
+            .insert({
+              product_id: item.id,
+              movement_type: 'sale',
+              quantity: -item.quantity,
+              unit_cost: item.price,
+              notes: `POS Sale`,
+              created_by: session.user.id
+            });
+
+          if (movementError) throw movementError;
         }
       }
 
       toast({
         title: "Success",
-        description: "Transaction completed successfully",
+        description: "Bill created successfully",
       });
 
       // Reset cart
@@ -69,14 +98,14 @@ export const useCartManager = (
       setPaidAmount(0);
       
       // Refresh queries
-      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['bills'] });
       queryClient.invalidateQueries({ queryKey: ['products'] });
 
     } catch (error) {
       console.error('Error during checkout:', error);
       toast({
         title: "Error",
-        description: "Failed to complete transaction",
+        description: "Failed to complete checkout",
         variant: "destructive",
       });
     } finally {
