@@ -23,6 +23,7 @@ interface CartFooterProps {
   onDiscountChange: (discount: number) => void;
   onCheckout: () => void;
   onCancelBill: () => void;
+  selectedPayerId?: string | null;
 }
 
 export const CartFooter = ({
@@ -34,6 +35,7 @@ export const CartFooter = ({
   onDiscountChange,
   onCheckout,
   onCancelBill,
+  selectedPayerId,
 }: CartFooterProps) => {
   return (
     <div className="border-t p-4 space-y-4">
@@ -114,7 +116,7 @@ export const CartFooter = ({
                 Processing...
               </>
             ) : (
-              "CHECKOUT"
+              selectedPayerId ? "CHARGE TO ACCOUNT" : "CHECKOUT"
             )}
           </Button>
         </div>

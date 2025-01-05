@@ -43,11 +43,10 @@ export const OrderCart = ({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      // Create bill data object with correct status value
       const billData = {
         source_id: sourceId,
         user_id: user.id,
-        status: 'active', // Changed from 'pending' to 'active'
+        status: 'active',
         items: serializeBillItems(items),
         subtotal,
         discount,
@@ -119,6 +118,7 @@ export const OrderCart = ({
           onDiscountChange={handleDiscountChange}
           onCheckout={handleCheckout}
           onCancelBill={handleCancelBill}
+          selectedPayerId={selectedPayerId}
         />
       )}
     </div>
