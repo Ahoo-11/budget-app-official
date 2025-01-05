@@ -1,6 +1,7 @@
+import { useState } from "react";
 import { BillProduct } from "@/types/bill";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { useBillUpdates } from "@/hooks/bills/useBillUpdates";
 import { CartHeader } from "./cart/CartHeader";
 import { CartItems } from "./cart/CartItems";
@@ -42,22 +43,33 @@ export const OrderCart = ({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
+      // Create bill data object, explicitly setting null for empty values
+      const billData = {
+        source_id: sourceId || null,
+        user_id: user.id || null,
+        status: 'pending',
+        items: serializeBillItems(items),
+        subtotal,
+        discount,
+        gst: gstAmount,
+        total: finalTotal,
+        date: date.toISOString(),
+        payer_id: selectedPayerId || null,
+        type_id: null // Explicitly set to null if not used
+      };
+
+      // Validate required UUIDs
+      if (!billData.source_id) throw new Error("Source ID is required");
+      if (!billData.user_id) throw new Error("User ID is required");
+
       const { error: billError } = await supabase
         .from('bills')
-        .insert({
-          source_id: sourceId,
-          user_id: user.id,
-          status: 'pending',
-          items: serializeBillItems(items),
-          subtotal,
-          discount,
-          gst: gstAmount,
-          total: finalTotal,
-          date: date.toISOString(),
-          payer_id: selectedPayerId
-        });
+        .insert(billData);
 
-      if (billError) throw billError;
+      if (billError) {
+        console.error('Error creating bill:', billError);
+        throw billError;
+      }
 
       toast({
         title: "Success",
@@ -71,7 +83,7 @@ export const OrderCart = ({
       console.error('Error creating bill:', error);
       toast({
         title: "Error",
-        description: "Failed to create bill",
+        description: error instanceof Error ? error.message : "Failed to create bill",
         variant: "destructive",
       });
     }
