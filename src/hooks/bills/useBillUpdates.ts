@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Bill, BillProduct } from "@/types/bills";
+import { Bill, BillProduct, serializeBillItems } from "@/types/bills";
 
 export function useBillUpdates() {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -11,9 +11,14 @@ export function useBillUpdates() {
     try {
       setIsSubmitting(true);
 
+      const serializedBill = {
+        ...bill,
+        items: serializeBillItems(bill.items)
+      };
+
       const { error } = await supabase
         .from('bills')
-        .update(bill)
+        .update(serializedBill)
         .eq('id', bill.id);
 
       if (error) throw error;

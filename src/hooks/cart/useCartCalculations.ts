@@ -1,28 +1,21 @@
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
 import { BillProduct } from "@/types/bills";
+import { calculateGSTFromTotal } from "@/utils/gst";
 
-export function useCartCalculations(sourceId: string | null) {
-  const { data: cartItems = [] } = useQuery({
-    queryKey: ['cartItems', sourceId],
-    queryFn: async () => {
-      if (!sourceId) return [];
+export function useCartCalculations(selectedProducts: BillProduct[]) {
+  const [discount, setDiscount] = useState(0);
 
-      const { data, error } = await supabase
-        .from('cart_items')
-        .select('*')
-        .eq('source_id', sourceId);
+  const subtotal = selectedProducts.reduce((total, item) => 
+    total + (item.price * item.quantity), 0
+  );
 
-      if (error) throw error;
-      return data as BillProduct[];
-    },
-    enabled: !!sourceId,
-  });
-
-  const totalAmount = cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
+  const { gstAmount, totalAmount: finalTotal } = calculateGSTFromTotal(subtotal - discount);
 
   return {
-    cartItems,
-    totalAmount,
+    discount,
+    setDiscount,
+    subtotal,
+    gstAmount,
+    finalTotal
   };
 }
