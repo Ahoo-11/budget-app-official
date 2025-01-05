@@ -1,30 +1,38 @@
-import { Bill } from "@/types/bills";
 import { supabase } from "@/integrations/supabase/client";
+import { BillProduct } from "@/types/bills";
+import { toast } from "sonner";
 
-export const createTransaction = async (bill: Bill) => {
+export const createTransaction = async (
+  sourceId: string,
+  items: BillProduct[],
+  payerId?: string
+) => {
   try {
-    const { data, error } = await supabase
-      .from('transactions')
-      .insert([
-        {
-          source_id: bill.source_id,
-          description: `Bill #${bill.id}`,
-          amount: bill.total,
-          type: 'pos_sale',
-          payer_id: bill.payer_id,
-          date: bill.date,
-          status: 'pending',
-          total_amount: bill.total,
-          paid_amount: bill.paid_amount,
-        }
-      ])
+    const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+    const { data: transaction, error } = await supabase
+      .from("transactions")
+      .insert({
+        source_id: sourceId,
+        payer_id: payerId,
+        type: "pos_sale",
+        amount: total,
+        description: `POS Sale - ${items.length} items`,
+        status: "pending",
+        total_amount: total,
+        remaining_amount: total,
+      })
       .select()
       .single();
 
-    if (error) throw error;
-    return data;
+    if (error) {
+      toast.error("Error creating transaction");
+      throw error;
+    }
+
+    return transaction;
   } catch (error) {
-    console.error('Error creating transaction:', error);
+    console.error("Error in createTransaction:", error);
     throw error;
   }
 };

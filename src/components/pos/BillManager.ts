@@ -1,37 +1,43 @@
-import { useEffect, useState } from "react";
-import { Bill } from "@/types/bills";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { BillProduct } from "@/types/bills";
+import { toast } from "sonner";
 
-export const BillManager = () => {
-  const [bills, setBills] = useState<Bill[]>([]);
-  const { toast } = useToast();
+export const useBillManager = (sourceId: string) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const fetchBills = async () => {
+  const createBill = async (items: BillProduct[]) => {
     try {
-      const { data, error } = await supabase
-        .from('bills')
-        .select('*');
+      setIsSubmitting(true);
 
-      if (error) throw error;
+      const { data: bill, error } = await supabase
+        .from("bills")
+        .insert({
+          source_id: sourceId,
+          items,
+          status: "pending",
+          total: items.reduce((sum, item) => sum + item.price * item.quantity, 0),
+        })
+        .select()
+        .single();
 
-      setBills(data as Bill[]);
+      if (error) {
+        toast.error("Error creating bill");
+        throw error;
+      }
+
+      toast.success("Bill created successfully");
+      return bill;
     } catch (error) {
-      console.error('Error fetching bills:', error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch bills",
-        variant: "destructive",
-      });
+      console.error("Error in createBill:", error);
+      throw error;
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  useEffect(() => {
-    fetchBills();
-  }, []);
-
   return {
-    bills,
-    fetchBills,
+    createBill,
+    isSubmitting,
   };
 };

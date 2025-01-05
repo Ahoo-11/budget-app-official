@@ -1,87 +1,130 @@
-import { Bill, BillProduct } from '@/types/bills';
-import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useToast } from '@/hooks/use-toast';
+import { useState, useEffect } from "react";
+import { Card } from "@/components/ui/card";
+import { OrderContent } from "./OrderContent";
+import { OrderCart } from "./cart/OrderCart";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Product } from "@/types/product";
+import { Service } from "@/types/service";
+import { BillProduct } from "@/types/bills";
+import { toast } from "sonner";
 
 interface OrderInterfaceProps {
   sourceId: string;
-  bill?: Bill;
-  onUpdate?: (updatedBill: Bill) => void;
 }
 
-export const OrderInterface = ({ sourceId, bill, onUpdate }: OrderInterfaceProps) => {
-  const [products, setProducts] = useState<BillProduct[]>([]);
-  const { toast } = useToast();
+export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
+  const [selectedProducts, setSelectedProducts] = useState<BillProduct[]>([]);
 
-  useEffect(() => {
-    if (bill?.items) {
-      setProducts(bill.items);
+  const { data: products = [] } = useQuery({
+    queryKey: ["products", sourceId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("products")
+        .select("*")
+        .eq("source_id", sourceId)
+        .order("name");
+
+      if (error) {
+        toast.error("Error loading products");
+        throw error;
+      }
+
+      return data as Product[];
+    },
+  });
+
+  const { data: services = [] } = useQuery({
+    queryKey: ["services", sourceId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("services")
+        .select("*")
+        .eq("source_id", sourceId)
+        .order("name");
+
+      if (error) {
+        toast.error("Error loading services");
+        throw error;
+      }
+
+      return data as Service[];
+    },
+  });
+
+  const handleProductSelect = (product: Product) => {
+    const existingProduct = selectedProducts.find((p) => p.id === product.id);
+
+    if (existingProduct) {
+      setSelectedProducts(
+        selectedProducts.map((p) =>
+          p.id === product.id
+            ? { ...p, quantity: p.quantity + 1 }
+            : p
+        )
+      );
+    } else {
+      setSelectedProducts([
+        ...selectedProducts,
+        {
+          ...product,
+          quantity: 1,
+          type: "product",
+        } as BillProduct,
+      ]);
     }
-  }, [bill]);
-
-  const handleProductChange = (index: number, field: keyof BillProduct, value: any) => {
-    const updatedProducts = [...products];
-    updatedProducts[index] = { ...updatedProducts[index], [field]: value };
-    setProducts(updatedProducts);
   };
 
-  const handleSave = () => {
-    if (!bill || !onUpdate) {
-      toast({
-        title: "Error",
-        description: "Cannot update bill at this time",
-        variant: "destructive",
-      });
-      return;
+  const handleServiceSelect = (service: Service) => {
+    const existingService = selectedProducts.find((p) => p.id === service.id);
+
+    if (existingService) {
+      setSelectedProducts(
+        selectedProducts.map((p) =>
+          p.id === service.id
+            ? { ...p, quantity: p.quantity + 1 }
+            : p
+        )
+      );
+    } else {
+      setSelectedProducts([
+        ...selectedProducts,
+        {
+          ...service,
+          quantity: 1,
+          type: "service",
+        } as BillProduct,
+      ]);
     }
-
-    const updatedBill = { ...bill, items: products };
-    onUpdate(updatedBill);
   };
-
-  if (!bill) {
-    return <div>Loading...</div>;
-  }
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-lg font-semibold">Order Details</h2>
-      {products.map((product, index) => (
-        <div key={product.id} className="flex items-center space-x-4">
-          <Input
-            value={product.name}
-            onChange={(e) => handleProductChange(index, 'name', e.target.value)}
-            placeholder="Product Name"
-          />
-          <Input
-            type="number"
-            value={product.price}
-            onChange={(e) => handleProductChange(index, 'price', parseFloat(e.target.value))}
-            placeholder="Price"
-          />
-          <Input
-            type="number"
-            value={product.quantity}
-            onChange={(e) => handleProductChange(index, 'quantity', parseInt(e.target.value))}
-            placeholder="Quantity"
-          />
-          <Select
-            value={product.type}
-            onValueChange={(value) => handleProductChange(index, 'type', value)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select Type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="product">Product</SelectItem>
-              <SelectItem value="service">Service</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      ))}
-      <Button onClick={handleSave}>Save Order</Button>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
+      <Card className="p-4">
+        <OrderContent
+          products={products}
+          services={services}
+          sourceId={sourceId}
+          onProductSelect={handleProductSelect}
+          onServiceSelect={handleServiceSelect}
+        />
+      </Card>
+
+      <OrderCart
+        items={selectedProducts}
+        onUpdateQuantity={(productId: string, quantity: number) => {
+          setSelectedProducts(
+            selectedProducts.map((p) =>
+              p.id === productId ? { ...p, quantity } : p
+            )
+          );
+        }}
+        onRemove={(productId: string) => {
+          setSelectedProducts(selectedProducts.filter((p) => p.id !== productId));
+        }}
+        sourceId={sourceId}
+        setSelectedProducts={setSelectedProducts}
+      />
     </div>
   );
 };
