@@ -62,7 +62,7 @@ export const useBillSwitching = (
     }
 
     try {
-      // If there's an active bill with items, save it first
+      // If there's an active bill, just save its current state
       if (activeBillId) {
         const { data: currentBill } = await supabase
           .from('bills')
@@ -70,15 +70,14 @@ export const useBillSwitching = (
           .eq('id', activeBillId)
           .single();
 
-        // Check if items exist and is an array with items
-        if (currentBill?.items && Array.isArray(currentBill.items) && currentBill.items.length > 0) {
-          console.log('📝 Saving current active bill:', activeBillId);
-          // Keep it as active, don't complete it
-          await supabase
-            .from('bills')
-            .update({ status: 'active' })
-            .eq('id', activeBillId);
-        }
+        // Save current bill's state without changing its status
+        await supabase
+          .from('bills')
+          .update({ 
+            status: 'active',  // Keep it active
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', activeBillId);
       }
 
       // Create new bill
@@ -87,7 +86,7 @@ export const useBillSwitching = (
         .insert([
           {
             source_id: sourceId,
-            status: 'active', // Always create as active
+            status: 'active',
             items: [],
             user_id: session.user.id,
             subtotal: 0,
