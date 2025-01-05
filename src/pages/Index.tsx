@@ -15,8 +15,6 @@ const Index = () => {
   });
 
   const { transactions, isLoading } = useTransactions();
-  
-  console.log('Transactions in Index:', transactions);
 
   const filteredTransactions = transactions.filter((transaction) => {
     const transactionDate = new Date(transaction.date);
@@ -26,8 +24,6 @@ const Index = () => {
     
     return matchesDateRange && matchesSource;
   });
-
-  console.log('Filtered transactions:', filteredTransactions);
 
   if (isLoading) {
     return <div>Loading...</div>;

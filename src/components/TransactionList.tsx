@@ -30,12 +30,7 @@ export const TransactionList = ({ transactions, onDelete, onEdit }: TransactionL
     }
   };
 
-  // Sort transactions by date in descending order and filter out child transactions
-  const sortedTransactions = [...transactions]
-    .filter(t => !t.parent_transaction_id) // Only show parent transactions
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-
-  if (!sortedTransactions.length) {
+  if (!transactions.length) {
     return (
       <div className="text-center py-6 text-muted-foreground">
         No transactions found
@@ -45,7 +40,7 @@ export const TransactionList = ({ transactions, onDelete, onEdit }: TransactionL
 
   return (
     <div className="space-y-4">
-      {sortedTransactions.map((transaction) => (
+      {transactions.map((transaction) => (
         <TransactionItem
           key={transaction.id}
           transaction={transaction}
