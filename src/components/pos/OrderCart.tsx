@@ -1,15 +1,12 @@
-import { useState } from "react";
 import { BillProduct } from "@/types/bill";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { useBillUpdates } from "@/hooks/bills/useBillUpdates";
 import { CartHeader } from "./cart/CartHeader";
 import { CartItems } from "./cart/CartItems";
 import { CartFooter } from "./cart/CartFooter";
 import { PaymentInput } from "./cart/PaymentInput";
-import { useQueryClient } from "@tanstack/react-query";
-import { serializeBillItems } from "./BillManager";
-import { getBillStatus } from "@/utils/creditUtils";
+import { useCartManager } from "./cart/CartManager";
+import { useBillUpdates } from "@/hooks/bills/useBillUpdates";
+import { useCartCalculations } from "@/hooks/cart/useCartCalculations";
+import { useCartPayment } from "@/hooks/cart/useCartPayment";
 
 interface OrderCartProps {
   items: BillProduct[];
@@ -26,145 +23,31 @@ export const OrderCart = ({
   sourceId,
   setSelectedProducts,
 }: OrderCartProps) => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [paidAmount, setPaidAmount] = useState(0);
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
+  const {
+    isSubmitting,
+    paidAmount,
+    setPaidAmount,
+  } = useCartPayment();
+
   const {
     discount,
-    date,
-    selectedPayerId,
+    setDiscount,
     subtotal,
     gstAmount,
-    finalTotal,
+    finalTotal
+  } = useCartCalculations(items);
+
+  const {
+    date,
+    selectedPayerId,
     handlePayerSelect,
     handleDateChange,
-    handleDiscountChange
   } = useBillUpdates(undefined, items);
 
-  const handleCheckout = async () => {
-    if (!sourceId) {
-      toast({
-        title: "Error",
-        description: "Source ID is required",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
-
-      // Create bill with paid amount
-      const billData = {
-        source_id: sourceId,
-        user_id: user.id,
-        status: 'pending', // Initial status, will be updated by trigger based on paid_amount
-        items: serializeBillItems(items),
-        subtotal,
-        discount,
-        gst: gstAmount,
-        total: finalTotal,
-        date: date.toISOString(),
-        payer_id: selectedPayerId || null,
-        type_id: null,
-        paid_amount: paidAmount
-      };
-
-      const { error: billError } = await supabase
-        .from('bills')
-        .insert(billData);
-
-      if (billError) {
-        console.error('Error creating bill:', billError);
-        throw billError;
-      }
-
-      // Update stock levels for products
-      for (const item of items) {
-        if (item.type === 'product') {
-          const { error: stockError } = await supabase
-            .from('products')
-            .update({ 
-              current_stock: item.current_stock - item.quantity 
-            })
-            .eq('id', item.id);
-
-          if (stockError) {
-            console.error('Error updating stock:', stockError);
-            throw stockError;
-          }
-
-          // Create stock movement record
-          const { error: movementError } = await supabase
-            .from('stock_movements')
-            .insert({
-              product_id: item.id,
-              movement_type: 'sale',
-              quantity: -item.quantity,
-              unit_cost: item.price,
-              notes: `Sale from bill`,
-              created_by: user.id
-            });
-
-          if (movementError) {
-            console.error('Error creating stock movement:', movementError);
-            throw movementError;
-          }
-        }
-      }
-
-      // Create transaction record if there's a paid amount
-      if (paidAmount > 0) {
-        const { error: transactionError } = await supabase
-          .from('transactions')
-          .insert({
-            source_id: sourceId,
-            user_id: user.id,
-            description: `POS Sale Payment`,
-            amount: paidAmount,
-            type: 'income',
-            date: date.toISOString(),
-            payer_id: selectedPayerId || null,
-            status: 'completed',
-            created_by_name: user.email
-          });
-
-        if (transactionError) {
-          console.error('Error creating transaction:', transactionError);
-          throw transactionError;
-        }
-      }
-
-      toast({
-        title: "Success",
-        description: "Bill created successfully",
-      });
-
-      setSelectedProducts([]);
-      setPaidAmount(0);
-      queryClient.invalidateQueries({ queryKey: ['bills'] });
-      queryClient.invalidateQueries({ queryKey: ['products'] });
-      queryClient.invalidateQueries({ queryKey: ['transactions'] });
-
-    } catch (error) {
-      console.error('Error during checkout:', error);
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to complete checkout",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleCancelBill = () => {
-    setSelectedProducts([]);
-    setPaidAmount(0);
-  };
+  const {
+    handleCheckout,
+    handleCancelBill,
+  } = useCartManager(sourceId, items, setSelectedProducts);
 
   return (
     <div className="bg-white h-full flex flex-col border rounded-lg">
@@ -199,7 +82,7 @@ export const OrderCart = ({
             gstAmount={gstAmount}
             discount={discount}
             finalTotal={finalTotal}
-            onDiscountChange={handleDiscountChange}
+            onDiscountChange={setDiscount}
             onCheckout={handleCheckout}
             onCancelBill={handleCancelBill}
             selectedPayerId={selectedPayerId}
