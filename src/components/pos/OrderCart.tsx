@@ -43,11 +43,11 @@ export const OrderCart = ({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      // Create bill data object, explicitly setting null for empty values
+      // Create bill data object with correct status value
       const billData = {
-        source_id: sourceId || null,
-        user_id: user.id || null,
-        status: 'pending',
+        source_id: sourceId,
+        user_id: user.id,
+        status: 'active', // Changed from 'pending' to 'active'
         items: serializeBillItems(items),
         subtotal,
         discount,
@@ -55,12 +55,10 @@ export const OrderCart = ({
         total: finalTotal,
         date: date.toISOString(),
         payer_id: selectedPayerId || null,
-        type_id: null // Explicitly set to null if not used
+        type_id: null
       };
 
-      // Validate required UUIDs
-      if (!billData.source_id) throw new Error("Source ID is required");
-      if (!billData.user_id) throw new Error("User ID is required");
+      console.log('Creating bill with data:', billData);
 
       const { error: billError } = await supabase
         .from('bills')
