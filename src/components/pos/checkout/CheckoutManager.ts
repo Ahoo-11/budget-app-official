@@ -32,6 +32,23 @@ export const useCheckoutManager = () => {
         throw new Error("User not authenticated");
       }
 
+      // First, get the bill to check its current status and source_id
+      const { data: bill, error: billError } = await supabase
+        .from('bills')
+        .select('status, source_id')
+        .eq('id', billId)
+        .single();
+
+      if (billError || !bill) {
+        console.error('❌ Error fetching bill:', billError);
+        throw billError || new Error('Bill not found');
+      }
+
+      if (bill.status === 'completed') {
+        console.log('⚠️ Bill is already completed');
+        return true;
+      }
+
       // Calculate totals
       const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
       const gstRate = 0.08; // 8% GST
@@ -53,11 +70,11 @@ export const useCheckoutManager = () => {
         description: item.description
       }));
 
-      // First, create transaction record
-      const { error: transactionError } = await supabase
+      // Start a transaction block
+      const { data: transaction, error: transactionError } = await supabase
         .from('transactions')
         .insert({
-          source_id: items[0].source_id,
+          source_id: bill.source_id,
           type: 'income',
           amount: total,
           description: `POS Sale - Bill #${billId}`,
@@ -66,16 +83,19 @@ export const useCheckoutManager = () => {
           payer_id: payerId,
           created_by_name: user.email,
           status: 'completed'
-        });
+        })
+        .select()
+        .single();
 
       if (transactionError) {
         console.error('❌ Error creating transaction:', transactionError);
         throw transactionError;
       }
 
-      // Then update bill status to completed
-      console.log('📝 Updating bill status to completed...');
-      const { error: billError } = await supabase
+      console.log('✅ Transaction created:', transaction);
+
+      // Update bill status to completed
+      const { error: updateError } = await supabase
         .from('bills')
         .update({
           status: 'completed',
@@ -86,12 +106,32 @@ export const useCheckoutManager = () => {
           payer_id: payerId,
           updated_at: new Date().toISOString(),
         })
-        .eq('id', billId);
+        .eq('id', billId)
+        .eq('status', 'active'); // Only update if status is still active
 
-      if (billError) {
-        console.error('❌ Error updating bill:', billError);
-        throw billError;
+      if (updateError) {
+        console.error('❌ Error updating bill:', updateError);
+        throw updateError;
       }
+
+      // Verify bill status after update
+      const { data: verifyBill, error: verifyError } = await supabase
+        .from('bills')
+        .select('status')
+        .eq('id', billId)
+        .single();
+        
+      if (verifyError || !verifyBill) {
+        console.error('⚠️ Error verifying bill status:', verifyError);
+        throw verifyError || new Error('Could not verify bill status');
+      }
+
+      if (verifyBill.status !== 'completed') {
+        console.error('❌ Bill status not updated correctly:', verifyBill);
+        throw new Error('Bill status not updated to completed');
+      }
+
+      console.log('✅ Bill status verified as completed');
 
       // Update product stock levels and create stock movements for products only
       for (const item of items) {
@@ -125,30 +165,14 @@ export const useCheckoutManager = () => {
         }
       }
 
-      // Verify bill status after update
-      const { data: verifyBill, error: verifyError } = await supabase
-        .from('bills')
-        .select('status')
-        .eq('id', billId)
-        .single();
-        
-      if (verifyError) {
-        console.error('⚠️ Error verifying bill status:', verifyError);
-        throw verifyError;
-      }
-
-      if (verifyBill?.status !== 'completed') {
-        console.error('❌ Bill status not updated correctly:', verifyBill);
-        throw new Error('Bill status not updated to completed');
-      }
-
-      // Refresh queries
-      console.log('🔄 Invalidating and refetching queries...');
+      // Force refresh queries
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['bills'] }),
         queryClient.invalidateQueries({ queryKey: ['products'] }),
         queryClient.invalidateQueries({ queryKey: ['transactions'] })
       ]);
+
+      console.log('🔄 Queries invalidated and refetched');
 
       toast({
         title: "Success",
