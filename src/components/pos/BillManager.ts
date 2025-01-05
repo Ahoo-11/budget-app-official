@@ -61,7 +61,7 @@ export const fetchActiveBills = async (sourceId: string): Promise<Bill[]> => {
     .from('bills')
     .select('*')
     .eq('source_id', sourceId)
-    .eq('status', 'active')  // Only fetch active bills
+    .in('status', ['pending', 'partially_paid'])  // Changed to fetch bills with payment status pending or partially paid
     .order('created_at', { ascending: false });
 
   if (error) {
