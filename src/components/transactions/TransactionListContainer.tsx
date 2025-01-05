@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Bill } from "@/types/bill";
+import { deserializeBillItems } from "@/components/pos/BillManager";
 
 const TransactionListContainer = () => {
   const [selectedSource, setSelectedSource] = useState("");
@@ -35,7 +36,11 @@ const TransactionListContainer = () => {
       }
       
       console.log('Fetched bills:', data);
-      return data as Bill[];
+      return (data || []).map(bill => ({
+        ...bill,
+        items: deserializeBillItems(bill.items),
+        status: bill.status as Bill['status']
+      })) as Bill[];
     },
   });
 
