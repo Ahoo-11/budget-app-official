@@ -8,6 +8,7 @@ import { CartItems } from "./cart/CartItems";
 import { CartFooter } from "./cart/CartFooter";
 import { useQueryClient } from "@tanstack/react-query";
 import { serializeBillItems } from "./BillManager";
+import { getBillStatus } from "@/utils/creditUtils";
 
 interface OrderCartProps {
   items: BillProduct[];
@@ -24,6 +25,7 @@ export const OrderCart = ({
   sourceId,
   setSelectedProducts,
 }: OrderCartProps) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const {
@@ -39,14 +41,22 @@ export const OrderCart = ({
   } = useBillUpdates(undefined, items);
 
   const handleCheckout = async () => {
+    setIsSubmitting(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
+      // Determine bill status based on payer and credit terms
+      const status = selectedPayerId 
+        ? await getBillStatus(date, sourceId, selectedPayerId)
+        : 'completed';
+
+      console.log('Creating bill with status:', status);
+
       const billData = {
         source_id: sourceId,
         user_id: user.id,
-        status: 'active',
+        status,
         items: serializeBillItems(items),
         subtotal,
         discount,
@@ -57,8 +67,6 @@ export const OrderCart = ({
         type_id: null
       };
 
-      console.log('Creating bill with data:', billData);
-
       const { error: billError } = await supabase
         .from('bills')
         .insert(billData);
@@ -68,21 +76,81 @@ export const OrderCart = ({
         throw billError;
       }
 
+      // Update stock levels for products
+      for (const item of items) {
+        if (item.type === 'product') {
+          const { error: stockError } = await supabase
+            .from('products')
+            .update({ 
+              current_stock: item.current_stock - item.quantity 
+            })
+            .eq('id', item.id);
+
+          if (stockError) {
+            console.error('Error updating stock:', stockError);
+            throw stockError;
+          }
+
+          // Create stock movement record
+          const { error: movementError } = await supabase
+            .from('stock_movements')
+            .insert({
+              product_id: item.id,
+              movement_type: 'sale',
+              quantity: -item.quantity,
+              unit_cost: item.price,
+              notes: `Sale from bill`,
+              created_by: user.id
+            });
+
+          if (movementError) {
+            console.error('Error creating stock movement:', movementError);
+            throw movementError;
+          }
+        }
+      }
+
+      // Create transaction record
+      const { error: transactionError } = await supabase
+        .from('transactions')
+        .insert({
+          source_id: sourceId,
+          user_id: user.id,
+          description: `POS Sale`,
+          amount: finalTotal,
+          type: 'income',
+          date: date,
+          payer_id: selectedPayerId,
+          status: status === 'completed' ? 'completed' : 'pending',
+          created_by_name: user.email
+        });
+
+      if (transactionError) {
+        console.error('Error creating transaction:', transactionError);
+        throw transactionError;
+      }
+
       toast({
         title: "Success",
-        description: "Bill created successfully",
+        description: status === 'completed' 
+          ? "Payment completed successfully"
+          : "Bill charged to account successfully",
       });
 
       setSelectedProducts([]);
       queryClient.invalidateQueries({ queryKey: ['bills'] });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
 
     } catch (error) {
-      console.error('Error creating bill:', error);
+      console.error('Error during checkout:', error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to create bill",
+        description: error instanceof Error ? error.message : "Failed to complete checkout",
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -119,6 +187,7 @@ export const OrderCart = ({
           onCheckout={handleCheckout}
           onCancelBill={handleCancelBill}
           selectedPayerId={selectedPayerId}
+          isSubmitting={isSubmitting}
         />
       )}
     </div>
