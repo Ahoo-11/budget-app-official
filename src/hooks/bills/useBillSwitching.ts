@@ -61,9 +61,23 @@ export const useBillSwitching = (
     }
 
     try {
-      // Clear selected products first
-      setSelectedProducts([]);
-      console.log('🧹 Cleared selected products');
+      // If there's an active bill with items, save it first
+      if (activeBillId) {
+        const { data: currentBill } = await supabase
+          .from('bills')
+          .select('items')
+          .eq('id', activeBillId)
+          .single();
+
+        if (currentBill && currentBill.items && currentBill.items.length > 0) {
+          console.log('📝 Saving current active bill:', activeBillId);
+          // Keep it as active, don't complete it
+          await supabase
+            .from('bills')
+            .update({ status: 'active' })
+            .eq('id', activeBillId);
+        }
+      }
 
       // Create new bill
       const { data: newBill, error } = await supabase
@@ -71,7 +85,7 @@ export const useBillSwitching = (
         .insert([
           {
             source_id: sourceId,
-            status: 'active',
+            status: 'active', // Always create as active
             items: [],
             user_id: session.user.id,
             subtotal: 0,
@@ -87,6 +101,9 @@ export const useBillSwitching = (
       if (error) throw error;
 
       console.log('✨ Created new bill:', newBill);
+      
+      // Clear the interface
+      setSelectedProducts([]);
       
       // Set the new bill as active
       setActiveBillId(newBill.id);
@@ -110,7 +127,7 @@ export const useBillSwitching = (
       });
       return null;
     }
-  }, [session?.user?.id, sourceId, toast, setSelectedProducts, queryClient]);
+  }, [session?.user?.id, sourceId, toast, setSelectedProducts, queryClient, activeBillId]);
 
   const handleSwitchBill = useCallback(async (billId: string) => {
     console.log('🔄 Switching to bill:', billId);
