@@ -53,7 +53,27 @@ export const useCheckoutManager = () => {
         description: item.description
       }));
 
-      // First, update bill status to completed
+      // First, create transaction record
+      const { error: transactionError } = await supabase
+        .from('transactions')
+        .insert({
+          source_id: items[0].source_id,
+          type: 'income',
+          amount: total,
+          description: `POS Sale - Bill #${billId}`,
+          date: new Date().toISOString(),
+          user_id: user.id,
+          payer_id: payerId,
+          created_by_name: user.email,
+          status: 'completed'
+        });
+
+      if (transactionError) {
+        console.error('❌ Error creating transaction:', transactionError);
+        throw transactionError;
+      }
+
+      // Then update bill status to completed
       console.log('📝 Updating bill status to completed...');
       const { error: billError } = await supabase
         .from('bills')
@@ -72,23 +92,6 @@ export const useCheckoutManager = () => {
         console.error('❌ Error updating bill:', billError);
         throw billError;
       }
-
-      // Create transaction record
-      const { error: transactionError } = await supabase
-        .from('transactions')
-        .insert({
-          source_id: items[0].source_id, // Use the source_id from the first item
-          type: 'income',
-          amount: total,
-          description: `POS Sale - Bill #${billId}`,
-          date: new Date().toISOString(),
-          user_id: user.id,
-          payer_id: payerId,
-          created_by_name: user.email,
-          status: 'pending' // Initial transaction status is pending
-        });
-
-      if (transactionError) throw transactionError;
 
       // Update product stock levels and create stock movements for products only
       for (const item of items) {
@@ -129,8 +132,6 @@ export const useCheckoutManager = () => {
         .eq('id', billId)
         .single();
         
-      console.log('🔍 Final bill status verification:', verifyBill);
-
       if (verifyError) {
         console.error('⚠️ Error verifying bill status:', verifyError);
         throw verifyError;
@@ -144,14 +145,7 @@ export const useCheckoutManager = () => {
       // Refresh queries
       console.log('🔄 Invalidating and refetching queries...');
       await Promise.all([
-        queryClient.invalidateQueries({ 
-          queryKey: ['bills'],
-          refetchType: 'all'
-        }),
-        queryClient.refetchQueries({ 
-          queryKey: ['bills'],
-          type: 'all'
-        }),
+        queryClient.invalidateQueries({ queryKey: ['bills'] }),
         queryClient.invalidateQueries({ queryKey: ['products'] }),
         queryClient.invalidateQueries({ queryKey: ['transactions'] })
       ]);
