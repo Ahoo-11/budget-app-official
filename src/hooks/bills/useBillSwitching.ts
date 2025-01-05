@@ -49,6 +49,8 @@ export const useBillSwitching = (
   }, [sourceId, setSelectedProducts]);
 
   const handleNewBill = useCallback(async () => {
+    console.log('🆕 Creating new bill...');
+    
     if (!session?.user?.id) {
       toast({
         title: "Error",
@@ -59,9 +61,11 @@ export const useBillSwitching = (
     }
 
     try {
-      // Clear selected products before creating new bill
+      // Clear selected products first
       setSelectedProducts([]);
+      console.log('🧹 Cleared selected products');
 
+      // Create new bill
       const { data: newBill, error } = await supabase
         .from('bills')
         .insert([
@@ -89,6 +93,7 @@ export const useBillSwitching = (
 
       // Force an immediate refetch of bills
       await queryClient.invalidateQueries({ queryKey: ['bills', sourceId] });
+      console.log('🔄 Invalidated bills query');
 
       toast({
         title: "Success",
@@ -97,7 +102,7 @@ export const useBillSwitching = (
 
       return newBill.id;
     } catch (error) {
-      console.error('Error creating new bill:', error);
+      console.error('❌ Error creating new bill:', error);
       toast({
         title: "Error",
         description: "Failed to create new bill. Please try again.",
@@ -105,9 +110,11 @@ export const useBillSwitching = (
       });
       return null;
     }
-  }, [session?.user?.id, sourceId, toast, setActiveBillId, queryClient, setSelectedProducts]);
+  }, [session?.user?.id, sourceId, toast, setSelectedProducts, queryClient]);
 
   const handleSwitchBill = useCallback(async (billId: string) => {
+    console.log('🔄 Switching to bill:', billId);
+    
     try {
       const { data: bill, error } = await supabase
         .from('bills')
@@ -117,13 +124,19 @@ export const useBillSwitching = (
 
       if (error) throw error;
 
+      console.log('📋 Retrieved bill data:', bill);
+
       // Set the selected bill as active
       setActiveBillId(billId);
 
       // Set the products from the bill
       if (bill.items) {
         const billItems = deserializeBillItems(bill.items);
+        console.log('📦 Setting bill items:', billItems);
         setSelectedProducts(billItems);
+      } else {
+        console.log('⚠️ No items in bill, clearing selection');
+        setSelectedProducts([]);
       }
 
       toast({
@@ -133,7 +146,7 @@ export const useBillSwitching = (
 
       return true;
     } catch (error) {
-      console.error('Error switching bill:', error);
+      console.error('❌ Error switching bill:', error);
       toast({
         title: "Error",
         description: "Failed to switch bill. Please try again.",
