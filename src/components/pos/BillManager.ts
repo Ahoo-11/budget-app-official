@@ -55,17 +55,16 @@ export const deserializeBillItems = (items: Json): BillProduct[] => {
 };
 
 export const fetchActiveBills = async (sourceId: string): Promise<Bill[]> => {
-  console.log('🔍 Fetching active bills for source:', sourceId);
+  console.log('🔍 Fetching bills for source:', sourceId);
   
   const { data, error } = await supabase
     .from('bills')
     .select('*')
     .eq('source_id', sourceId)
-    .eq('status', 'active')  // Changed back to fetch bills with status 'active'
     .order('created_at', { ascending: false });
 
   if (error) {
-    console.error('❌ Error fetching active bills:', error);
+    console.error('❌ Error fetching bills:', error);
     throw error;
   }
 
