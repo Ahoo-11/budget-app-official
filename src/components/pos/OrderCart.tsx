@@ -1,4 +1,4 @@
-import { BillProduct } from "@/types/bill";
+import { BillProduct } from "@/types/bills";
 import { CartHeader } from "./cart/CartHeader";
 import { CartItems } from "./cart/CartItems";
 import { CartFooter } from "./cart/CartFooter";
@@ -9,7 +9,7 @@ import { useCartCalculations } from "@/hooks/cart/useCartCalculations";
 import { useCartPayment } from "@/hooks/cart/useCartPayment";
 
 interface OrderCartProps {
-  items: BillProduct[];
+  selectedProducts: BillProduct[];
   onUpdateQuantity: (productId: string, quantity: number) => void;
   onRemove: (productId: string) => void;
   sourceId: string;
@@ -17,7 +17,7 @@ interface OrderCartProps {
 }
 
 export const OrderCart = ({
-  items = [],
+  selectedProducts,
   onUpdateQuantity,
   onRemove,
   sourceId,
@@ -35,19 +35,19 @@ export const OrderCart = ({
     subtotal,
     gstAmount,
     finalTotal
-  } = useCartCalculations(items);
+  } = useCartCalculations(selectedProducts);
 
   const {
     date,
     selectedPayerId,
     handlePayerSelect,
     handleDateChange,
-  } = useBillUpdates(undefined, items);
+  } = useBillUpdates();
 
   const {
     handleCheckout,
     handleCancelBill,
-  } = useCartManager(sourceId, items, setSelectedProducts);
+  } = useCartManager(sourceId, selectedProducts, setSelectedProducts);
 
   return (
     <div className="bg-white h-full flex flex-col border rounded-lg">
@@ -63,12 +63,12 @@ export const OrderCart = ({
       </div>
 
       <CartItems
-        items={items}
+        selectedProducts={selectedProducts}
         onUpdateQuantity={onUpdateQuantity}
         onRemove={onRemove}
       />
 
-      {items.length > 0 && (
+      {selectedProducts.length > 0 && (
         <>
           <div className="border-t p-4">
             <PaymentInput

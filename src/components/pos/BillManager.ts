@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { BillProduct } from "@/types/bills";
+import { BillProduct, serializeBillItems } from "@/types/bills";
 import { toast } from "sonner";
 
 export const useBillManager = (sourceId: string) => {
@@ -14,9 +14,10 @@ export const useBillManager = (sourceId: string) => {
         .from("bills")
         .insert({
           source_id: sourceId,
-          items,
+          items: serializeBillItems(items),
           status: "pending",
           total: items.reduce((sum, item) => sum + item.price * item.quantity, 0),
+          user_id: (await supabase.auth.getUser()).data.user?.id
         })
         .select()
         .single();

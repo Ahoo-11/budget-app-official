@@ -1,47 +1,48 @@
-import { BillProduct } from '@/types/bills';
-import { useCart } from '@/hooks/cart/useCart';
-import { Button } from '@/components/ui/button';
-import { Trash } from 'lucide-react';
+import { BillProduct } from "@/types/bills";
 
-export const CartItems = () => {
-  const { cartItems, removeFromCart, updateCartItemQuantity } = useCart();
+interface CartItemsProps {
+  selectedProducts: BillProduct[];
+  onUpdateQuantity: (productId: string, quantity: number) => void;
+  onRemove: (productId: string) => void;
+}
 
-  if (cartItems.length === 0) {
-    return <div className="text-center py-6 text-muted-foreground">No items in the cart</div>;
+export const CartItems = ({
+  selectedProducts,
+  onUpdateQuantity,
+  onRemove,
+}: CartItemsProps) => {
+  if (!selectedProducts.length) {
+    return (
+      <div className="flex-1 p-4 text-center text-muted-foreground">
+        No items in cart
+      </div>
+    );
   }
 
   return (
-    <div className="space-y-4">
-      {cartItems.map((item: BillProduct) => (
-        <div key={item.id} className="flex items-center justify-between p-4 border rounded-lg">
+    <div className="flex-1 overflow-auto p-4 space-y-4">
+      {selectedProducts.map((product) => (
+        <div key={product.id} className="flex justify-between items-center p-2 border rounded-lg">
           <div>
-            <h4 className="font-medium">{item.name}</h4>
-            <p className="text-sm text-muted-foreground">MVR {item.price.toFixed(2)}</p>
+            <h4 className="font-medium">{product.name}</h4>
+            <p className="text-sm text-muted-foreground">
+              MVR {product.price.toFixed(2)} × {product.quantity}
+            </p>
           </div>
           <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => updateCartItemQuantity(item.id, item.quantity - 1)}
-              disabled={item.quantity <= 1}
+            <input
+              type="number"
+              min="1"
+              value={product.quantity}
+              onChange={(e) => onUpdateQuantity(product.id, parseInt(e.target.value) || 1)}
+              className="w-16 px-2 py-1 border rounded"
+            />
+            <button
+              onClick={() => onRemove(product.id)}
+              className="p-1 text-red-500 hover:text-red-600"
             >
-              -
-            </Button>
-            <span>{item.quantity}</span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => updateCartItemQuantity(item.id, item.quantity + 1)}
-            >
-              +
-            </Button>
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={() => removeFromCart(item.id)}
-            >
-              <Trash className="h-4 w-4" />
-            </Button>
+              Remove
+            </button>
           </div>
         </div>
       ))}
