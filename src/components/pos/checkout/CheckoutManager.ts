@@ -53,10 +53,9 @@ export const useCheckoutManager = () => {
         description: item.description
       }));
 
+      // First, update bill status to completed
       console.log('📝 Updating bill status to completed...');
-
-      // Update bill status and totals
-      const { error: billError, data: updatedBill } = await supabase
+      const { error: billError } = await supabase
         .from('bills')
         .update({
           status: 'completed',
@@ -67,28 +66,26 @@ export const useCheckoutManager = () => {
           payer_id: payerId,
           updated_at: new Date().toISOString(),
         })
-        .eq('id', billId)
-        .select()
-        .single();
+        .eq('id', billId);
 
       if (billError) {
         console.error('❌ Error updating bill:', billError);
         throw billError;
       }
 
-      console.log('✅ Bill updated successfully:', updatedBill);
-
+      // Create transaction record
       const { error: transactionError } = await supabase
         .from('transactions')
         .insert({
-          source_id: updatedBill.source_id,
+          source_id: items[0].source_id, // Use the source_id from the first item
           type: 'income',
           amount: total,
           description: `POS Sale - Bill #${billId}`,
           date: new Date().toISOString(),
           user_id: user.id,
           payer_id: payerId,
-          created_by_name: user.email
+          created_by_name: user.email,
+          status: 'pending' // Initial transaction status is pending
         });
 
       if (transactionError) throw transactionError;
@@ -148,30 +145,16 @@ export const useCheckoutManager = () => {
       console.log('🔄 Invalidating and refetching queries...');
       await Promise.all([
         queryClient.invalidateQueries({ 
-          queryKey: ['bills', updatedBill.source_id],
+          queryKey: ['bills'],
           refetchType: 'all'
         }),
         queryClient.refetchQueries({ 
-          queryKey: ['bills', updatedBill.source_id],
+          queryKey: ['bills'],
           type: 'all'
         }),
         queryClient.invalidateQueries({ queryKey: ['products'] }),
         queryClient.invalidateQueries({ queryKey: ['transactions'] })
       ]);
-
-      // Double check that the bill is no longer active
-      const { data: checkBill, error: checkError } = await supabase
-        .from('bills')
-        .select('status')
-        .eq('id', billId)
-        .single();
-
-      if (checkError) {
-        console.error('⚠️ Error checking bill status:', checkError);
-      } else if (checkBill.status !== 'completed') {
-        console.error('❌ Bill status not updated correctly:', checkBill);
-        throw new Error('Bill status not updated to completed');
-      }
 
       toast({
         title: "Success",
