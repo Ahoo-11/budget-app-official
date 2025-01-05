@@ -47,7 +47,11 @@ export const OrderCart = ({
   const {
     handleCheckout,
     handleCancelBill,
-  } = useCartManager(sourceId, selectedProducts, setSelectedProducts);
+  } = useCartManager({
+    sourceId,
+    selectedProducts,
+    setSelectedProducts
+  });
 
   return (
     <div className="bg-white h-full flex flex-col border rounded-lg">

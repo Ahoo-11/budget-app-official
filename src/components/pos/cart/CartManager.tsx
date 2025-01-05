@@ -1,128 +1,64 @@
-import { Bill, BillProduct } from '@/types/bills';
-import { useCallback, useState } from 'react';
-import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { BillProduct, serializeBillItems } from "@/types/bills";
+import { useToast } from "@/hooks/use-toast";
 
-export interface CartItem extends BillProduct {
-  quantity: number;
+interface CartManagerProps {
+  sourceId: string;
+  selectedProducts: BillProduct[];
+  setSelectedProducts: (products: BillProduct[]) => void;
 }
 
-export function useCartManager(sourceId: string | null) {
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+export const useCartManager = ({
+  sourceId,
+  selectedProducts,
+  setSelectedProducts
+}: CartManagerProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
-  const addToCart = useCallback((product: Omit<BillProduct, 'quantity'>) => {
-    setCartItems(currentItems => {
-      const existingItem = currentItems.find(item => item.id === product.id);
-      
-      if (existingItem) {
-        return currentItems.map(item =>
-          item.id === product.id
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
-        );
-      }
-      
-      return [...currentItems, { ...product, quantity: 1 }];
-    });
-  }, []);
+  const handleCheckout = async () => {
+    if (!sourceId || selectedProducts.length === 0) return;
 
-  const removeFromCart = useCallback((productId: string) => {
-    setCartItems(currentItems =>
-      currentItems.filter(item => item.id !== productId)
-    );
-  }, []);
-
-  const updateQuantity = useCallback((productId: string, quantity: number) => {
-    if (quantity < 1) return;
-    
-    setCartItems(currentItems =>
-      currentItems.map(item =>
-        item.id === productId ? { ...item, quantity } : item
-      )
-    );
-  }, []);
-
-  const clearCart = useCallback(() => {
-    setCartItems([]);
-  }, []);
-
-  const calculateTotal = useCallback(() => {
-    return cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
-  }, [cartItems]);
-
-  const createBill = useCallback(async () => {
-    if (!sourceId) {
-      toast({
-        title: "Error",
-        description: "Source ID is required",
-        variant: "destructive",
-      });
-      return null;
-    }
-
-    if (cartItems.length === 0) {
-      toast({
-        title: "Error",
-        description: "Cart is empty",
-        variant: "destructive",
-      });
-      return null;
-    }
-
+    setIsSubmitting(true);
     try {
-      setIsSubmitting(true);
-
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("User not authenticated");
-
-      const total = calculateTotal();
-      const billData = {
-        source_id: sourceId,
-        user_id: user.id,
-        items: cartItems,
-        total,
-        status: 'active' as const,
-        date: new Date().toISOString(),
-      };
-
-      const { data: bill, error } = await supabase
+      const { data, error } = await supabase
         .from('bills')
-        .insert([billData])
-        .select()
-        .single();
+        .insert({
+          source_id: sourceId,
+          user_id: (await supabase.auth.getUser()).data.user?.id,
+          items: serializeBillItems(selectedProducts),
+          total: selectedProducts.reduce((sum, item) => sum + (item.price * item.quantity), 0),
+          status: 'active',
+          date: new Date().toISOString()
+        });
 
       if (error) throw error;
 
+      setSelectedProducts([]);
       toast({
         title: "Success",
         description: "Bill created successfully",
       });
-
-      clearCart();
-      return bill as Bill;
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error creating bill:', error);
       toast({
         title: "Error",
-        description: error.message,
+        description: "Failed to create bill",
         variant: "destructive",
       });
-      return null;
     } finally {
       setIsSubmitting(false);
     }
-  }, [sourceId, cartItems, toast, calculateTotal, clearCart]);
+  };
+
+  const handleCancelBill = () => {
+    setSelectedProducts([]);
+  };
 
   return {
-    cartItems,
-    addToCart,
-    removeFromCart,
-    updateQuantity,
-    clearCart,
-    calculateTotal,
-    createBill,
-    isSubmitting,
+    handleCheckout,
+    handleCancelBill,
+    isSubmitting
   };
-}
+};

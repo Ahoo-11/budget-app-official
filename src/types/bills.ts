@@ -41,17 +41,17 @@ export interface Bill extends Omit<BillRow, 'items'> {
 }
 
 // Helper functions for serialization
-export const serializeBillItems = (items: BillProduct[]): Json => {
+export const serializeBillItems = (items: BillProduct[]): any => {
   return items.map(item => ({
     ...item,
     price: Number(item.price),
     quantity: Number(item.quantity),
     current_stock: Number(item.current_stock),
     purchase_cost: item.purchase_cost ? Number(item.purchase_cost) : null
-  })) as Json;
+  }));
 };
 
-export const deserializeBillItems = (items: Json | null): BillProduct[] => {
+export const deserializeBillItems = (items: any | null): BillProduct[] => {
   if (!items || !Array.isArray(items)) return [];
   
   return items.map(item => ({
