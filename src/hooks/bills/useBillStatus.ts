@@ -2,7 +2,7 @@ import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-export const useBillStatus = () => {
+export function useBillStatus() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
@@ -32,7 +32,6 @@ export const useBillStatus = () => {
 
   return {
     isSubmitting,
-    setIsSubmitting,
     handleUpdateBillStatus
   };
-};
+}

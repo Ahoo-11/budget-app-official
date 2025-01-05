@@ -8,7 +8,7 @@ import { useEffect, useCallback } from "react";
 import { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 import { useToast } from "@/hooks/use-toast";
 
-export const useBillManagement = (sourceId: string) => {
+export function useBillManagement(sourceId: string) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { selectedProducts, setSelectedProducts, handleProductSelect } = useBillProducts();
@@ -136,4 +136,4 @@ export const useBillManagement = (sourceId: string) => {
     handleUpdateBillStatus,
     refetchBills: fetchBills
   };
-};
+}
