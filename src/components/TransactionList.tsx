@@ -30,10 +30,10 @@ export const TransactionList = ({ transactions, onDelete, onEdit }: TransactionL
     }
   };
 
-  // Sort transactions by date in descending order
-  const sortedTransactions = [...transactions].sort((a, b) => 
-    new Date(b.date).getTime() - new Date(a.date).getTime()
-  );
+  // Sort transactions by date in descending order and filter out child transactions
+  const sortedTransactions = [...transactions]
+    .filter(t => !t.parent_transaction_id) // Only show parent transactions
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   if (!sortedTransactions.length) {
     return (

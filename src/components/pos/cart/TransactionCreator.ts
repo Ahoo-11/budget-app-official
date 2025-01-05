@@ -10,7 +10,7 @@ export const createBillTransaction = async (
   date: Date,
   items: BillProduct[]
 ) => {
-  // Create the main transaction for the full bill amount
+  // Create the main bill transaction
   const { data, error } = await supabase
     .from('transactions')
     .insert({
@@ -18,7 +18,7 @@ export const createBillTransaction = async (
       user_id: userId,
       type: 'income',
       amount: totalAmount,
-      description: `POS Sale - ${items.length} items`,
+      description: `POS Sale`,
       date: date.toISOString(),
       payer_id: payerId,
       status: paidAmount >= totalAmount ? 'completed' : 'pending',
@@ -30,12 +30,12 @@ export const createBillTransaction = async (
     .single();
 
   if (error) {
-    console.error('Error creating transaction:', error);
+    console.error('Error creating bill transaction:', error);
     throw error;
   }
 
-  // If there's a partial payment, create a payment transaction
-  if (paidAmount > 0 && paidAmount < totalAmount) {
+  // If there's any payment, create a payment transaction
+  if (paidAmount > 0) {
     const { error: paymentError } = await supabase
       .from('transactions')
       .insert({
