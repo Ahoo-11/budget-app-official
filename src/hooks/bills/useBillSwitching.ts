@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@supabase/auth-helpers-react";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { BillProduct } from "@/types/bill";
 import { deserializeBillItems } from "@/components/pos/BillManager";
 import { useQueryClient } from '@tanstack/react-query';
@@ -19,7 +19,6 @@ export const useBillSwitching = (
   useEffect(() => {
     const initializeActiveBill = async () => {
       try {
-        // Use maybeSingle() instead of single() to handle no results gracefully
         const { data, error } = await supabase
           .from('bills')
           .select('*')
@@ -45,10 +44,8 @@ export const useBillSwitching = (
       }
     };
 
-    if (!activeBillId) {
-      initializeActiveBill();
-    }
-  }, [sourceId, setSelectedProducts, activeBillId]);
+    initializeActiveBill();
+  }, [sourceId, setSelectedProducts]);
 
   const handleNewBill = useCallback(async () => {
     if (!session?.user?.id) {
@@ -72,6 +69,11 @@ export const useBillSwitching = (
             status: 'active',
             items: [],
             user_id: session.user.id,
+            subtotal: 0,
+            total: 0,
+            gst: 0,
+            discount: 0,
+            date: new Date().toISOString(),
           },
         ])
         .select()
@@ -83,14 +85,12 @@ export const useBillSwitching = (
       setActiveBillId(newBill.id);
 
       // Force an immediate refetch of bills
-      const { data: bills } = await supabase
-        .from('bills')
-        .select('*')
-        .eq('source_id', sourceId)
-        .eq('status', 'active')
-        .order('created_at', { ascending: false });
+      queryClient.invalidateQueries({ queryKey: ['bills', sourceId] });
 
-      queryClient.setQueryData(['bills', sourceId], bills);
+      toast({
+        title: "Success",
+        description: "New bill created successfully",
+      });
 
       return newBill.id;
     } catch (error) {
@@ -106,9 +106,6 @@ export const useBillSwitching = (
 
   const handleSwitchBill = useCallback(async (billId: string) => {
     try {
-      // Clear selected products before fetching new bill
-      setSelectedProducts([]);
-
       const { data: bill, error } = await supabase
         .from('bills')
         .select('*')
@@ -124,6 +121,11 @@ export const useBillSwitching = (
         const billItems = deserializeBillItems(bill.items);
         setSelectedProducts(billItems);
       }
+
+      toast({
+        title: "Success",
+        description: "Switched to selected bill",
+      });
 
       return true;
     } catch (error) {

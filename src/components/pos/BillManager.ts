@@ -55,6 +55,8 @@ export const deserializeBillItems = (items: Json): BillProduct[] => {
 };
 
 export const fetchActiveBills = async (sourceId: string): Promise<Bill[]> => {
+  console.log('🔍 Fetching active bills for source:', sourceId);
+  
   const { data, error } = await supabase
     .from('bills')
     .select('*')
@@ -62,8 +64,13 @@ export const fetchActiveBills = async (sourceId: string): Promise<Bill[]> => {
     .in('status', ['active', 'pending', 'partially_paid'])
     .order('created_at', { ascending: false });
 
-  if (error) throw error;
+  if (error) {
+    console.error('❌ Error fetching active bills:', error);
+    throw error;
+  }
 
+  console.log('📦 Fetched bills:', data);
+  
   return (data || []).map(bill => ({
     ...bill,
     items: deserializeBillItems(bill.items),
@@ -120,7 +127,6 @@ export const createNewBill = async (sourceId: string, userId: string) => {
     const defaultPayerId = await getDefaultPayer();
     console.log('Default Payer ID:', defaultPayerId);
 
-    // Create the base bill data
     const billData = {
       source_id: sourceId,
       user_id: userId,
@@ -131,7 +137,7 @@ export const createNewBill = async (sourceId: string, userId: string) => {
       gst: 0,
       discount: 0,
       date: new Date().toISOString(),
-      payer_id: defaultPayerId // This will be null if no default payer exists
+      payer_id: defaultPayerId
     };
 
     console.log('📋 Bill data to insert:', billData);

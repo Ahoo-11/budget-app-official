@@ -6,9 +6,11 @@ import { useBillStatus } from "./bills/useBillStatus";
 import { useBillSwitching } from "./bills/useBillSwitching";
 import { useEffect, useCallback } from "react";
 import { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
+import { useToast } from "@/hooks/use-toast";
 
 export const useBillManagement = (sourceId: string) => {
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const { selectedProducts, setSelectedProducts, handleProductSelect } = useBillProducts();
   const { isSubmitting, handleUpdateBillStatus } = useBillStatus();
   const { activeBillId, handleNewBill, handleSwitchBill } = useBillSwitching(
@@ -22,48 +24,58 @@ export const useBillManagement = (sourceId: string) => {
 
   const fetchBills = useCallback(async () => {
     console.log('🔍 Fetching bills for source:', sourceId);
-    const { data, error } = await supabase
-      .from('bills')
-      .select('*')
-      .eq('source_id', sourceId)
-      .eq('status', 'active')  // Only fetch active bills
-      .order('created_at', { ascending: false });
-    
-    if (error) {
-      console.error('❌ Error fetching bills:', error);
-      throw error;
+    try {
+      const { data, error } = await supabase
+        .from('bills')
+        .select('*')
+        .eq('source_id', sourceId)
+        .in('status', ['active', 'pending', 'partially_paid'])
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        console.error('❌ Error fetching bills:', error);
+        toast({
+          title: "Error fetching bills",
+          description: error.message,
+          variant: "destructive",
+        });
+        throw error;
+      }
+      
+      console.log('📦 Fetched bills data:', data);
+      
+      return (data || []).map(bill => ({
+        ...bill,
+        items: Array.isArray(bill.items) 
+          ? (bill.items as unknown[] as BillItemJson[]).map(item => ({
+              id: item.id,
+              name: item.name,
+              price: Number(item.price) || 0,
+              quantity: Number(item.quantity) || 0,
+              type: item.type,
+              source_id: item.source_id,
+              category: item.category,
+              image_url: item.image_url,
+              description: item.description,
+              income_type_id: item.income_type_id,
+              current_stock: 0,
+              purchase_cost: null
+            }))
+          : [],
+        status: bill.status
+      })) as Bill[];
+    } catch (error) {
+      console.error('❌ Error in fetchBills:', error);
+      return [];
     }
-    
-    console.log('📦 Fetched bills data:', data);
-    
-    return (data || []).map(bill => ({
-      ...bill,
-      items: Array.isArray(bill.items) 
-        ? (bill.items as unknown[] as BillItemJson[]).map(item => ({
-            id: item.id,
-            name: item.name,
-            price: Number(item.price) || 0,
-            quantity: Number(item.quantity) || 0,
-            type: item.type,
-            source_id: item.source_id,
-            category: item.category,
-            image_url: item.image_url,
-            description: item.description,
-            income_type_id: item.income_type_id,
-            current_stock: 0, // Default value for current_stock
-            purchase_cost: null // Default value for purchase_cost
-          }))
-        : [],
-      status: bill.status as 'active' | 'completed'
-    })) as Bill[];
-  }, [sourceId]);
+  }, [sourceId, toast]);
 
   const { data: bills = [] } = useQuery({
     queryKey: ['bills', sourceId],
     queryFn: fetchBills,
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true,
     refetchOnMount: true,
-    staleTime: 0, // Always fetch fresh data
+    staleTime: 0,
   });
 
   // Handle real-time updates
@@ -71,14 +83,21 @@ export const useBillManagement = (sourceId: string) => {
     console.log('🔄 Real-time bill update:', payload);
     
     // Force refetch bills on any change
-    const updatedBills = await fetchBills();
-    queryClient.setQueryData(['bills', sourceId], updatedBills);
+    queryClient.invalidateQueries({ queryKey: ['bills', sourceId] });
     
     // If the active bill was deleted, clear selected products
     if (payload.eventType === 'DELETE' && payload.old?.id === activeBillId) {
       setSelectedProducts([]);
     }
-  }, [sourceId, queryClient, fetchBills, activeBillId, setSelectedProducts]);
+
+    // Show toast notification for bill updates
+    if (payload.eventType === 'INSERT') {
+      toast({
+        title: "New bill created",
+        description: "A new bill has been created successfully.",
+      });
+    }
+  }, [sourceId, queryClient, activeBillId, setSelectedProducts, toast]);
 
   // Set up real-time subscription for bill updates
   useEffect(() => {
