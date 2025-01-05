@@ -47,6 +47,7 @@ export type Database = {
           gst: number
           id: string
           items: Json
+          paid_amount: number
           payer_id: string | null
           source_id: string
           status: string
@@ -63,6 +64,7 @@ export type Database = {
           gst?: number
           id?: string
           items?: Json
+          paid_amount?: number
           payer_id?: string | null
           source_id: string
           status: string
@@ -79,6 +81,7 @@ export type Database = {
           gst?: number
           id?: string
           items?: Json
+          paid_amount?: number
           payer_id?: string | null
           source_id?: string
           status?: string

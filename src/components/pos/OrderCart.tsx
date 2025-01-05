@@ -6,6 +6,7 @@ import { useBillUpdates } from "@/hooks/bills/useBillUpdates";
 import { CartHeader } from "./cart/CartHeader";
 import { CartItems } from "./cart/CartItems";
 import { CartFooter } from "./cart/CartFooter";
+import { PaymentInput } from "./cart/PaymentInput";
 import { useQueryClient } from "@tanstack/react-query";
 import { serializeBillItems } from "./BillManager";
 import { getBillStatus } from "@/utils/creditUtils";
@@ -26,6 +27,7 @@ export const OrderCart = ({
   setSelectedProducts,
 }: OrderCartProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [paidAmount, setPaidAmount] = useState(0);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const {
@@ -55,17 +57,11 @@ export const OrderCart = ({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      // Determine bill status based on payer and credit terms
-      const status = selectedPayerId 
-        ? await getBillStatus(date, sourceId, selectedPayerId)
-        : 'completed';
-
-      console.log('Creating bill with status:', status);
-
+      // Create bill with paid amount
       const billData = {
         source_id: sourceId,
         user_id: user.id,
-        status,
+        status: 'pending', // Initial status, will be updated by trigger based on paid_amount
         items: serializeBillItems(items),
         subtotal,
         discount,
@@ -73,7 +69,8 @@ export const OrderCart = ({
         total: finalTotal,
         date: date.toISOString(),
         payer_id: selectedPayerId || null,
-        type_id: null
+        type_id: null,
+        paid_amount: paidAmount
       };
 
       const { error: billError } = await supabase
@@ -119,34 +116,35 @@ export const OrderCart = ({
         }
       }
 
-      // Create transaction record
-      const { error: transactionError } = await supabase
-        .from('transactions')
-        .insert({
-          source_id: sourceId,
-          user_id: user.id,
-          description: `POS Sale`,
-          amount: finalTotal,
-          type: 'income',
-          date: date.toISOString(),
-          payer_id: selectedPayerId || null,
-          status: status === 'completed' ? 'completed' : 'pending',
-          created_by_name: user.email
-        });
+      // Create transaction record if there's a paid amount
+      if (paidAmount > 0) {
+        const { error: transactionError } = await supabase
+          .from('transactions')
+          .insert({
+            source_id: sourceId,
+            user_id: user.id,
+            description: `POS Sale Payment`,
+            amount: paidAmount,
+            type: 'income',
+            date: date.toISOString(),
+            payer_id: selectedPayerId || null,
+            status: 'completed',
+            created_by_name: user.email
+          });
 
-      if (transactionError) {
-        console.error('Error creating transaction:', transactionError);
-        throw transactionError;
+        if (transactionError) {
+          console.error('Error creating transaction:', transactionError);
+          throw transactionError;
+        }
       }
 
       toast({
         title: "Success",
-        description: status === 'completed' 
-          ? "Payment completed successfully"
-          : "Bill charged to account successfully",
+        description: "Bill created successfully",
       });
 
       setSelectedProducts([]);
+      setPaidAmount(0);
       queryClient.invalidateQueries({ queryKey: ['bills'] });
       queryClient.invalidateQueries({ queryKey: ['products'] });
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
@@ -165,6 +163,7 @@ export const OrderCart = ({
 
   const handleCancelBill = () => {
     setSelectedProducts([]);
+    setPaidAmount(0);
   };
 
   return (
@@ -187,17 +186,26 @@ export const OrderCart = ({
       />
 
       {items.length > 0 && (
-        <CartFooter
-          subtotal={subtotal}
-          gstAmount={gstAmount}
-          discount={discount}
-          finalTotal={finalTotal}
-          onDiscountChange={handleDiscountChange}
-          onCheckout={handleCheckout}
-          onCancelBill={handleCancelBill}
-          selectedPayerId={selectedPayerId}
-          isSubmitting={isSubmitting}
-        />
+        <>
+          <div className="border-t p-4">
+            <PaymentInput
+              total={finalTotal}
+              paidAmount={paidAmount}
+              onPaidAmountChange={setPaidAmount}
+            />
+          </div>
+          <CartFooter
+            subtotal={subtotal}
+            gstAmount={gstAmount}
+            discount={discount}
+            finalTotal={finalTotal}
+            onDiscountChange={handleDiscountChange}
+            onCheckout={handleCheckout}
+            onCancelBill={handleCancelBill}
+            selectedPayerId={selectedPayerId}
+            isSubmitting={isSubmitting}
+          />
+        </>
       )}
     </div>
   );
