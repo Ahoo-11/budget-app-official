@@ -1,16 +1,25 @@
 import { Bill, BillProduct } from '@/types/bills';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useToast } from '@/hooks/use-toast';
 
 interface OrderInterfaceProps {
-  bill: Bill;
-  onUpdate: (updatedBill: Bill) => void;
+  sourceId: string;
+  bill?: Bill;
+  onUpdate?: (updatedBill: Bill) => void;
 }
 
-export const OrderInterface = ({ bill, onUpdate }: OrderInterfaceProps) => {
-  const [products, setProducts] = useState<BillProduct[]>(bill.items);
+export const OrderInterface = ({ sourceId, bill, onUpdate }: OrderInterfaceProps) => {
+  const [products, setProducts] = useState<BillProduct[]>([]);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    if (bill?.items) {
+      setProducts(bill.items);
+    }
+  }, [bill]);
 
   const handleProductChange = (index: number, field: keyof BillProduct, value: any) => {
     const updatedProducts = [...products];
@@ -19,9 +28,22 @@ export const OrderInterface = ({ bill, onUpdate }: OrderInterfaceProps) => {
   };
 
   const handleSave = () => {
+    if (!bill || !onUpdate) {
+      toast({
+        title: "Error",
+        description: "Cannot update bill at this time",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const updatedBill = { ...bill, items: products };
     onUpdate(updatedBill);
   };
+
+  if (!bill) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="space-y-4">
