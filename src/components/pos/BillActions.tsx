@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Bill } from "@/types/bill";
-import { FilePlus, Receipt } from "lucide-react";
+import { PauseCircle, Receipt } from "lucide-react";
 import { BillListItem } from "./bills/BillListItem";
 import { BillBulkActions } from "./bills/BillBulkActions";
 import { supabase } from "@/integrations/supabase/client";
@@ -95,6 +95,11 @@ export const BillActions = ({
     setIsSheetOpen(false);
   };
 
+  const handleHoldAndNew = () => {
+    if (isSubmitting) return;
+    onNewBill();
+  };
+
   return (
     <div className="flex justify-end gap-2">
       <TooltipProvider>
@@ -103,15 +108,15 @@ export const BillActions = ({
             <Button
               variant="outline"
               size="icon"
-              onClick={onNewBill}
+              onClick={handleHoldAndNew}
               className="h-9 w-9"
               disabled={isSubmitting}
             >
-              <FilePlus className="h-4 w-4" />
+              <PauseCircle className="h-4 w-4" />
             </Button>
           </TooltipTrigger>
           <TooltipContent>
-            <p>New Bill</p>
+            <p>Hold & New Bill</p>
           </TooltipContent>
         </Tooltip>
 

@@ -5,7 +5,6 @@ import { useToast } from "@/hooks/use-toast";
 import { BillProduct } from "@/types/bill";
 import { deserializeBillItems } from "@/components/pos/BillManager";
 import { useQueryClient } from '@tanstack/react-query';
-import { Json } from "@/integrations/supabase/types";
 
 export const useBillSwitching = (
   sourceId: string,
@@ -62,7 +61,7 @@ export const useBillSwitching = (
     }
 
     try {
-      // If there's an active bill, just save its current state
+      // If there's an active bill, save its current state
       if (activeBillId) {
         const { data: currentBill } = await supabase
           .from('bills')
@@ -70,11 +69,11 @@ export const useBillSwitching = (
           .eq('id', activeBillId)
           .single();
 
-        // Save current bill's state without changing its status
+        // Keep the current bill as active
         await supabase
           .from('bills')
           .update({ 
-            status: 'active',  // Keep it active
+            status: 'active',
             updated_at: new Date().toISOString()
           })
           .eq('id', activeBillId);
@@ -115,7 +114,7 @@ export const useBillSwitching = (
 
       toast({
         title: "Success",
-        description: "New bill created successfully",
+        description: "New bill created. Previous bill is on hold.",
       });
 
       return newBill.id;
