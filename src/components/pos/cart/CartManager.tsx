@@ -17,7 +17,10 @@ export const useCartManager = (
   const queryClient = useQueryClient();
 
   const handleCheckout = async () => {
+    console.log('🚀 Starting checkout process with:', { sourceId, items, paidAmount });
+    
     if (!sourceId || !session?.user?.id) {
+      console.error('❌ Missing required information:', { sourceId, userId: session?.user?.id });
       toast({
         title: "Error",
         description: "Missing required information",
@@ -28,13 +31,16 @@ export const useCartManager = (
 
     setIsSubmitting(true);
     try {
+      // Calculate totals
       const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-      const gstRate = 0.08;
+      const gstRate = 0.08; // 8% GST
       const gstAmount = subtotal * gstRate;
       const total = subtotal + gstAmount;
 
+      console.log('💰 Calculated totals:', { subtotal, gstAmount, total });
+
       // Create bill
-      const { error: billError } = await supabase
+      const { data: bill, error: billError } = await supabase
         .from('bills')
         .insert({
           source_id: sourceId,
@@ -56,21 +62,37 @@ export const useCartManager = (
           total,
           paid_amount: paidAmount,
           date: new Date().toISOString(),
-        });
+        })
+        .select()
+        .single();
 
-      if (billError) throw billError;
+      if (billError) {
+        console.error('❌ Error creating bill:', billError);
+        throw billError;
+      }
+
+      console.log('✅ Bill created successfully:', bill);
 
       // Update stock levels for products
       for (const item of items) {
         if (item.type === 'product' && item.current_stock !== undefined) {
           const newStock = item.current_stock - item.quantity;
           
+          console.log('📦 Updating stock for product:', { 
+            productId: item.id, 
+            oldStock: item.current_stock, 
+            newStock 
+          });
+
           const { error: stockError } = await supabase
             .from('products')
             .update({ current_stock: newStock })
             .eq('id', item.id);
 
-          if (stockError) throw stockError;
+          if (stockError) {
+            console.error('❌ Error updating stock:', stockError);
+            throw stockError;
+          }
 
           // Create stock movement record
           const { error: movementError } = await supabase
@@ -80,11 +102,16 @@ export const useCartManager = (
               movement_type: 'sale',
               quantity: -item.quantity,
               unit_cost: item.price,
-              notes: `POS Sale`,
+              notes: `POS Sale - Bill #${bill.id}`,
               created_by: session.user.id
             });
 
-          if (movementError) throw movementError;
+          if (movementError) {
+            console.error('❌ Error creating stock movement:', movementError);
+            throw movementError;
+          }
+
+          console.log('✅ Stock movement recorded for product:', item.id);
         }
       }
 
@@ -98,11 +125,14 @@ export const useCartManager = (
       setPaidAmount(0);
       
       // Refresh queries
-      queryClient.invalidateQueries({ queryKey: ['bills'] });
-      queryClient.invalidateQueries({ queryKey: ['products'] });
+      console.log('🔄 Refreshing queries...');
+      await queryClient.invalidateQueries({ queryKey: ['bills'] });
+      await queryClient.invalidateQueries({ queryKey: ['products'] });
+
+      console.log('✨ Checkout process completed successfully');
 
     } catch (error) {
-      console.error('Error during checkout:', error);
+      console.error('❌ Error during checkout:', error);
       toast({
         title: "Error",
         description: "Failed to complete checkout",
