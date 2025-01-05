@@ -41,6 +41,15 @@ export const OrderCart = ({
   } = useBillUpdates(undefined, items);
 
   const handleCheckout = async () => {
+    if (!sourceId) {
+      toast({
+        title: "Error",
+        description: "Source ID is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -119,8 +128,8 @@ export const OrderCart = ({
           description: `POS Sale`,
           amount: finalTotal,
           type: 'income',
-          date: date.toISOString(), // Convert Date to ISO string
-          payer_id: selectedPayerId,
+          date: date.toISOString(),
+          payer_id: selectedPayerId || null,
           status: status === 'completed' ? 'completed' : 'pending',
           created_by_name: user.email
         });
