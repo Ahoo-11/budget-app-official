@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { BillProduct } from "@/types/bill";
 import { deserializeBillItems } from "@/components/pos/BillManager";
 import { useQueryClient } from '@tanstack/react-query';
+import { Json } from "@/integrations/supabase/types";
 
 export const useBillSwitching = (
   sourceId: string,
@@ -69,7 +70,8 @@ export const useBillSwitching = (
           .eq('id', activeBillId)
           .single();
 
-        if (currentBill && currentBill.items && currentBill.items.length > 0) {
+        // Check if items exist and is an array with items
+        if (currentBill?.items && Array.isArray(currentBill.items) && currentBill.items.length > 0) {
           console.log('📝 Saving current active bill:', activeBillId);
           // Keep it as active, don't complete it
           await supabase
