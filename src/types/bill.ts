@@ -26,11 +26,13 @@ export interface BillItemJson {
   income_type_id?: string | null;
 }
 
+export type BillStatus = 'active' | 'completed' | 'partially_paid' | 'pending' | 'overdue';
+
 export interface Bill {
   id: string;
   source_id: string;
   user_id: string;
-  status: 'active' | 'completed';
+  status: BillStatus;
   items: BillProduct[];
   subtotal: number;
   discount: number;

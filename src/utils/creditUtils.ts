@@ -4,8 +4,8 @@ export const getBillStatus = async (
   billDate: Date,
   sourceId: string,
   payerId: string | null
-): Promise<'overdue' | 'pending'> => {
-  if (!payerId) return 'pending';
+): Promise<'overdue' | 'pending' | 'active'> => {
+  if (!payerId) return 'active';
 
   try {
     // Get payer credit settings
@@ -20,9 +20,15 @@ export const getBillStatus = async (
     const dueDate = new Date(billDate);
     dueDate.setDate(dueDate.getDate() + creditDays);
 
-    return new Date() > dueDate ? 'overdue' : 'pending';
+    return new Date() > dueDate ? 'overdue' : 'active';
   } catch (error) {
     console.error('Error checking bill status:', error);
-    return 'pending';
+    return 'active';
   }
+};
+
+export const calculateDueDate = (billDate: Date, creditDays: number = 1): Date => {
+  const dueDate = new Date(billDate);
+  dueDate.setDate(dueDate.getDate() + creditDays);
+  return dueDate;
 };
