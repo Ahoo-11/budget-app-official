@@ -22,11 +22,13 @@ export interface BillItemJson {
   name: string;
   price: number | string;
   quantity: number | string;
-  type?: 'product' | 'service';
-  source_id?: string;
+  type: 'product' | 'service';
+  source_id: string;
   category?: string | null;
   image_url?: string | null;
   description?: string | null;
+  current_stock: number;
+  purchase_cost: number | null;
   income_type_id?: string | null;
 }
 
