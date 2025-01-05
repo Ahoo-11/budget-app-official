@@ -1,158 +1,128 @@
-import { useState } from "react";
-import { BillProduct } from "@/types/bill";
-import { useSession } from "@supabase/auth-helpers-react";
-import { useToast } from "@/hooks/use-toast";
-import { useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { Bill, BillProduct } from '@/types/bills';
+import { useCallback, useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
-export const useCartManager = (
-  sourceId: string,
-  items: BillProduct[],
-  setSelectedProducts: (products: BillProduct[]) => void,
-) => {
+export interface CartItem extends BillProduct {
+  quantity: number;
+}
+
+export function useCartManager(sourceId: string | null) {
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [paidAmount, setPaidAmount] = useState(0);
-  const session = useSession();
   const { toast } = useToast();
-  const queryClient = useQueryClient();
 
-  const handleCheckout = async () => {
-    console.log('🚀 Starting checkout process with:', { sourceId, items, paidAmount });
+  const addToCart = useCallback((product: Omit<BillProduct, 'quantity'>) => {
+    setCartItems(currentItems => {
+      const existingItem = currentItems.find(item => item.id === product.id);
+      
+      if (existingItem) {
+        return currentItems.map(item =>
+          item.id === product.id
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
+        );
+      }
+      
+      return [...currentItems, { ...product, quantity: 1 }];
+    });
+  }, []);
+
+  const removeFromCart = useCallback((productId: string) => {
+    setCartItems(currentItems =>
+      currentItems.filter(item => item.id !== productId)
+    );
+  }, []);
+
+  const updateQuantity = useCallback((productId: string, quantity: number) => {
+    if (quantity < 1) return;
     
-    if (!sourceId || !session?.user?.id) {
-      console.error('❌ Missing required information:', { sourceId, userId: session?.user?.id });
+    setCartItems(currentItems =>
+      currentItems.map(item =>
+        item.id === productId ? { ...item, quantity } : item
+      )
+    );
+  }, []);
+
+  const clearCart = useCallback(() => {
+    setCartItems([]);
+  }, []);
+
+  const calculateTotal = useCallback(() => {
+    return cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
+  }, [cartItems]);
+
+  const createBill = useCallback(async () => {
+    if (!sourceId) {
       toast({
         title: "Error",
-        description: "Missing required information",
+        description: "Source ID is required",
         variant: "destructive",
       });
-      return;
+      return null;
     }
 
-    setIsSubmitting(true);
+    if (cartItems.length === 0) {
+      toast({
+        title: "Error",
+        description: "Cart is empty",
+        variant: "destructive",
+      });
+      return null;
+    }
+
     try {
-      // Calculate totals
-      const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-      const gstRate = 0.08; // 8% GST
-      const gstAmount = subtotal * gstRate;
-      const total = subtotal + gstAmount;
+      setIsSubmitting(true);
 
-      console.log('💰 Calculated totals:', { subtotal, gstAmount, total });
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("User not authenticated");
 
-      // Create bill
-      const { data: bill, error: billError } = await supabase
+      const total = calculateTotal();
+      const billData = {
+        source_id: sourceId,
+        user_id: user.id,
+        items: cartItems,
+        total,
+        status: 'active' as const,
+        date: new Date().toISOString(),
+      };
+
+      const { data: bill, error } = await supabase
         .from('bills')
-        .insert({
-          source_id: sourceId,
-          user_id: session.user.id,
-          status: 'pending',
-          items: items.map(item => ({
-            id: item.id,
-            name: item.name,
-            price: item.price,
-            quantity: item.quantity,
-            type: item.type,
-            source_id: sourceId,
-            category: item.category,
-            image_url: item.image_url,
-            description: item.description
-          })),
-          subtotal,
-          gst: gstAmount,
-          total,
-          paid_amount: paidAmount,
-          date: new Date().toISOString(),
-        })
+        .insert([billData])
         .select()
         .single();
 
-      if (billError) {
-        console.error('❌ Error creating bill:', billError);
-        throw billError;
-      }
-
-      console.log('✅ Bill created successfully:', bill);
-
-      // Update stock levels for products
-      for (const item of items) {
-        if (item.type === 'product' && item.current_stock !== undefined) {
-          const newStock = item.current_stock - item.quantity;
-          
-          console.log('📦 Updating stock for product:', { 
-            productId: item.id, 
-            oldStock: item.current_stock, 
-            newStock 
-          });
-
-          const { error: stockError } = await supabase
-            .from('products')
-            .update({ current_stock: newStock })
-            .eq('id', item.id);
-
-          if (stockError) {
-            console.error('❌ Error updating stock:', stockError);
-            throw stockError;
-          }
-
-          // Create stock movement record
-          const { error: movementError } = await supabase
-            .from('stock_movements')
-            .insert({
-              product_id: item.id,
-              movement_type: 'sale',
-              quantity: -item.quantity,
-              unit_cost: item.price,
-              notes: `POS Sale - Bill #${bill.id}`,
-              created_by: session.user.id
-            });
-
-          if (movementError) {
-            console.error('❌ Error creating stock movement:', movementError);
-            throw movementError;
-          }
-
-          console.log('✅ Stock movement recorded for product:', item.id);
-        }
-      }
+      if (error) throw error;
 
       toast({
         title: "Success",
         description: "Bill created successfully",
       });
 
-      // Reset cart
-      setSelectedProducts([]);
-      setPaidAmount(0);
-      
-      // Refresh queries
-      console.log('🔄 Refreshing queries...');
-      await queryClient.invalidateQueries({ queryKey: ['bills'] });
-      await queryClient.invalidateQueries({ queryKey: ['products'] });
-
-      console.log('✨ Checkout process completed successfully');
-
-    } catch (error) {
-      console.error('❌ Error during checkout:', error);
+      clearCart();
+      return bill as Bill;
+    } catch (error: any) {
+      console.error('Error creating bill:', error);
       toast({
         title: "Error",
-        description: "Failed to complete checkout",
+        description: error.message,
         variant: "destructive",
       });
+      return null;
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const handleCancelBill = () => {
-    setSelectedProducts([]);
-    setPaidAmount(0);
-  };
+  }, [sourceId, cartItems, toast, calculateTotal, clearCart]);
 
   return {
+    cartItems,
+    addToCart,
+    removeFromCart,
+    updateQuantity,
+    clearCart,
+    calculateTotal,
+    createBill,
     isSubmitting,
-    paidAmount,
-    setPaidAmount,
-    handleCheckout,
-    handleCancelBill,
   };
-};
+}

@@ -1,71 +1,81 @@
-import { supabase } from "@/integrations/supabase/client";
-import { BillProduct } from "@/types/bill";
-import { PosTransaction } from "@/types/pos-transaction";
+import { Bill, BillProduct } from '@/types/bills';
+import { supabase } from '@/integrations/supabase/client';
 
-export const createPosTransaction = async (
-  sourceId: string,
-  userId: string,
-  items: BillProduct[],
-  subtotal: number,
-  discount: number,
-  gst: number,
-  total: number,
-  paidAmount: number,
-  payerId: string | null = null,
-) => {
+export const createTransaction = async (transactionData: any) => {
   const { data, error } = await supabase
     .from('transactions')
-    .insert({
-      source_id: sourceId,
-      user_id: userId,
-      type: 'pos_sale',
-      description: 'POS Sale',
-      items: items,
-      amount: total,
-      paid_amount: paidAmount,
-      status: 'pending',
-      date: new Date().toISOString(),
-      payer_id: payerId,
-      subtotal,
-      discount,
-      gst,
-      total,
-      created_by_name: 'POS System'
-    })
-    .select()
-    .single();
+    .insert([transactionData]);
 
-  if (error) throw error;
+  if (error) {
+    throw new Error(error.message);
+  }
+
   return data;
 };
 
-export const completePosTransaction = async (
-  transactionId: string,
-  paidAmount: number
-) => {
-  const { data, error } = await supabase
-    .from('transactions')
-    .update({
-      status: 'completed',
-      paid_amount: paidAmount,
-    })
-    .eq('id', transactionId)
-    .select()
-    .single();
-
-  if (error) throw error;
-  return data;
-};
-
-export const fetchActivePosTransactions = async (sourceId: string): Promise<PosTransaction[]> => {
+export const getTransactionsByBillId = async (billId: string) => {
   const { data, error } = await supabase
     .from('transactions')
     .select('*')
-    .eq('source_id', sourceId)
-    .eq('type', 'pos_sale')
-    .in('status', ['pending', 'partially_paid'])
-    .order('created_at', { ascending: false });
+    .eq('bill_id', billId);
 
-  if (error) throw error;
-  return data as unknown as PosTransaction[];
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data;
+};
+
+export const updateTransaction = async (transactionId: string, updates: any) => {
+  const { data, error } = await supabase
+    .from('transactions')
+    .update(updates)
+    .eq('id', transactionId);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data;
+};
+
+export const deleteTransaction = async (transactionId: string) => {
+  const { data, error } = await supabase
+    .from('transactions')
+    .delete()
+    .eq('id', transactionId);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data;
+};
+
+export const getAllTransactions = async () => {
+  const { data, error } = await supabase
+    .from('transactions')
+    .select('*');
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return data;
+};
+
+export const mapBillToTransaction = (bill: Bill): any => {
+  return {
+    bill_id: bill.id,
+    total: bill.total,
+    payer_id: bill.payer_id,
+    status: bill.status,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+};
+
+export const createBillTransaction = async (bill: Bill) => {
+  const transactionData = mapBillToTransaction(bill);
+  return await createTransaction(transactionData);
 };

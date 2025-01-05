@@ -1,20 +1,28 @@
-import { useState } from "react";
-import { BillProduct } from "@/types/bill";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { BillProduct } from "@/types/bills";
 
-export const useCartCalculations = (items: BillProduct[]) => {
-  const [discount, setDiscount] = useState<number>(0);
-  
-  const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const gstRate = 0.08; // 8% GST
-  const discountedTotal = subtotal - discount; // First apply discount
-  const gstAmount = (discountedTotal * gstRate); // Calculate 8% of the discounted total
-  const finalTotal = discountedTotal + gstAmount; // Add GST to get final total
+export function useCartCalculations(sourceId: string | null) {
+  const { data: cartItems = [] } = useQuery({
+    queryKey: ['cartItems', sourceId],
+    queryFn: async () => {
+      if (!sourceId) return [];
+
+      const { data, error } = await supabase
+        .from('cart_items')
+        .select('*')
+        .eq('source_id', sourceId);
+
+      if (error) throw error;
+      return data as BillProduct[];
+    },
+    enabled: !!sourceId,
+  });
+
+  const totalAmount = cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
 
   return {
-    discount,
-    setDiscount,
-    subtotal,
-    gstAmount,
-    finalTotal
+    cartItems,
+    totalAmount,
   };
-};
+}
