@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { BillProduct } from '@/types/bill';
+import { BillProduct } from '@/types/bills';
 
 export const useBillProducts = () => {
   const [selectedProducts, setSelectedProducts] = useState<BillProduct[]>([]);
@@ -19,6 +19,8 @@ export const useBillProducts = () => {
       return [...prevProducts, { 
         ...product, 
         quantity: 1,
+        current_stock: product.current_stock || 0,
+        purchase_cost: product.purchase_cost || null,
         income_type_id: product.income_type_id || null
       }];
     });

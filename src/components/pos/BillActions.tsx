@@ -35,9 +35,22 @@ export const BillActions = ({
   console.log('📋 Active bills in BillActions:', activeBills);
   console.log('🎯 Current active bill ID:', activeBillId);
   
-  // Filter to show only bills with status 'active'
-  const activeBillsList = activeBills.filter(bill => bill.status === 'active');
-  console.log('📝 Active bills:', activeBillsList);
+  // Group bills by status for better organization
+  const billsByStatus = activeBills.reduce((acc, bill) => {
+    acc[bill.status] = acc[bill.status] || [];
+    acc[bill.status].push(bill);
+    return acc;
+  }, {} as Record<string, Bill[]>);
+
+  // Get active bills for the list
+  const activeBillsList = billsByStatus['active'] || [];
+  
+  console.log('📝 Bills by status:', {
+    active: billsByStatus['active']?.length || 0,
+    completed: billsByStatus['completed']?.length || 0,
+    pending: billsByStatus['pending']?.length || 0,
+    partially_paid: billsByStatus['partially_paid']?.length || 0
+  });
   
   const isAllSelected = activeBillsList.length > 0 && selectedBills.length === activeBillsList.length;
 

@@ -1,16 +1,18 @@
+import { useCallback, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Bill, BillItemJson } from "@/types/bill";
+import { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
+import { Bill, BillItemJson, BillProduct, BillRow } from "@/types/bills";
 import { useBillProducts } from "./bills/useBillProducts";
 import { useBillStatus } from "./bills/useBillStatus";
 import { useBillSwitching } from "./bills/useBillSwitching";
-import { useEffect, useCallback } from "react";
-import { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
-import { useToast } from "@/hooks/use-toast";
+import { useSession } from "@supabase/auth-helpers-react";
 
-export function useBillManagement(sourceId: string) {
+export function useBillManagement(sourceId: string | null) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const session = useSession();
   const { selectedProducts, setSelectedProducts, handleProductSelect } = useBillProducts();
   const { isSubmitting, handleUpdateBillStatus } = useBillStatus();
   const { activeBillId, handleNewBill, handleSwitchBill } = useBillSwitching(
@@ -20,17 +22,30 @@ export function useBillManagement(sourceId: string) {
   );
 
   console.log('🔄 useBillManagement - sourceId:', sourceId);
+  console.log('🔄 useBillManagement - userId:', session?.user?.id);
   console.log('📄 useBillManagement - activeBillId:', activeBillId);
 
   const fetchBills = useCallback(async () => {
     console.log('🔍 Fetching bills for source:', sourceId);
     try {
-      const { data, error } = await supabase
+      if (!session?.user?.id) {
+        console.log('No user session, skipping bill fetch');
+        return [];
+      }
+
+      let query = supabase
         .from('bills')
-        .select('*')
-        .eq('source_id', sourceId)
-        .in('status', ['active', 'pending', 'partially_paid'])
+        .select('*, payers(name)')
+        .eq('user_id', session.user.id)
+        .in('status', ['active', 'completed'] as const)
         .order('created_at', { ascending: false });
+      
+      // Only filter by source_id if one is provided and not 'all'
+      if (sourceId && sourceId !== 'all') {
+        query = query.eq('source_id', sourceId);
+      }
+      
+      const { data, error } = await query;
       
       if (error) {
         console.error('❌ Error fetching bills:', error);
@@ -46,40 +61,42 @@ export function useBillManagement(sourceId: string) {
       
       return (data || []).map(bill => ({
         ...bill,
+        payer_name: bill.payers?.name,
         items: Array.isArray(bill.items) 
-          ? (bill.items as unknown[] as BillItemJson[]).map(item => ({
-              id: item.id,
-              name: item.name,
+          ? (bill.items as any[]).map(item => ({
+              id: item.id || '',
+              name: item.name || '',
               price: Number(item.price) || 0,
               quantity: Number(item.quantity) || 0,
-              type: item.type,
-              source_id: item.source_id,
-              category: item.category,
-              image_url: item.image_url,
-              description: item.description,
-              income_type_id: item.income_type_id,
-              current_stock: 0,
-              purchase_cost: null
-            }))
+              type: item.type || '',
+              source_id: item.source_id || '',
+              category: item.category || '',
+              image_url: item.image_url || null,
+              description: item.description || null,
+              current_stock: Number(item.current_stock) || 0,
+              purchase_cost: Number(item.purchase_cost) || null,
+              income_type_id: item.income_type_id || null
+            } as BillItemJson))
           : [],
-        status: bill.status
+        status: bill.status as Bill['status']
       })) as Bill[];
     } catch (error) {
       console.error('❌ Error in fetchBills:', error);
       return [];
     }
-  }, [sourceId, toast]);
+  }, [sourceId, session?.user?.id, toast]);
 
   const { data: bills = [] } = useQuery({
-    queryKey: ['bills', sourceId],
+    queryKey: ['bills', sourceId, session?.user?.id],
     queryFn: fetchBills,
+    enabled: !!session?.user?.id,  // Only run query if we have a user
     refetchOnWindowFocus: true,
     refetchOnMount: true,
     staleTime: 0,
   });
 
   // Handle real-time updates
-  const handleRealtimeUpdate = useCallback(async (payload: RealtimePostgresChangesPayload<any>) => {
+  const handleRealtimeUpdate = useCallback(async (payload: RealtimePostgresChangesPayload<BillRow>) => {
     console.log('🔄 Real-time bill update:', payload);
     
     // Force refetch bills on any change
@@ -96,44 +113,48 @@ export function useBillManagement(sourceId: string) {
         title: "New bill created",
         description: "A new bill has been created successfully.",
       });
+    } else if (payload.eventType === 'UPDATE' && payload.new?.status === 'completed') {
+      toast({
+        title: "Bill completed",
+        description: "The bill has been marked as completed.",
+      });
     }
-  }, [sourceId, queryClient, activeBillId, setSelectedProducts, toast]);
+  }, [activeBillId, queryClient, setSelectedProducts, sourceId, toast]);
 
-  // Set up real-time subscription for bill updates
+  // Subscribe to real-time updates
   useEffect(() => {
-    console.log('🔌 Setting up real-time subscription for bills...');
+    if (!session?.user?.id) return;
+
     const channel = supabase
-      .channel(`bills-${sourceId}`)
-      .on(
+      .channel('bills-channel')
+      .on<BillRow>(
         'postgres_changes',
-        {
+        { 
           event: '*',
           schema: 'public',
           table: 'bills',
-          filter: `source_id=eq.${sourceId}`
+          filter: sourceId && sourceId !== 'all' 
+            ? `source_id=eq.${sourceId} and user_id=eq.${session.user.id}`
+            : `user_id=eq.${session.user.id}`
         },
         handleRealtimeUpdate
       )
-      .subscribe((status) => {
-        console.log('📡 Subscription status:', status);
-      });
+      .subscribe();
 
     return () => {
-      console.log('🔌 Cleaning up bills subscription');
-      channel.unsubscribe();
+      supabase.removeChannel(channel);
     };
-  }, [sourceId, handleRealtimeUpdate]);
+  }, [sourceId, handleRealtimeUpdate, session?.user?.id]);
 
   return {
     bills,
-    activeBillId,
     selectedProducts,
-    isSubmitting,
     setSelectedProducts,
+    handleProductSelect,
+    isSubmitting,
+    handleUpdateBillStatus,
+    activeBillId,
     handleNewBill,
     handleSwitchBill,
-    handleProductSelect,
-    handleUpdateBillStatus,
-    refetchBills: fetchBills
   };
 }

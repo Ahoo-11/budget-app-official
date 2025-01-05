@@ -1,7 +1,7 @@
-import TransactionListContainer from "@/components/transactions/TransactionListContainer";
+import { BillListContainer } from "@/components/bills/BillListContainer";
 
 const Index = () => {
-  return <TransactionListContainer />;
+  return <BillListContainer />;
 };
 
 export default Index;

@@ -70,121 +70,53 @@ export const useCheckoutManager = () => {
         description: item.description
       }));
 
-      // Start a transaction block
-      const { data: transaction, error: transactionError } = await supabase
-        .from('transactions')
-        .insert({
-          source_id: bill.source_id,
-          type: 'income',
-          amount: total,
-          description: `POS Sale - Bill #${billId}`,
-          date: new Date().toISOString(),
-          user_id: user.id,
-          payer_id: payerId,
-          created_by_name: user.email,
-          status: 'completed'
-        })
-        .select()
-        .single();
-
-      if (transactionError) {
-        console.error('❌ Error creating transaction:', transactionError);
-        throw transactionError;
-      }
-
-      console.log('✅ Transaction created:', transaction);
-
       // Update bill status to completed
       const { error: updateError } = await supabase
         .from('bills')
         .update({
-          status: payerId ? 'pending' : 'completed', // Set to pending if there's a payer, completed otherwise
+          status: 'completed',
           items: serializedItems,
           subtotal,
           gst: gstAmount,
           total,
           payer_id: payerId,
+          paid_amount: total,
           updated_at: new Date().toISOString(),
         })
         .eq('id', billId)
-        .eq('status', 'active'); // Only update if status is still active
+        .eq('status', 'active');
 
       if (updateError) {
         console.error('❌ Error updating bill:', updateError);
-        throw updateError;
+        throw new Error(`Failed to update bill status: ${updateError.message}`);
       }
 
-      // Verify bill status after update
-      const { data: verifyBill, error: verifyError } = await supabase
-        .from('bills')
-        .select('status')
-        .eq('id', billId)
-        .single();
-        
-      if (verifyError || !verifyBill) {
-        console.error('⚠️ Error verifying bill status:', verifyError);
-        throw verifyError || new Error('Could not verify bill status');
-      }
-
-      console.log('✅ Bill status verified as:', verifyBill.status);
-
-      // Update product stock levels and create stock movements for products only
-      for (const item of items) {
-        if (item.type === 'product' && item.current_stock !== undefined) {
-          const newStock = item.current_stock - item.quantity;
-          
-          // Update product stock
-          const { error: stockError } = await supabase
-            .from('products')
-            .update({ current_stock: newStock })
-            .eq('id', item.id);
-
-          if (stockError) throw stockError;
-
-          // Create stock movement
-          const { error: movementError } = await supabase
-            .from('stock_movements')
-            .insert({
-              product_id: item.id,
-              movement_type: 'sale',
-              quantity: -item.quantity,
-              unit_cost: item.price,
-              notes: `Sale from bill ${billId}`,
-              created_by: user.id
-            });
-
-          if (movementError) {
-            console.error('Stock movement error:', movementError);
-            throw movementError;
-          }
-        }
-      }
-
-      // Force refresh queries
+      // Update queries after successful checkout
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['bills'] }),
-        queryClient.invalidateQueries({ queryKey: ['products'] }),
-        queryClient.invalidateQueries({ queryKey: ['transactions'] })
+        queryClient.invalidateQueries({ queryKey: ['products'] })
       ]);
 
       console.log('🔄 Queries invalidated and refetched');
 
       toast({
         title: "Success",
-        description: "Checkout completed successfully",
+        description: "Bill has been completed successfully",
       });
 
       return true;
     } catch (error) {
-      console.error('❌ Checkout error:', error);
+      console.error('❌ Error in checkout process:', error);
       toast({
         title: "Error",
-        description: "Failed to complete checkout",
+        description: error.message || "Failed to complete checkout",
         variant: "destructive",
       });
       return false;
     }
   };
 
-  return { handleCheckout };
+  return {
+    handleCheckout
+  };
 };

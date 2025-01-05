@@ -1,37 +1,41 @@
-import { useState, useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { BillStatus } from "@/types/bills";
 
 export function useBillStatus() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
-  const handleUpdateBillStatus = useCallback(async (billId: string, status: 'active' | 'completed') => {
-    setIsSubmitting(true);
+  const handleUpdateBillStatus = async (billId: string, status: BillStatus): Promise<void> => {
     try {
+      setIsSubmitting(true);
+
       const { error } = await supabase
         .from('bills')
         .update({ status })
         .eq('id', billId);
 
       if (error) throw error;
-      
-      return true;
-    } catch (error) {
+
+      toast({
+        title: "Success",
+        description: `Bill ${status === 'completed' ? 'completed' : 'activated'} successfully`,
+      });
+    } catch (error: any) {
       console.error('Error updating bill status:', error);
       toast({
         title: "Error",
-        description: "Failed to update bill status",
+        description: error.message,
         variant: "destructive",
       });
-      return false;
     } finally {
       setIsSubmitting(false);
     }
-  }, [toast]);
+  };
 
   return {
     isSubmitting,
-    handleUpdateBillStatus
+    handleUpdateBillStatus,
   };
 }

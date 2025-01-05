@@ -1,181 +1,196 @@
-import { useState, useCallback, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { useSession } from "@supabase/auth-helpers-react";
+import { useState, useEffect, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { BillProduct } from "@/types/bill";
-import { deserializeBillItems } from "@/components/pos/BillManager";
-import { useQueryClient } from '@tanstack/react-query';
+import { supabase } from "@/integrations/supabase/client";
+import { BillProduct, BillItemJson, NewBillInput } from "@/types/bills";
+import { useSession } from "@supabase/auth-helpers-react";
 
-export const useBillSwitching = (
-  sourceId: string,
+export function useBillSwitching(
+  sourceId: string | null,
   setSelectedProducts: (products: BillProduct[]) => void,
-  handleUpdateBillStatus: (billId: string, status: 'active' | 'completed') => Promise<boolean>
-) => {
+  handleUpdateBillStatus: (billId: string, status: 'completed') => Promise<void>
+) {
   const [activeBillId, setActiveBillId] = useState<string | null>(null);
   const { toast } = useToast();
   const session = useSession();
-  const queryClient = useQueryClient();
 
-  // Initialize active bill on mount
-  useEffect(() => {
-    const initializeActiveBill = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('bills')
-          .select('*')
-          .eq('source_id', sourceId)
-          .eq('status', 'active')
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        if (error) {
-          console.error('Error fetching active bill:', error);
-          return;
-        }
-
-        if (data) {
-          console.log('Found existing active bill:', data.id);
-          setActiveBillId(data.id);
-          const billItems = deserializeBillItems(data.items);
-          setSelectedProducts(billItems);
-        }
-      } catch (error) {
-        console.error('Error initializing active bill:', error);
-      }
-    };
-
-    initializeActiveBill();
-  }, [sourceId, setSelectedProducts]);
-
-  const handleNewBill = useCallback(async () => {
-    console.log('🆕 Creating new bill...');
-    
-    if (!session?.user?.id) {
-      toast({
-        title: "Error",
-        description: "You must be logged in to create a bill.",
-        variant: "destructive",
-      });
-      return null;
-    }
-
+  const initializeActiveBill = useCallback(async () => {
     try {
-      // If there's an active bill, save its current state
-      if (activeBillId) {
-        const { data: currentBill } = await supabase
+      // Only proceed if we have a valid sourceId and user
+      if (!sourceId || sourceId === 'all') {
+        console.log('No source selected, skipping bill initialization');
+        return;
+      }
+
+      if (!session?.user?.id) {
+        console.log('No user session, skipping bill initialization');
+        return;
+      }
+
+      // Find any existing active bill for this source
+      const { data: existingBills, error: fetchError } = await supabase
+        .from('bills')
+        .select('*')
+        .eq('source_id', sourceId)
+        .eq('status', 'active')
+        .eq('user_id', session.user.id)
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (fetchError) throw fetchError;
+
+      if (existingBills && existingBills.length > 0) {
+        const activeBill = existingBills[0];
+        setActiveBillId(activeBill.id);
+        setSelectedProducts(Array.isArray(activeBill.items) ? activeBill.items : []);
+        console.log('Found existing active bill:', activeBill.id);
+      } else {
+        // Create a new bill if none exists
+        const newBill: NewBillInput = {
+          source_id: sourceId,
+          user_id: session.user.id,
+          items: [],
+          subtotal: 0,
+          gst: 0,
+          total: 0,
+          status: 'active',
+          paid_amount: 0,
+          date: new Date().toISOString(),
+        };
+
+        const { data: createdBill, error: createError } = await supabase
           .from('bills')
-          .select('items')
-          .eq('id', activeBillId)
+          .insert([newBill])
+          .select()
           .single();
 
-        // Keep the current bill as active
-        await supabase
-          .from('bills')
-          .update({ 
-            status: 'active',
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', activeBillId);
+        if (createError) throw createError;
+
+        if (createdBill) {
+          setActiveBillId(createdBill.id);
+          setSelectedProducts([]);
+          console.log('Created new active bill:', createdBill.id);
+        }
+      }
+    } catch (error: any) {
+      console.error('Error initializing active bill:', error);
+      toast({
+        title: "Error initializing bill",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  }, [sourceId, setSelectedProducts, toast, session?.user?.id]);
+
+  const handleNewBill = useCallback(async () => {
+    try {
+      if (!sourceId || sourceId === 'all') {
+        toast({
+          title: "Error creating bill",
+          description: "Please select a source first",
+          variant: "destructive",
+        });
+        return;
       }
 
-      // Create new bill
-      const { data: newBill, error } = await supabase
+      if (!session?.user?.id) {
+        toast({
+          title: "Error creating bill",
+          description: "You must be logged in to create a bill",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Complete the current active bill if it exists
+      if (activeBillId) {
+        await handleUpdateBillStatus(activeBillId, 'completed');
+      }
+
+      // Create a new bill
+      const newBill: NewBillInput = {
+        source_id: sourceId,
+        user_id: session.user.id,
+        items: [],
+        subtotal: 0,
+        gst: 0,
+        total: 0,
+        status: 'active',
+        paid_amount: 0,
+        date: new Date().toISOString(),
+      };
+
+      const { data: createdBill, error } = await supabase
         .from('bills')
-        .insert([
-          {
-            source_id: sourceId,
-            status: 'active',
-            items: [],
-            user_id: session.user.id,
-            subtotal: 0,
-            total: 0,
-            gst: 0,
-            discount: 0,
-            date: new Date().toISOString(),
-          },
-        ])
+        .insert([newBill])
         .select()
         .single();
 
       if (error) throw error;
 
-      console.log('✨ Created new bill:', newBill);
-      
-      // Clear the interface
-      setSelectedProducts([]);
-      
-      // Set the new bill as active
-      setActiveBillId(newBill.id);
-
-      // Force an immediate refetch of bills
-      await queryClient.invalidateQueries({ queryKey: ['bills', sourceId] });
-      console.log('🔄 Invalidated bills query');
-
+      if (createdBill) {
+        setActiveBillId(createdBill.id);
+        setSelectedProducts([]);
+        toast({
+          title: "New bill created",
+          description: "Successfully created a new bill",
+        });
+      }
+    } catch (error: any) {
+      console.error('Error creating new bill:', error);
       toast({
-        title: "Success",
-        description: "New bill created. Previous bill is on hold.",
-      });
-
-      return newBill.id;
-    } catch (error) {
-      console.error('❌ Error creating new bill:', error);
-      toast({
-        title: "Error",
-        description: "Failed to create new bill. Please try again.",
+        title: "Error creating bill",
+        description: error.message,
         variant: "destructive",
       });
-      return null;
     }
-  }, [session?.user?.id, sourceId, toast, setSelectedProducts, queryClient, activeBillId]);
+  }, [sourceId, activeBillId, handleUpdateBillStatus, setSelectedProducts, toast, session?.user?.id]);
 
   const handleSwitchBill = useCallback(async (billId: string) => {
-    console.log('🔄 Switching to bill:', billId);
-    
     try {
+      if (!session?.user?.id) {
+        toast({
+          title: "Error switching bill",
+          description: "You must be logged in to switch bills",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const { data: bill, error } = await supabase
         .from('bills')
         .select('*')
         .eq('id', billId)
+        .eq('user_id', session.user.id)
         .single();
 
       if (error) throw error;
 
-      console.log('📋 Retrieved bill data:', bill);
-
-      // Set the selected bill as active
-      setActiveBillId(billId);
-
-      // Set the products from the bill
-      if (bill.items) {
-        const billItems = deserializeBillItems(bill.items);
-        console.log('📦 Setting bill items:', billItems);
-        setSelectedProducts(billItems);
-      } else {
-        console.log('⚠️ No items in bill, clearing selection');
-        setSelectedProducts([]);
+      if (bill) {
+        setActiveBillId(bill.id);
+        setSelectedProducts(Array.isArray(bill.items) ? bill.items : []);
+        toast({
+          title: "Switched to bill",
+          description: `Now viewing bill #${bill.id.slice(0, 8)}`,
+        });
       }
-
+    } catch (error: any) {
+      console.error('Error switching bill:', error);
       toast({
-        title: "Success",
-        description: "Switched to selected bill",
-      });
-
-      return true;
-    } catch (error) {
-      console.error('❌ Error switching bill:', error);
-      toast({
-        title: "Error",
-        description: "Failed to switch bill. Please try again.",
+        title: "Error switching bill",
+        description: error.message,
         variant: "destructive",
       });
-      return false;
     }
-  }, [setActiveBillId, setSelectedProducts, toast]);
+  }, [setSelectedProducts, toast, session?.user?.id]);
+
+  // Initialize active bill when source changes
+  useEffect(() => {
+    initializeActiveBill();
+  }, [initializeActiveBill]);
 
   return {
     activeBillId,
     handleNewBill,
-    handleSwitchBill
+    handleSwitchBill,
   };
-};
+}
