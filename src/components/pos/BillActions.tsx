@@ -35,15 +35,15 @@ export const BillActions = ({
   console.log('📋 Active bills in BillActions:', activeBills);
   console.log('🎯 Current active bill ID:', activeBillId);
   
-  // Only show pending bills in the sidebar
-  const pendingBills = activeBills.filter(bill => bill.status === 'pending');
+  // Only show active bills in the sidebar
+  const activeBillsList = activeBills.filter(bill => bill.status === 'active');
   
-  console.log('📝 Pending bills:', pendingBills.length);
+  console.log('📝 Active bills:', activeBillsList.length);
   
-  const isAllSelected = pendingBills.length > 0 && selectedBills.length === pendingBills.length;
+  const isAllSelected = activeBillsList.length > 0 && selectedBills.length === activeBillsList.length;
 
   const handleSelectAll = (checked: boolean) => {
-    setSelectedBills(checked ? pendingBills.map(bill => bill.id) : []);
+    setSelectedBills(checked ? activeBillsList.map(bill => bill.id) : []);
   };
 
   const handleSelectBill = (billId: string, isSelected: boolean) => {
@@ -126,16 +126,16 @@ export const BillActions = ({
                   className="h-9 w-9 relative"
                 >
                   <Receipt className="h-4 w-4" />
-                  {pendingBills.length > 0 && (
+                  {activeBillsList.length > 0 && (
                     <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground rounded-full w-4 h-4 text-xs flex items-center justify-center">
-                      {pendingBills.length}
+                      {activeBillsList.length}
                     </span>
                   )}
                 </Button>
               </SheetTrigger>
               <SheetContent>
                 <SheetHeader>
-                  <SheetTitle>Pending Bills</SheetTitle>
+                  <SheetTitle>Active Bills</SheetTitle>
                 </SheetHeader>
                 <div className="mt-4">
                   <BillBulkActions
@@ -143,10 +143,10 @@ export const BillActions = ({
                     onSelectAll={handleSelectAll}
                     isAllSelected={isAllSelected}
                     onDeleteSelected={handleDeleteSelected}
-                    totalBills={pendingBills.length}
+                    totalBills={activeBillsList.length}
                   />
                   <div className="mt-4 space-y-4">
-                    {pendingBills.map((bill) => (
+                    {activeBillsList.map((bill) => (
                       <BillListItem
                         key={bill.id}
                         bill={bill}
@@ -162,7 +162,7 @@ export const BillActions = ({
             </Sheet>
           </TooltipTrigger>
           <TooltipContent>
-            <p>Pending Bills</p>
+            <p>Active Bills</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>

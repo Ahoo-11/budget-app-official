@@ -64,8 +64,8 @@ export const BillListContainer = () => {
 
   console.log('📊 BillListContainer - bills:', bills);
 
-  const activeBills = bills.filter(bill => bill.status === 'active');
-  const completedBills = bills.filter(bill => bill.status === 'completed');
+  const pendingBills = bills.filter(bill => bill.status === 'pending' || bill.status === 'partially_paid');
+  const paidBills = bills.filter(bill => bill.status === 'paid');
 
   const filterBillsByDate = (billList: Bill[]) => {
     return billList.filter((bill) => {
@@ -77,8 +77,8 @@ export const BillListContainer = () => {
     });
   };
 
-  const filteredActiveBills = filterBillsByDate(activeBills);
-  const filteredCompletedBills = filterBillsByDate(completedBills);
+  const filteredPendingBills = filterBillsByDate(pendingBills);
+  const filteredPaidBills = filterBillsByDate(paidBills);
 
   return (
     <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">
@@ -101,7 +101,7 @@ export const BillListContainer = () => {
             Bill History
           </h1>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Keep track of your active and completed bills with our beautiful and intuitive
+            Keep track of your pending and paid bills with our beautiful and intuitive
             interface.
           </p>
         </header>
@@ -115,22 +115,22 @@ export const BillListContainer = () => {
         />
 
         <Card className="p-6">
-          <Tabs defaultValue="active" className="w-full">
+          <Tabs defaultValue="pending" className="w-full">
             <TabsList className="w-full justify-start">
-              <TabsTrigger value="active">
-                Active Bills ({filteredActiveBills.length})
+              <TabsTrigger value="pending">
+                Pending Bills ({filteredPendingBills.length})
               </TabsTrigger>
-              <TabsTrigger value="completed">
-                Completed Bills ({filteredCompletedBills.length})
+              <TabsTrigger value="paid">
+                Paid Bills ({filteredPaidBills.length})
               </TabsTrigger>
             </TabsList>
             
-            <TabsContent value="active">
-              <BillList bills={filteredActiveBills} />
+            <TabsContent value="pending">
+              <BillList bills={filteredPendingBills} />
             </TabsContent>
             
-            <TabsContent value="completed">
-              <BillList bills={filteredCompletedBills} />
+            <TabsContent value="paid">
+              <BillList bills={filteredPaidBills} />
             </TabsContent>
           </Tabs>
         </Card>

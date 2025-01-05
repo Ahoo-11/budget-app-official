@@ -1,6 +1,6 @@
 import { Database } from './supabase';
 
-export type BillStatus = Database['public']['Tables']['bills']['Row']['status'];
+export type BillStatus = 'active' | 'pending' | 'partially_paid' | 'paid';
 
 export interface BillProduct {
   id: string;

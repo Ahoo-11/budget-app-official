@@ -28,8 +28,8 @@ export const BillListItem = ({
         return <Clock className="h-4 w-4 text-yellow-500" />;
       case 'partially_paid':
         return <DollarSign className="h-4 w-4 text-blue-500" />;
-      default:
-        return <AlertCircle className="h-4 w-4 text-red-500" />;
+      case 'active':
+        return <AlertCircle className="h-4 w-4 text-primary" />;
     }
   };
 
@@ -41,8 +41,8 @@ export const BillListItem = ({
         return 'bg-yellow-50 text-yellow-700 border-yellow-200';
       case 'partially_paid':
         return 'bg-blue-50 text-blue-700 border-blue-200';
-      default:
-        return 'bg-gray-50 text-gray-700 border-gray-200';
+      case 'active':
+        return 'bg-primary/10 text-primary border-primary/20';
     }
   };
 
@@ -82,7 +82,7 @@ export const BillListItem = ({
         <span className="font-medium">{formatCurrency(bill.total)}</span>
       </div>
 
-      {bill.status === 'pending' && (
+      {bill.status === 'active' && (
         <Button
           variant="outline"
           size="sm"

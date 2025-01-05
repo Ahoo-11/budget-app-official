@@ -7,7 +7,7 @@ import { useSession } from "@supabase/auth-helpers-react";
 export function useBillSwitching(
   sourceId: string | null,
   setSelectedProducts: (products: BillProduct[]) => void,
-  handleUpdateBillStatus: (billId: string, status: 'completed') => Promise<void>
+  handleUpdateBillStatus: (billId: string, status: BillStatus) => Promise<void>
 ) {
   const [activeBillId, setActiveBillId] = useState<string | null>(null);
   const { toast } = useToast();
@@ -25,7 +25,7 @@ export function useBillSwitching(
         .from('bills')
         .select('*')
         .eq('source_id', sourceId)
-        .eq('status', 'pending')
+        .eq('status', 'active')
         .order('created_at', { ascending: false })
         .limit(1);
 
@@ -34,8 +34,10 @@ export function useBillSwitching(
       if (existingBills && existingBills.length > 0) {
         const activeBill = existingBills[0];
         setActiveBillId(activeBill.id);
-        setSelectedProducts(Array.isArray(activeBill.items) ? activeBill.items : []);
-        console.log('Found existing pending bill:', activeBill.id);
+        if (Array.isArray(activeBill.items)) {
+          setSelectedProducts(activeBill.items as BillProduct[]);
+        }
+        console.log('Found existing active bill:', activeBill.id);
       } else {
         await createNewBill();
       }
@@ -59,7 +61,7 @@ export function useBillSwitching(
       subtotal: 0,
       gst: 0,
       total: 0,
-      status: 'pending',
+      status: 'active',
       paid_amount: 0,
       date: new Date().toISOString(),
     };
@@ -121,14 +123,16 @@ export function useBillSwitching(
         .from('bills')
         .select('*')
         .eq('id', billId)
-        .eq('status', 'pending')
+        .eq('status', 'active')
         .single();
 
       if (error) throw error;
 
       if (bill) {
         setActiveBillId(bill.id);
-        setSelectedProducts(Array.isArray(bill.items) ? bill.items : []);
+        if (Array.isArray(bill.items)) {
+          setSelectedProducts(bill.items as BillProduct[]);
+        }
         toast({
           title: "Switched bill",
           description: `Now viewing bill #${bill.id.slice(0, 8)}`,
