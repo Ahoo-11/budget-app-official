@@ -30,7 +30,12 @@ export const TransactionList = ({ transactions, onDelete, onEdit }: TransactionL
     }
   };
 
-  if (!transactions.length) {
+  // Sort transactions by date in descending order
+  const sortedTransactions = [...transactions].sort((a, b) => 
+    new Date(b.date).getTime() - new Date(a.date).getTime()
+  );
+
+  if (!sortedTransactions.length) {
     return (
       <div className="text-center py-6 text-muted-foreground">
         No transactions found
@@ -40,7 +45,7 @@ export const TransactionList = ({ transactions, onDelete, onEdit }: TransactionL
 
   return (
     <div className="space-y-4">
-      {transactions.map((transaction) => (
+      {sortedTransactions.map((transaction) => (
         <TransactionItem
           key={transaction.id}
           transaction={transaction}

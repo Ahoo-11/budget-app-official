@@ -10,37 +10,51 @@ export const createBillTransaction = async (
   date: Date,
   items: BillProduct[]
 ) => {
-  console.log('Creating transaction with:', {
-    sourceId,
-    userId,
-    paidAmount,
-    totalAmount,
-    payerId,
-    date,
-    items
-  });
-
-  // Always create a transaction record for bill tracking
-  const { data, error: transactionError } = await supabase
+  // Create the main transaction for the full bill amount
+  const { data, error } = await supabase
     .from('transactions')
     .insert({
       source_id: sourceId,
       user_id: userId,
       type: 'income',
-      amount: totalAmount, // Use total amount for transaction visibility
-      description: `POS Sale${paidAmount > 0 ? ' - Payment' : ' - Pending'}`,
+      amount: totalAmount,
+      description: `POS Sale - ${items.length} items`,
       date: date.toISOString(),
       payer_id: payerId,
       status: paidAmount >= totalAmount ? 'completed' : 'pending',
-      created_by_name: 'POS System'
+      created_by_name: 'POS System',
+      total_amount: totalAmount,
+      remaining_amount: totalAmount - paidAmount
     })
-    .select();
+    .select()
+    .single();
 
-  console.log('Transaction creation result:', { data, error: transactionError });
+  if (error) {
+    console.error('Error creating transaction:', error);
+    throw error;
+  }
 
-  if (transactionError) {
-    console.error('Error creating transaction:', transactionError);
-    throw transactionError;
+  // If there's a partial payment, create a payment transaction
+  if (paidAmount > 0 && paidAmount < totalAmount) {
+    const { error: paymentError } = await supabase
+      .from('transactions')
+      .insert({
+        source_id: sourceId,
+        user_id: userId,
+        type: 'income',
+        amount: paidAmount,
+        description: `POS Sale Payment`,
+        date: date.toISOString(),
+        payer_id: payerId,
+        status: 'completed',
+        created_by_name: 'POS System',
+        parent_transaction_id: data.id
+      });
+
+    if (paymentError) {
+      console.error('Error creating payment transaction:', paymentError);
+      throw paymentError;
+    }
   }
 
   return data;
