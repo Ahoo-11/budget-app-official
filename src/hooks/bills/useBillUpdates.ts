@@ -1,24 +1,24 @@
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Bill, BillProduct, serializeBillItems } from "@/types/bills";
+import { Bill } from "@/types/bills";
 
 export function useBillUpdates() {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [date, setDate] = useState<Date>(new Date());
+  const [selectedPayerId, setSelectedPayerId] = useState<string | null>(null);
   const { toast } = useToast();
 
   const handleUpdateBill = async (bill: Bill): Promise<void> => {
     try {
       setIsSubmitting(true);
 
-      const serializedBill = {
-        ...bill,
-        items: serializeBillItems(bill.items)
-      };
-
       const { error } = await supabase
         .from('bills')
-        .update(serializedBill)
+        .update({
+          ...bill,
+          items: JSON.stringify(bill.items)
+        })
         .eq('id', bill.id);
 
       if (error) throw error;
@@ -66,9 +66,21 @@ export function useBillUpdates() {
     }
   };
 
+  const handlePayerSelect = (payerId: string | null) => {
+    setSelectedPayerId(payerId);
+  };
+
+  const handleDateChange = (newDate: Date) => {
+    setDate(newDate);
+  };
+
   return {
     isSubmitting,
     handleUpdateBill,
     handleDeleteBill,
+    date,
+    selectedPayerId,
+    handlePayerSelect,
+    handleDateChange,
   };
 }

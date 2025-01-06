@@ -24,7 +24,7 @@ export const OrderCart = ({
   setSelectedProducts,
 }: OrderCartProps) => {
   const {
-    isSubmitting,
+    isSubmitting: isPaymentSubmitting,
     paidAmount,
     setPaidAmount,
   } = useCartPayment();
@@ -38,6 +38,7 @@ export const OrderCart = ({
   } = useCartCalculations(selectedProducts);
 
   const {
+    isSubmitting: isBillSubmitting,
     date,
     selectedPayerId,
     handlePayerSelect,
@@ -90,7 +91,7 @@ export const OrderCart = ({
             onCheckout={handleCheckout}
             onCancelBill={handleCancelBill}
             selectedPayerId={selectedPayerId}
-            isSubmitting={isSubmitting}
+            isSubmitting={isPaymentSubmitting || isBillSubmitting}
           />
         </>
       )}
