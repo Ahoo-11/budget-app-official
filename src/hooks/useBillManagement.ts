@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
-import { Bill, BillItemJson, BillProduct, BillRow } from "@/types/bills";
+import { Bill, BillItemJson, BillProduct, BillDBRow } from "@/types/bills";
 import { useBillProducts } from "./bills/useBillProducts";
 import { useBillStatus } from "./bills/useBillStatus";
 import { useBillSwitching } from "./bills/useBillSwitching";
@@ -96,7 +96,7 @@ export function useBillManagement(sourceId: string | null) {
   });
 
   // Handle real-time updates
-  const handleRealtimeUpdate = useCallback(async (payload: RealtimePostgresChangesPayload<BillRow>) => {
+  const handleRealtimeUpdate = useCallback(async (payload: RealtimePostgresChangesPayload<BillDBRow>) => {
     console.log('🔄 Real-time bill update:', payload);
     
     // Force refetch bills on any change
@@ -127,7 +127,7 @@ export function useBillManagement(sourceId: string | null) {
 
     const channel = supabase
       .channel('bills-channel')
-      .on<BillRow>(
+      .on<BillDBRow>(
         'postgres_changes',
         { 
           event: '*',

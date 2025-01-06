@@ -12,7 +12,7 @@ export interface BillProduct {
   current_stock: number;
   purchase_cost: number | null;
   category?: string;
-  description?: string;
+  description?: string | null;
   image_url?: string | null;
   income_type_id?: string | null;
 }
@@ -21,7 +21,7 @@ export interface BillDBRow {
   id: string;
   source_id: string;
   user_id: string;
-  status: string;
+  status: BillStatus;
   items: Json;
   subtotal: number;
   discount: number;
@@ -35,26 +35,27 @@ export interface BillDBRow {
   paid_amount: number;
 }
 
-export interface Bill {
-  id: string;
-  source_id: string;
-  user_id: string;
-  status: BillStatus;
+export interface Bill extends Omit<BillDBRow, 'items'> {
   items: BillProduct[];
-  subtotal: number;
-  discount: number;
-  gst: number;
-  total: number;
-  date: string;
-  created_at: string;
-  updated_at: string;
-  payer_id?: string | null;
-  type_id?: string | null;
-  paid_amount: number;
   payer_name?: string;
 }
 
-export const serializeBillItems = (items: BillProduct[]): Json => {
+export interface BillItemJson {
+  id: string;
+  name: string;
+  price: number;
+  quantity: number;
+  type: "product" | "service";
+  source_id: string;
+  current_stock: number;
+  purchase_cost: number | null;
+  category?: string | null;
+  description?: string | null;
+  image_url?: string | null;
+  income_type_id?: string | null;
+}
+
+export const serializeBillItems = (items: BillProduct[]): BillItemJson[] => {
   return items.map(item => ({
     id: item.id,
     name: item.name,
@@ -68,24 +69,24 @@ export const serializeBillItems = (items: BillProduct[]): Json => {
     description: item.description || null,
     image_url: item.image_url || null,
     income_type_id: item.income_type_id || null
-  })) as Json;
+  }));
 };
 
 export const deserializeBillItems = (json: Json): BillProduct[] => {
   if (!Array.isArray(json)) return [];
   
   return json.map(item => ({
-    id: String(item.id || ''),
-    name: String(item.name || ''),
-    price: Number(item.price || 0),
-    quantity: Number(item.quantity || 0),
-    type: (item.type as "product" | "service") || "product",
-    source_id: String(item.source_id || ''),
-    current_stock: Number(item.current_stock || 0),
-    purchase_cost: item.purchase_cost ? Number(item.purchase_cost) : null,
-    category: item.category ? String(item.category) : undefined,
-    description: item.description ? String(item.description) : undefined,
-    image_url: item.image_url ? String(item.image_url) : null,
-    income_type_id: item.income_type_id ? String(item.income_type_id) : null
+    id: String(item?.id || ''),
+    name: String(item?.name || ''),
+    price: Number(item?.price || 0),
+    quantity: Number(item?.quantity || 0),
+    type: (item?.type as "product" | "service") || "product",
+    source_id: String(item?.source_id || ''),
+    current_stock: Number(item?.current_stock || 0),
+    purchase_cost: item?.purchase_cost ? Number(item.purchase_cost) : null,
+    category: item?.category ? String(item.category) : undefined,
+    description: item?.description ? String(item.description) : undefined,
+    image_url: item?.image_url ? String(item.image_url) : null,
+    income_type_id: item?.income_type_id ? String(item.income_type_id) : null
   }));
 };
