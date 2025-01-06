@@ -1,9 +1,9 @@
 import { BillProduct } from "@/types/bills";
-import { CartHeader } from "./cart/CartHeader";
-import { CartItems } from "./cart/CartItems";
-import { CartFooter } from "./cart/CartFooter";
-import { PaymentInput } from "./cart/PaymentInput";
-import { useCartManager } from "./cart/CartManager";
+import { CartHeader } from "../cart/CartHeader";
+import { CartItems } from "../cart/CartItems";
+import { CartFooter } from "../cart/CartFooter";
+import { PaymentInput } from "../cart/PaymentInput";
+import { useCartManager } from "../cart/CartManager";
 import { useCartCalculations } from "@/hooks/cart/useCartCalculations";
 import { useCartPayment } from "@/hooks/cart/useCartPayment";
 import { useBillUpdates } from "@/hooks/bills/useBillUpdates";
