@@ -8,6 +8,7 @@ import { useBillManagement } from "@/hooks/useBillManagement";
 import { BillListHeader } from "./list/BillListHeader";
 import { BillListSearch } from "./list/BillListSearch";
 import { BillListTabs } from "./list/BillListTabs";
+import { useToast } from "@/hooks/use-toast";
 
 export const BillListContainer = () => {
   const [selectedSource, setSelectedSource] = useState<string | null>(null);
@@ -16,8 +17,17 @@ export const BillListContainer = () => {
     to: new Date(),
   });
   const [searchQuery, setSearchQuery] = useState("");
+  const { toast } = useToast();
 
-  const { bills } = useBillManagement(selectedSource === 'all' ? null : selectedSource);
+  const { bills, isLoading, error } = useBillManagement(selectedSource === 'all' ? null : selectedSource);
+
+  if (error) {
+    toast({
+      title: "Error loading bills",
+      description: "There was a problem loading the bills. Please try again.",
+      variant: "destructive",
+    });
+  }
 
   const pendingBills = bills.filter(bill => 
     bill.status === 'pending' || bill.status === 'partially_paid'
@@ -63,10 +73,16 @@ export const BillListContainer = () => {
         />
 
         <Card className="p-6">
-          <BillListTabs 
-            pendingBills={filteredPendingBills}
-            paidBills={filteredPaidBills}
-          />
+          {isLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-white"></div>
+            </div>
+          ) : (
+            <BillListTabs 
+              pendingBills={filteredPendingBills}
+              paidBills={filteredPaidBills}
+            />
+          )}
         </Card>
       </motion.div>
     </div>

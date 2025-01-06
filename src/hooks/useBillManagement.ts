@@ -15,7 +15,7 @@ export function useBillManagement(sourceId: string | null) {
     handleUpdateBillStatus
   );
 
-  const { bills, queryClient } = useBillQueries(sourceId);
+  const { bills, queryClient, isLoading, error } = useBillQueries(sourceId);
 
   useBillRealtime(
     sourceId,
@@ -35,5 +35,7 @@ export function useBillManagement(sourceId: string | null) {
     activeBillId,
     handleNewBill,
     handleSwitchBill,
+    isLoading,
+    error
   };
 }

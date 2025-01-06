@@ -20,8 +20,6 @@ export function useBillQueries(sourceId: string | null) {
       let query = supabase
         .from('bills')
         .select('*, payers(name)')
-        .eq('user_id', session.user.id)
-        .in('status', ['active', 'completed'] as const)
         .order('created_at', { ascending: false });
       
       if (sourceId && sourceId !== 'all') {
@@ -69,14 +67,14 @@ export function useBillQueries(sourceId: string | null) {
     }
   };
 
-  const { data: bills = [] } = useQuery({
-    queryKey: ['bills', sourceId, session?.user?.id],
+  const { data: bills = [], isLoading, error } = useQuery({
+    queryKey: ['bills', sourceId],
     queryFn: fetchBills,
     enabled: !!session?.user?.id,
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
     staleTime: 0,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
-  return { bills, queryClient };
+  return { bills, queryClient, isLoading, error };
 }
