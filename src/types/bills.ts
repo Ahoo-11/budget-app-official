@@ -1,6 +1,6 @@
 import { Json } from "@/integrations/supabase/types";
 
-export type BillStatus = "active" | "pending" | "partially_paid" | "paid" | "cancelled";
+export type BillStatus = "active" | "pending" | "partially_paid" | "paid" | "cancelled" | "completed";
 
 export interface BillProduct {
   id: string;
@@ -41,6 +41,7 @@ export interface Bill extends Omit<BillDBRow, 'items'> {
 }
 
 export interface BillItemJson {
+  [key: string]: Json | undefined;
   id: string;
   name: string;
   price: number;
@@ -55,7 +56,7 @@ export interface BillItemJson {
   income_type_id?: string | null;
 }
 
-export const serializeBillItems = (items: BillProduct[]): BillItemJson[] => {
+export const serializeBillItems = (items: BillProduct[]): Json => {
   return items.map(item => ({
     id: item.id,
     name: item.name,
@@ -69,24 +70,28 @@ export const serializeBillItems = (items: BillProduct[]): BillItemJson[] => {
     description: item.description || null,
     image_url: item.image_url || null,
     income_type_id: item.income_type_id || null
-  }));
+  })) as Json;
 };
 
 export const deserializeBillItems = (json: Json): BillProduct[] => {
   if (!Array.isArray(json)) return [];
   
-  return json.map(item => ({
-    id: String(item?.id || ''),
-    name: String(item?.name || ''),
-    price: Number(item?.price || 0),
-    quantity: Number(item?.quantity || 0),
-    type: (item?.type as "product" | "service") || "product",
-    source_id: String(item?.source_id || ''),
-    current_stock: Number(item?.current_stock || 0),
-    purchase_cost: item?.purchase_cost ? Number(item.purchase_cost) : null,
-    category: item?.category ? String(item.category) : undefined,
-    description: item?.description ? String(item.description) : undefined,
-    image_url: item?.image_url ? String(item.image_url) : null,
-    income_type_id: item?.income_type_id ? String(item.income_type_id) : null
-  }));
+  return json.map(item => {
+    if (typeof item !== 'object' || !item) return {} as BillProduct;
+    
+    return {
+      id: String(item.id || ''),
+      name: String(item.name || ''),
+      price: Number(item.price || 0),
+      quantity: Number(item.quantity || 0),
+      type: (item.type as "product" | "service") || "product",
+      source_id: String(item.source_id || ''),
+      current_stock: Number(item.current_stock || 0),
+      purchase_cost: item.purchase_cost ? Number(item.purchase_cost) : null,
+      category: item.category ? String(item.category) : undefined,
+      description: item.description ? String(item.description) : null,
+      image_url: item.image_url ? String(item.image_url) : null,
+      income_type_id: item.income_type_id ? String(item.income_type_id) : null
+    };
+  });
 };

@@ -17,7 +17,8 @@ export const useBillManager = (sourceId: string) => {
           items: serializeBillItems(items),
           status: "pending",
           total: items.reduce((sum, item) => sum + item.price * item.quantity, 0),
-          user_id: (await supabase.auth.getUser()).data.user?.id
+          user_id: (await supabase.auth.getUser()).data.user?.id,
+          date: new Date().toISOString()
         })
         .select()
         .single();
