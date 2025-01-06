@@ -1,16 +1,16 @@
-import { Button } from "@/components/ui/button";
-import { Plus, Settings2, LogOut, Menu } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Menu } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { useQuery } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useSession } from "@supabase/auth-helpers-react";
-import { SidebarNav } from "./sidebar/SidebarNav";
-import { SourcesList } from "./sidebar/SourcesList";
+import { useQuery } from "@tanstack/react-query";
+import { SidebarNavigation } from "./sidebar/SidebarNavigation";
+import { useSources } from "@/hooks/useSources";
 
 export function AppSidebar() {
   const [isAddSourceOpen, setIsAddSourceOpen] = useState(false);
@@ -21,7 +21,7 @@ export function AppSidebar() {
   const session = useSession();
 
   const { data: userStatus } = useQuery({
-    queryKey: ['userStatus'],
+    queryKey: ['userStatus', session?.user?.id],
     queryFn: async () => {
       if (!session?.user?.id) return null;
       
@@ -42,75 +42,10 @@ export function AppSidebar() {
       }
       return data?.status;
     },
-    enabled: !!session?.user?.id,
-    retry: 3,
-    retryDelay: 1000
+    enabled: !!session?.user?.id
   });
 
-  const { data: sources = [], refetch } = useQuery({
-    queryKey: ['sources'],
-    queryFn: async () => {
-      if (!session?.user?.id || userStatus !== 'approved') return [];
-      
-      try {
-        const { data: userRole, error: roleError } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', session.user.id)
-          .single();
-
-        if (roleError) {
-          console.error('Error fetching user role:', roleError);
-          throw roleError;
-        }
-
-        let query = supabase.from('sources').select('*');
-
-        if (!userRole || !['controller', 'super_admin'].includes(userRole.role)) {
-          const { data: permissions, error: permError } = await supabase
-            .from('source_permissions')
-            .select('source_id')
-            .eq('user_id', session.user.id);
-
-          if (permError) {
-            console.error('Error fetching permissions:', permError);
-            throw permError;
-          }
-
-          if (permissions && permissions.length > 0) {
-            const sourceIds = permissions.map(p => p.source_id);
-            query = query.in('id', sourceIds);
-          } else {
-            return [];
-          }
-        }
-
-        const { data, error } = await query.order('created_at');
-        
-        if (error) {
-          console.error('Error fetching sources:', error);
-          toast({
-            variant: "destructive",
-            title: "Error",
-            description: "Failed to fetch sources. Please try refreshing the page.",
-          });
-          throw error;
-        }
-        return data;
-      } catch (error) {
-        console.error('Error in sources query:', error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "An error occurred while fetching sources. Please try again.",
-        });
-        throw error;
-      }
-    },
-    enabled: !!session?.user?.id && userStatus === 'approved',
-    retry: 3,
-    retryDelay: 1000
-  });
+  const { data: sources = [] } = useSources(userStatus);
 
   const handleLogout = async () => {
     try {
@@ -158,7 +93,6 @@ export function AppSidebar() {
       });
       setNewSourceName("");
       setIsAddSourceOpen(false);
-      refetch();
     } catch (error) {
       console.error('Error adding source:', error);
       toast({
@@ -168,48 +102,6 @@ export function AppSidebar() {
       });
     }
   };
-
-  const NavContent = () => (
-    <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="font-semibold">Expense Tracker</h2>
-      </div>
-      <div className="flex-1">
-        <SidebarNav />
-        {userStatus === 'approved' && (
-          <>
-            <SourcesList 
-              sources={sources} 
-              onCloseMobileMenu={() => setIsMobileMenuOpen(false)} 
-            />
-            <Button 
-              variant="ghost" 
-              className="w-full justify-start mt-2"
-              onClick={() => {
-                setIsAddSourceOpen(true);
-                setIsMobileMenuOpen(false);
-              }}
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Add Source
-            </Button>
-          </>
-        )}
-      </div>
-      <div className="flex items-center space-x-2">
-        {userStatus === 'approved' && (
-          <Link to="/settings">
-            <Button variant="outline" size="icon">
-              <Settings2 className="h-4 w-4" />
-            </Button>
-          </Link>
-        )}
-        <Button variant="outline" size="icon" onClick={handleLogout}>
-          <LogOut className="h-4 w-4" />
-        </Button>
-      </div>
-    </div>
-  );
 
   return (
     <>
@@ -221,13 +113,25 @@ export function AppSidebar() {
             </Button>
           </SheetTrigger>
           <SheetContent side="left" className="w-[240px] p-4">
-            <NavContent />
+            <SidebarNavigation
+              sources={sources}
+              userStatus={userStatus}
+              onAddSource={() => setIsAddSourceOpen(true)}
+              onLogout={handleLogout}
+              onCloseMobileMenu={() => setIsMobileMenuOpen(false)}
+            />
           </SheetContent>
         </Sheet>
       </div>
 
       <div className="border-r bg-background fixed top-0 left-0 h-screen w-[200px] p-4 hidden md:block overflow-hidden">
-        <NavContent />
+        <SidebarNavigation
+          sources={sources}
+          userStatus={userStatus}
+          onAddSource={() => setIsAddSourceOpen(true)}
+          onLogout={handleLogout}
+          onCloseMobileMenu={() => setIsMobileMenuOpen(false)}
+        />
       </div>
 
       <Dialog open={isAddSourceOpen} onOpenChange={setIsAddSourceOpen}>
