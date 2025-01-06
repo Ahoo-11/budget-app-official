@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { serializeBillItems } from "@/types/bills";
 
 interface BillListItemProps {
   bill: Bill;
@@ -58,9 +59,10 @@ export const BillListItem = ({ bill }: BillListItemProps) => {
     try {
       setIsUpdating(true);
       
-      const updateData: Partial<Bill> = {
+      const updateData = {
         status: newStatus,
-        paid_amount: newStatus === 'paid' ? bill.total : 0
+        paid_amount: newStatus === 'paid' ? bill.total : 0,
+        items: serializeBillItems(bill.items) // Serialize items before sending to Supabase
       };
 
       const { error } = await supabase
@@ -93,7 +95,8 @@ export const BillListItem = ({ bill }: BillListItemProps) => {
         .from('bills')
         .update({
           status: 'partially_paid',
-          paid_amount: paymentAmount
+          paid_amount: paymentAmount,
+          items: serializeBillItems(bill.items) // Serialize items before sending to Supabase
         })
         .eq('id', bill.id);
 
