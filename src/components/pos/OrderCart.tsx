@@ -48,11 +48,22 @@ export const OrderCart = ({
   const {
     handleCheckout,
     handleCancelBill,
+    isSubmitting: isCartSubmitting
   } = useCartManager({
     sourceId,
     selectedProducts,
     setSelectedProducts
   });
+
+  const handleCheckoutClick = () => {
+    handleCheckout(
+      subtotal,
+      discount,
+      gstAmount,
+      finalTotal,
+      paidAmount
+    );
+  };
 
   return (
     <div className="bg-white h-full flex flex-col border rounded-lg">
@@ -88,10 +99,10 @@ export const OrderCart = ({
             discount={discount}
             finalTotal={finalTotal}
             onDiscountChange={setDiscount}
-            onCheckout={handleCheckout}
+            onCheckout={handleCheckoutClick}
             onCancelBill={handleCancelBill}
             selectedPayerId={selectedPayerId}
-            isSubmitting={isPaymentSubmitting || isBillSubmitting}
+            isSubmitting={isPaymentSubmitting || isBillSubmitting || isCartSubmitting}
           />
         </>
       )}
