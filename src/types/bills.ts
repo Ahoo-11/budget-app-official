@@ -17,6 +17,24 @@ export interface BillProduct {
   income_type_id?: string | null;
 }
 
+export interface BillDBRow {
+  id: string;
+  source_id: string;
+  user_id: string;
+  status: string;
+  items: Json;
+  subtotal: number;
+  discount: number;
+  gst: number;
+  total: number;
+  date: string;
+  created_at: string;
+  updated_at: string;
+  payer_id?: string | null;
+  type_id?: string | null;
+  paid_amount: number;
+}
+
 export interface Bill {
   id: string;
   source_id: string;
@@ -34,24 +52,6 @@ export interface Bill {
   type_id?: string | null;
   paid_amount: number;
   payer_name?: string;
-}
-
-export interface BillDBRow {
-  id: string;
-  source_id: string;
-  user_id: string;
-  status: string;
-  items: Json;
-  subtotal: number;
-  discount: number;
-  gst: number;
-  total: number;
-  date: string;
-  created_at: string;
-  updated_at: string;
-  payer_id?: string | null;
-  type_id?: string | null;
-  paid_amount: number;
 }
 
 export const serializeBillItems = (items: BillProduct[]): Json => {

@@ -4,9 +4,9 @@ import { CartItems } from "./cart/CartItems";
 import { CartFooter } from "./cart/CartFooter";
 import { PaymentInput } from "./cart/PaymentInput";
 import { useCartManager } from "./cart/CartManager";
-import { useBillUpdates } from "@/hooks/bills/useBillUpdates";
 import { useCartCalculations } from "@/hooks/cart/useCartCalculations";
 import { useCartPayment } from "@/hooks/cart/useCartPayment";
+import { useBillUpdates } from "@/hooks/bills/useBillUpdates";
 
 interface OrderCartProps {
   selectedProducts: BillProduct[];

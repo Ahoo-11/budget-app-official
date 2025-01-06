@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { BillProduct } from "@/types/bills";
+import { BillProduct, serializeBillItems } from "@/types/bills";
 import { toast } from "sonner";
 
 export const useCheckoutManager = (sourceId: string) => {
@@ -13,6 +13,8 @@ export const useCheckoutManager = (sourceId: string) => {
   ) => {
     try {
       setIsProcessing(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No authenticated user");
 
       const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
@@ -20,8 +22,9 @@ export const useCheckoutManager = (sourceId: string) => {
         .from("bills")
         .insert({
           source_id: sourceId,
+          user_id: user.id,
           payer_id: payerId,
-          items,
+          items: serializeBillItems(items),
           status: paidAmount >= total ? "paid" : "pending",
           total,
           paid_amount: paidAmount,

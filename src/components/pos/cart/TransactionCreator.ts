@@ -8,12 +8,16 @@ export const createTransaction = async (
   payerId?: string
 ) => {
   try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("No authenticated user");
+
     const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
     const { data: transaction, error } = await supabase
       .from("transactions")
       .insert({
         source_id: sourceId,
+        user_id: user.id,
         payer_id: payerId,
         type: "pos_sale",
         amount: total,
