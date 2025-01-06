@@ -54,22 +54,21 @@ export interface BillDBRow {
   paid_amount: number;
 }
 
-// Helper functions for JSON serialization
 export const serializeBillItems = (items: BillProduct[]): Json => {
   return items.map(item => ({
     id: item.id,
     name: item.name,
     price: item.price,
     quantity: item.quantity,
-    type: item.type || 'product',
+    type: item.type,
     source_id: item.source_id,
-    current_stock: item.current_stock || 0,
-    purchase_cost: item.purchase_cost || null,
-    category: item.category,
-    description: item.description,
-    image_url: item.image_url,
-    income_type_id: item.income_type_id
-  }));
+    current_stock: item.current_stock,
+    purchase_cost: item.purchase_cost,
+    category: item.category || null,
+    description: item.description || null,
+    image_url: item.image_url || null,
+    income_type_id: item.income_type_id || null
+  })) as Json;
 };
 
 export const deserializeBillItems = (json: Json): BillProduct[] => {

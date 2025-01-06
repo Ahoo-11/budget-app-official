@@ -23,6 +23,7 @@ export const useBillUpdates = (billId: string) => {
       return {
         ...dbRow,
         items: deserializeBillItems(dbRow.items),
+        status: dbRow.status as Bill['status'],
         payer_name: dbRow.payers?.name
       };
     },
