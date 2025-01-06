@@ -71,6 +71,6 @@ export function useSources(userStatus: string | null) {
     },
     enabled: !!session?.user?.id && userStatus === 'approved',
     staleTime: 1000 * 60, // Consider data fresh for 1 minute
-    cacheTime: 1000 * 60 * 5 // Keep unused data in cache for 5 minutes
+    gcTime: 1000 * 60 * 5 // Keep unused data in cache for 5 minutes
   });
 }
