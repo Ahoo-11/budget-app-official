@@ -26,18 +26,30 @@ export const BillListItem = ({ bill }: BillListItemProps) => {
     try {
       setIsUpdating(true);
       
-      const updateData = {
-        status: newStatus,
-        paid_amount: newStatus === 'paid' ? bill.total : 0,
+      const updateData: Partial<Bill> = {
         items: serializeBillItems(bill.items)
       };
+
+      // Handle status and payment amount based on the new status
+      if (newStatus === 'paid') {
+        updateData.status = 'paid';
+        updateData.paid_amount = bill.total;
+      } else if (newStatus === 'pending') {
+        updateData.status = 'pending';
+        updateData.paid_amount = 0;
+      }
+
+      console.log('Updating bill with data:', updateData);
 
       const { error } = await supabase
         .from('bills')
         .update(updateData)
         .eq('id', bill.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error details:', error);
+        throw error;
+      }
 
       queryClient.invalidateQueries({ queryKey: ['bills'] });
       toast.success('Bill status updated successfully');
@@ -58,16 +70,23 @@ export const BillListItem = ({ bill }: BillListItemProps) => {
         return;
       }
 
+      const updateData: Partial<Bill> = {
+        status: paymentAmount >= bill.total ? 'paid' : 'partially_paid',
+        paid_amount: paymentAmount,
+        items: serializeBillItems(bill.items)
+      };
+
+      console.log('Submitting payment with data:', updateData);
+
       const { error } = await supabase
         .from('bills')
-        .update({
-          status: 'partially_paid',
-          paid_amount: paymentAmount,
-          items: serializeBillItems(bill.items)
-        })
+        .update(updateData)
         .eq('id', bill.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Payment error details:', error);
+        throw error;
+      }
 
       queryClient.invalidateQueries({ queryKey: ['bills'] });
       toast.success('Payment recorded successfully');
