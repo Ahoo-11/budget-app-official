@@ -4,11 +4,12 @@ import { addDays } from "date-fns";
 import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
 import { FiltersCard } from "@/components/filters/FiltersCard";
 import { useBillManagement } from "@/hooks/useBillManagement";
 import { Bill } from "@/types/bills";
 import { cn } from "@/lib/utils";
-import { Check, Clock, DollarSign } from "lucide-react";
+import { Check, Clock, DollarSign, Search } from "lucide-react";
 
 const BillList = ({ bills }: { bills: Bill[] }) => {
   if (!bills.length) {
@@ -87,6 +88,7 @@ export const BillListContainer = () => {
     from: addDays(new Date(), -30),
     to: new Date(),
   });
+  const [searchQuery, setSearchQuery] = useState("");
 
   const { bills } = useBillManagement(selectedSource === 'all' ? null : selectedSource);
 
@@ -101,7 +103,10 @@ export const BillListContainer = () => {
       const billDate = new Date(bill.date || bill.created_at);
       const matchesDateRange = (!date?.from || billDate >= date.from) && 
                              (!date?.to || billDate <= date.to);
-      return matchesDateRange;
+      const matchesSearch = searchQuery === "" || 
+                          bill.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          (bill.payer_name && bill.payer_name.toLowerCase().includes(searchQuery.toLowerCase()));
+      return matchesDateRange && matchesSearch;
     });
   };
 
@@ -140,6 +145,16 @@ export const BillListContainer = () => {
           setSelectedSource={setSelectedSource}
           showSourceSelector={true}
         />
+
+        <div className="relative">
+          <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search by bill ID or payer name..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9"
+          />
+        </div>
 
         <Card className="p-6">
           <Tabs defaultValue="pending" className="w-full">
