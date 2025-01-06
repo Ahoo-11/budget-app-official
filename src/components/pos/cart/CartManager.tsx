@@ -30,22 +30,17 @@ export const useCartManager = ({
 
     setIsSubmitting(true);
     try {
-      // Serialize items with proper error handling
-      let serializedItems;
-      try {
-        serializedItems = serializeBillItems(selectedProducts);
-      } catch (error) {
-        console.error('Error serializing items:', error);
-        toast.error("Error processing items");
-        return;
-      }
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("User not authenticated");
 
-      const { data, error } = await supabase
+      // Create bill first
+      const { data: bill, error: billError } = await supabase
         .from('bills')
         .insert({
           source_id: sourceId,
-          user_id: (await supabase.auth.getUser()).data.user?.id,
-          items: serializedItems,
+          user_id: user.id,
+          items: serializeBillItems(selectedProducts),
           subtotal: subtotal,
           discount: discount,
           gst: gstAmount,
@@ -57,13 +52,47 @@ export const useCartManager = ({
         .select()
         .single();
 
-      if (error) throw error;
+      if (billError) throw billError;
 
+      // Create stock movements for products
+      const stockMovements = selectedProducts
+        .filter(item => item.type === 'product') // Only process products, not services
+        .map(product => ({
+          product_id: product.id,
+          movement_type: 'sale',
+          quantity: -product.quantity, // Negative quantity for sales
+          unit_cost: product.purchase_cost || 0,
+          notes: `Bill: ${bill.id}`,
+          created_by: user.id
+        }));
+
+      if (stockMovements.length > 0) {
+        const { error: stockError } = await supabase
+          .from('stock_movements')
+          .insert(stockMovements);
+
+        if (stockError) throw stockError;
+
+        // Update product stock levels
+        for (const product of selectedProducts.filter(item => item.type === 'product')) {
+          const { error: updateError } = await supabase
+            .from('products')
+            .update({
+              current_stock: product.current_stock - product.quantity
+            })
+            .eq('id', product.id);
+
+          if (updateError) throw updateError;
+        }
+      }
+
+      // Clear cart and show success message
       setSelectedProducts([]);
-      toast.success("Bill created successfully");
-    } catch (error) {
+      toast.success("Bill created successfully and stock updated");
+
+    } catch (error: any) {
       console.error('Error creating bill:', error);
-      toast.error("Failed to create bill");
+      toast.error(error.message || "Failed to create bill");
     } finally {
       setIsSubmitting(false);
     }
