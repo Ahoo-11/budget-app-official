@@ -1,60 +1,110 @@
-import { useEffect, useState } from "react";
 import { BillProduct } from "@/types/bills";
-import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
+import { CartHeader } from "./cart/CartHeader";
+import { CartItems } from "./cart/CartItems";
+import { CartFooter } from "./cart/CartFooter";
+import { PaymentInput } from "./cart/PaymentInput";
+import { useCartManager } from "./cart/CartManager";
+import { useCartCalculations } from "@/hooks/cart/useCartCalculations";
+import { useCartPayment } from "@/hooks/cart/useCartPayment";
+import { useBillUpdates } from "@/hooks/bills/useBillUpdates";
 
 interface OrderCartProps {
   selectedProducts: BillProduct[];
-  onUpdate: (products: BillProduct[]) => void;
+  onUpdateQuantity: (productId: string, quantity: number) => void;
+  onRemove: (productId: string) => void;
+  sourceId: string;
+  setSelectedProducts: (products: BillProduct[]) => void;
 }
 
-export const OrderCart = ({ selectedProducts, onUpdate }: OrderCartProps) => {
-  const [products, setProducts] = useState<BillProduct[]>(selectedProducts);
+export const OrderCart = ({
+  selectedProducts,
+  onUpdateQuantity,
+  onRemove,
+  sourceId,
+  setSelectedProducts,
+}: OrderCartProps) => {
+  const {
+    isSubmitting: isPaymentSubmitting,
+    paidAmount,
+    setPaidAmount,
+  } = useCartPayment();
 
-  useEffect(() => {
-    setProducts(selectedProducts);
-  }, [selectedProducts]);
+  const {
+    discount,
+    setDiscount,
+    subtotal,
+    gstAmount,
+    finalTotal,
+  } = useCartCalculations(selectedProducts);
 
-  const handleRemoveProduct = (id: string) => {
-    const updatedProducts = products.filter(product => product.id !== id);
-    setProducts(updatedProducts);
-    onUpdate(updatedProducts);
-  };
+  const {
+    isSubmitting: isBillSubmitting,
+    date,
+    selectedPayerId,
+    handlePayerSelect,
+    handleDateChange,
+  } = useBillUpdates();
 
-  const handleUpdateQuantity = (id: string, quantity: number) => {
-    const updatedProducts = products.map(product => 
-      product.id === id ? { ...product, quantity } : product
+  const {
+    handleCheckout,
+    handleCancelBill,
+    isSubmitting: isCartSubmitting
+  } = useCartManager({
+    sourceId,
+    selectedProducts,
+    setSelectedProducts
+  });
+
+  const handleCheckoutClick = () => {
+    handleCheckout(
+      subtotal,
+      discount,
+      gstAmount,
+      finalTotal,
+      paidAmount
     );
-    setProducts(updatedProducts);
-    onUpdate(updatedProducts);
   };
 
   return (
-    <div className="space-y-4">
-      {products.map(product => (
-        <div key={product.id} className="flex items-center justify-between p-4 border rounded-lg">
-          <div>
-            <h4 className="font-medium">{product.name}</h4>
-            <p>Price: MVR {product.price.toFixed(2)}</p>
-            <p>Quantity: 
-              <input 
-                type="number" 
-                value={product.quantity} 
-                onChange={(e) => handleUpdateQuantity(product.id, Number(e.target.value))}
-                min="1"
-                className="w-16 border rounded"
-              />
-            </p>
+    <div className="bg-white h-full flex flex-col border rounded-lg">
+      <CartHeader
+        selectedPayerId={selectedPayerId}
+        date={date}
+        onPayerSelect={handlePayerSelect}
+        onDateChange={handleDateChange}
+      />
+
+      <div className="border-t p-4">
+        <h3 className="font-medium text-lg">Order Summary</h3>
+      </div>
+
+      <CartItems
+        selectedProducts={selectedProducts}
+        onUpdateQuantity={onUpdateQuantity}
+        onRemove={onRemove}
+      />
+
+      {selectedProducts.length > 0 && (
+        <>
+          <div className="border-t p-4">
+            <PaymentInput
+              total={finalTotal}
+              paidAmount={paidAmount}
+              onPaidAmountChange={setPaidAmount}
+            />
           </div>
-          <Button variant="destructive" onClick={() => handleRemoveProduct(product.id)}>
-            Remove
-          </Button>
-        </div>
-      ))}
-      {products.length === 0 && (
-        <div className="text-center py-6 text-muted-foreground">
-          No products in the cart
-        </div>
+          <CartFooter
+            subtotal={subtotal}
+            gstAmount={gstAmount}
+            discount={discount}
+            finalTotal={finalTotal}
+            onDiscountChange={setDiscount}
+            onCheckout={handleCheckoutClick}
+            onCancelBill={handleCancelBill}
+            selectedPayerId={selectedPayerId}
+            isSubmitting={isPaymentSubmitting || isBillSubmitting || isCartSubmitting}
+          />
+        </>
       )}
     </div>
   );

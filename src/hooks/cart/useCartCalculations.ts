@@ -9,13 +9,16 @@ export function useCartCalculations(selectedProducts: BillProduct[]) {
     total + (item.price * item.quantity), 0
   );
 
-  const { gstAmount, totalAmount: finalTotal } = calculateGSTFromTotal(subtotal - discount);
+  // Calculate GST after discount
+  const discountedTotal = subtotal - discount;
+  const { gstAmount, totalAmount: finalTotal } = calculateGSTFromTotal(discountedTotal);
 
   return {
     discount,
     setDiscount,
     subtotal,
     gstAmount,
-    finalTotal
+    finalTotal,
+    discountedTotal
   };
 }
