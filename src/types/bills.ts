@@ -33,15 +33,42 @@ export interface Bill {
   payer_id?: string | null;
   type_id?: string | null;
   paid_amount: number;
+  payer_name?: string;
+}
+
+export interface BillDBRow {
+  id: string;
+  source_id: string;
+  user_id: string;
+  status: string;
+  items: Json;
+  subtotal: number;
+  discount: number;
+  gst: number;
+  total: number;
+  date: string;
+  created_at: string;
+  updated_at: string;
+  payer_id?: string | null;
+  type_id?: string | null;
+  paid_amount: number;
 }
 
 // Helper functions for JSON serialization
 export const serializeBillItems = (items: BillProduct[]): Json => {
   return items.map(item => ({
-    ...item,
+    id: item.id,
+    name: item.name,
+    price: item.price,
+    quantity: item.quantity,
     type: item.type || 'product',
+    source_id: item.source_id,
     current_stock: item.current_stock || 0,
-    purchase_cost: item.purchase_cost || null
+    purchase_cost: item.purchase_cost || null,
+    category: item.category,
+    description: item.description,
+    image_url: item.image_url,
+    income_type_id: item.income_type_id
   }));
 };
 

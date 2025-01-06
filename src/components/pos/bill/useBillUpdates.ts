@@ -1,19 +1,30 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Bill, BillProduct } from "@/types/bills";
+import { Bill, BillDBRow, deserializeBillItems, serializeBillItems } from "@/types/bills";
+import { useState } from "react";
 
 export const useBillUpdates = (billId: string) => {
+  const [date, setDate] = useState<Date>(new Date());
+  const [selectedPayerId, setSelectedPayerId] = useState<string | null>(null);
+
   const { data: bill, error, isLoading } = useQuery<Bill | null>({
     queryKey: ['bill', billId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('bills')
-        .select('*')
+        .select('*, payers(name)')
         .eq('id', billId)
         .single();
 
       if (error) throw error;
-      return data as Bill;
+      
+      const dbRow = data as BillDBRow & { payers: { name: string } | null };
+      
+      return {
+        ...dbRow,
+        items: deserializeBillItems(dbRow.items),
+        payer_name: dbRow.payers?.name
+      };
     },
     enabled: !!billId,
   });
@@ -21,10 +32,21 @@ export const useBillUpdates = (billId: string) => {
   const updateBill = async (updatedBill: Partial<Bill>) => {
     const { error } = await supabase
       .from('bills')
-      .update(updatedBill)
+      .update({
+        ...updatedBill,
+        items: updatedBill.items ? serializeBillItems(updatedBill.items) : undefined
+      })
       .eq('id', billId);
 
     if (error) throw error;
+  };
+
+  const handlePayerSelect = (payerId: string | null) => {
+    setSelectedPayerId(payerId);
+  };
+
+  const handleDateChange = (newDate: Date) => {
+    setDate(newDate);
   };
 
   return {
@@ -32,5 +54,9 @@ export const useBillUpdates = (billId: string) => {
     error,
     isLoading,
     updateBill,
+    date,
+    selectedPayerId,
+    handlePayerSelect,
+    handleDateChange,
   };
 };
