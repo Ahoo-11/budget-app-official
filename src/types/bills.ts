@@ -41,7 +41,6 @@ export interface Bill extends Omit<BillDBRow, 'items'> {
 }
 
 export interface BillItemJson {
-  [key: string]: Json | undefined;
   id: string;
   name: string;
   price: number;
@@ -79,19 +78,21 @@ export const deserializeBillItems = (json: Json): BillProduct[] => {
   return json.map(item => {
     if (typeof item !== 'object' || !item) return {} as BillProduct;
     
+    const typedItem = item as Record<string, Json>;
+    
     return {
-      id: String(item.id || ''),
-      name: String(item.name || ''),
-      price: Number(item.price || 0),
-      quantity: Number(item.quantity || 0),
-      type: (item.type as "product" | "service") || "product",
-      source_id: String(item.source_id || ''),
-      current_stock: Number(item.current_stock || 0),
-      purchase_cost: item.purchase_cost ? Number(item.purchase_cost) : null,
-      category: item.category ? String(item.category) : undefined,
-      description: item.description ? String(item.description) : null,
-      image_url: item.image_url ? String(item.image_url) : null,
-      income_type_id: item.income_type_id ? String(item.income_type_id) : null
+      id: String(typedItem.id || ''),
+      name: String(typedItem.name || ''),
+      price: Number(typedItem.price || 0),
+      quantity: Number(typedItem.quantity || 0),
+      type: (String(typedItem.type || 'product')) as "product" | "service",
+      source_id: String(typedItem.source_id || ''),
+      current_stock: Number(typedItem.current_stock || 0),
+      purchase_cost: typedItem.purchase_cost ? Number(typedItem.purchase_cost) : null,
+      category: typedItem.category ? String(typedItem.category) : undefined,
+      description: typedItem.description ? String(typedItem.description) : null,
+      image_url: typedItem.image_url ? String(typedItem.image_url) : null,
+      income_type_id: typedItem.income_type_id ? String(typedItem.income_type_id) : null
     };
   });
 };
