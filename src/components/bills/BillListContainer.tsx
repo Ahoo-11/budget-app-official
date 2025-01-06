@@ -8,6 +8,7 @@ import { FiltersCard } from "@/components/filters/FiltersCard";
 import { useBillManagement } from "@/hooks/useBillManagement";
 import { Bill } from "@/types/bills";
 import { cn } from "@/lib/utils";
+import { Check, Clock, DollarSign } from "lucide-react";
 
 const BillList = ({ bills }: { bills: Bill[] }) => {
   if (!bills.length) {
@@ -17,6 +18,32 @@ const BillList = ({ bills }: { bills: Bill[] }) => {
       </div>
     );
   }
+
+  const getStatusIcon = (status: Bill['status']) => {
+    switch (status) {
+      case 'paid':
+        return <Check className="h-4 w-4 text-success" />;
+      case 'pending':
+        return <Clock className="h-4 w-4 text-warning" />;
+      case 'partially_paid':
+        return <DollarSign className="h-4 w-4 text-info" />;
+      default:
+        return <Clock className="h-4 w-4 text-muted-foreground" />;
+    }
+  };
+
+  const getStatusColor = (status: Bill['status']) => {
+    switch (status) {
+      case 'paid':
+        return 'bg-success/10 text-success';
+      case 'pending':
+        return 'bg-warning/10 text-warning';
+      case 'partially_paid':
+        return 'bg-info/10 text-info';
+      default:
+        return 'bg-muted text-muted-foreground';
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -34,14 +61,15 @@ const BillList = ({ bills }: { bills: Bill[] }) => {
             </div>
             <div className="text-right">
               <p className="font-medium">Total: MVR {bill.total?.toFixed(2)}</p>
-              <p className="text-sm">
-                Status: <span className={cn(
-                  "px-2 py-1 rounded-full text-xs",
-                  bill.status === 'paid' ? "bg-success/10 text-success" : "bg-primary/10 text-primary"
-                )}>{bill.status}</span>
-              </p>
+              <div className={cn(
+                "inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium",
+                getStatusColor(bill.status)
+              )}>
+                {getStatusIcon(bill.status)}
+                {bill.status.charAt(0).toUpperCase() + bill.status.slice(1).replace('_', ' ')}
+              </div>
               {bill.payer_name && (
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-muted-foreground mt-1">
                   Payer: {bill.payer_name}
                 </p>
               )}
@@ -94,15 +122,14 @@ export const BillListContainer = () => {
             transition={{ delay: 0.2 }}
           >
             <span className="px-3 py-1 text-sm bg-success/10 text-success rounded-full">
-              Track Your Bills
+              Recent Bills
             </span>
           </motion.div>
           <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
             Bill History
           </h1>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Keep track of your pending and paid bills with our beautiful and intuitive
-            interface.
+            View and manage your recent bills with our intuitive interface.
           </p>
         </header>
 
