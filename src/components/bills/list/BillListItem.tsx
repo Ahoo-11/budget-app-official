@@ -18,6 +18,7 @@ export const BillListItem = ({ bill }: BillListItemProps) => {
   const queryClient = useQueryClient();
 
   const handleStatusChange = async (newStatus: Bill['status']) => {
+    // If selecting partially_paid, show payment dialog
     if (newStatus === 'partially_paid') {
       setShowPaymentDialog(true);
       return;
@@ -26,9 +27,10 @@ export const BillListItem = ({ bill }: BillListItemProps) => {
     try {
       setIsUpdating(true);
       
-      // Prepare update data with serialized items
+      // Prepare update data
       const updateData = {
         status: newStatus,
+        // If paid status, set paid_amount to total bill amount
         paid_amount: newStatus === 'paid' ? bill.total : 0,
         items: serializeBillItems(bill.items)
       };
@@ -46,7 +48,7 @@ export const BillListItem = ({ bill }: BillListItemProps) => {
       }
 
       queryClient.invalidateQueries({ queryKey: ['bills'] });
-      toast.success('Bill status updated successfully');
+      toast.success(`Bill status updated to ${newStatus}`);
     } catch (error) {
       console.error('Error updating bill status:', error);
       toast.error('Failed to update bill status');
@@ -64,7 +66,6 @@ export const BillListItem = ({ bill }: BillListItemProps) => {
         return;
       }
 
-      // Prepare update data with serialized items
       const updateData = {
         status: paymentAmount >= bill.total ? 'paid' : 'partially_paid',
         paid_amount: paymentAmount,
