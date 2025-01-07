@@ -11,7 +11,7 @@ export function EmploymentIncome({ sourceId }: { sourceId: string }) {
   const [isOpen, setIsOpen] = useState(false);
   const { types, isTypeEnabled } = useTypes(sourceId);
 
-  const handleSuccess = () => {
+  const handleSuccess = async () => {
     setIsOpen(false);
   };
 

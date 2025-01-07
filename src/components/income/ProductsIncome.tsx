@@ -3,7 +3,7 @@ import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { ProductGrid } from "@/components/products/ProductGrid";
-import { ProductForm } from "@/components/products/form/ProductForm";
+import { ProductForm } from "@/components/products/ProductForm";
 
 interface ProductsIncomeProps {
   sourceId: string;
