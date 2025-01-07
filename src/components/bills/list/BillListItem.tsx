@@ -26,18 +26,12 @@ export const BillListItem = ({ bill }: BillListItemProps) => {
     try {
       setIsUpdating(true);
       
-      const updateData: Partial<Bill> = {
+      // Prepare update data with serialized items
+      const updateData = {
+        status: newStatus,
+        paid_amount: newStatus === 'paid' ? bill.total : 0,
         items: serializeBillItems(bill.items)
       };
-
-      // Handle status and payment amount based on the new status
-      if (newStatus === 'paid') {
-        updateData.status = 'paid';
-        updateData.paid_amount = bill.total;
-      } else if (newStatus === 'pending') {
-        updateData.status = 'pending';
-        updateData.paid_amount = 0;
-      }
 
       console.log('Updating bill with data:', updateData);
 
@@ -70,7 +64,8 @@ export const BillListItem = ({ bill }: BillListItemProps) => {
         return;
       }
 
-      const updateData: Partial<Bill> = {
+      // Prepare update data with serialized items
+      const updateData = {
         status: paymentAmount >= bill.total ? 'paid' : 'partially_paid',
         paid_amount: paymentAmount,
         items: serializeBillItems(bill.items)
