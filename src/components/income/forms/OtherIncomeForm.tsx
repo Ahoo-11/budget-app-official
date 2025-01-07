@@ -7,20 +7,19 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { CalendarIcon, Loader2 } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 
-interface InvestmentIncomeFormProps {
+interface OtherIncomeFormProps {
   sourceId: string;
   onSubmit: (data: any) => Promise<void>;
 }
 
-export const InvestmentIncomeForm = ({ sourceId, onSubmit }: InvestmentIncomeFormProps) => {
+export const OtherIncomeForm = ({ sourceId, onSubmit }: OtherIncomeFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [investmentName, setInvestmentName] = useState("");
+  const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
-  const [type, setType] = useState("dividend");
   const [date, setDate] = useState<Date>(new Date());
-  const [returnRate, setReturnRate] = useState("");
+  const [notes, setNotes] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,12 +27,11 @@ export const InvestmentIncomeForm = ({ sourceId, onSubmit }: InvestmentIncomeFor
     try {
       await onSubmit({
         source_id: sourceId,
-        type: "investment",
-        investment_name: investmentName,
+        type: "other",
+        description,
         amount: parseFloat(amount),
-        investment_type: type,
-        date: date,
-        return_rate: parseFloat(returnRate),
+        date,
+        notes,
       });
     } finally {
       setIsSubmitting(false);
@@ -44,28 +42,13 @@ export const InvestmentIncomeForm = ({ sourceId, onSubmit }: InvestmentIncomeFor
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="space-y-4">
         <div>
-          <Label>Investment Name</Label>
+          <Label>Description</Label>
           <Input
-            value={investmentName}
-            onChange={(e) => setInvestmentName(e.target.value)}
-            placeholder="Enter investment name"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Enter income description"
             required
           />
-        </div>
-
-        <div>
-          <Label>Investment Type</Label>
-          <Select value={type} onValueChange={setType}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select investment type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="dividend">Dividend</SelectItem>
-              <SelectItem value="interest">Interest</SelectItem>
-              <SelectItem value="capital_gain">Capital Gain</SelectItem>
-              <SelectItem value="other">Other</SelectItem>
-            </SelectContent>
-          </Select>
         </div>
 
         <div>
@@ -76,18 +59,6 @@ export const InvestmentIncomeForm = ({ sourceId, onSubmit }: InvestmentIncomeFor
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             placeholder="Enter amount"
-            required
-          />
-        </div>
-
-        <div>
-          <Label>Return Rate (%)</Label>
-          <Input
-            type="number"
-            step="0.01"
-            value={returnRate}
-            onChange={(e) => setReturnRate(e.target.value)}
-            placeholder="Enter return rate"
             required
           />
         </div>
@@ -117,6 +88,16 @@ export const InvestmentIncomeForm = ({ sourceId, onSubmit }: InvestmentIncomeFor
             </PopoverContent>
           </Popover>
         </div>
+
+        <div>
+          <Label>Additional Notes</Label>
+          <Textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Enter any additional notes"
+            className="h-24"
+          />
+        </div>
       </div>
 
       <Button
@@ -127,10 +108,10 @@ export const InvestmentIncomeForm = ({ sourceId, onSubmit }: InvestmentIncomeFor
         {isSubmitting ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Adding Investment Income...
+            Adding Other Income...
           </>
         ) : (
-          "Add Investment Income"
+          "Add Other Income"
         )}
       </Button>
     </form>

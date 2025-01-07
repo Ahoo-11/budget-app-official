@@ -7,7 +7,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { CalendarIcon, Loader2 } from "lucide-react";
-import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface RentalIncomeFormProps {
   sourceId: string;
@@ -17,13 +18,12 @@ interface RentalIncomeFormProps {
 export const RentalIncomeForm = ({ sourceId, onSubmit }: RentalIncomeFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [propertyName, setPropertyName] = useState("");
-  const [address, setAddress] = useState("");
   const [rentalAmount, setRentalAmount] = useState("");
-  const [dueDate, setDueDate] = useState<Date>(new Date());
-  const [tenantName, setTenantName] = useState("");
+  const [paymentDate, setPaymentDate] = useState<Date>(new Date());
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [frequency, setFrequency] = useState("monthly");
   const [leaseStart, setLeaseStart] = useState<Date>(new Date());
   const [leaseEnd, setLeaseEnd] = useState<Date>(new Date());
-  const [terms, setTerms] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,13 +33,12 @@ export const RentalIncomeForm = ({ sourceId, onSubmit }: RentalIncomeFormProps) 
         source_id: sourceId,
         type: "rental",
         property_name: propertyName,
-        address,
         rental_amount: parseFloat(rentalAmount),
-        due_date: dueDate,
-        tenant_name: tenantName,
+        payment_date: paymentDate,
+        is_recurring: isRecurring,
+        frequency,
         lease_start: leaseStart,
         lease_end: leaseEnd,
-        terms,
       });
     } finally {
       setIsSubmitting(false);
@@ -50,21 +49,11 @@ export const RentalIncomeForm = ({ sourceId, onSubmit }: RentalIncomeFormProps) 
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="space-y-4">
         <div>
-          <Label>Property Name</Label>
+          <Label>Property Name/Address</Label>
           <Input
             value={propertyName}
             onChange={(e) => setPropertyName(e.target.value)}
-            placeholder="Enter property name"
-            required
-          />
-        </div>
-
-        <div>
-          <Label>Address</Label>
-          <Textarea
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
-            placeholder="Enter property address"
+            placeholder="Enter property details"
             required
           />
         </div>
@@ -82,40 +71,56 @@ export const RentalIncomeForm = ({ sourceId, onSubmit }: RentalIncomeFormProps) 
         </div>
 
         <div>
-          <Label>Due Date</Label>
+          <Label>Payment Date</Label>
           <Popover>
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
                 className={cn(
                   "w-full justify-start text-left font-normal",
-                  !dueDate && "text-muted-foreground"
+                  !paymentDate && "text-muted-foreground"
                 )}
               >
                 <CalendarIcon className="mr-2 h-4 w-4" />
-                {dueDate ? format(dueDate, "PPP") : "Pick a date"}
+                {paymentDate ? format(paymentDate, "PPP") : "Pick a date"}
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0">
               <Calendar
                 mode="single"
-                selected={dueDate}
-                onSelect={(date) => date && setDueDate(date)}
+                selected={paymentDate}
+                onSelect={(date) => date && setPaymentDate(date)}
                 initialFocus
               />
             </PopoverContent>
           </Popover>
         </div>
 
-        <div>
-          <Label>Tenant Name</Label>
-          <Input
-            value={tenantName}
-            onChange={(e) => setTenantName(e.target.value)}
-            placeholder="Enter tenant name"
-            required
+        <div className="flex items-center space-x-2">
+          <Switch
+            id="recurring"
+            checked={isRecurring}
+            onCheckedChange={setIsRecurring}
           />
+          <Label htmlFor="recurring">Recurring Payment</Label>
         </div>
+
+        {isRecurring && (
+          <div>
+            <Label>Payment Frequency</Label>
+            <Select value={frequency} onValueChange={setFrequency}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select frequency" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="weekly">Weekly</SelectItem>
+                <SelectItem value="monthly">Monthly</SelectItem>
+                <SelectItem value="quarterly">Quarterly</SelectItem>
+                <SelectItem value="yearly">Yearly</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
 
         <div>
           <Label>Lease Period</Label>
@@ -166,15 +171,6 @@ export const RentalIncomeForm = ({ sourceId, onSubmit }: RentalIncomeFormProps) 
               </PopoverContent>
             </Popover>
           </div>
-        </div>
-
-        <div>
-          <Label>Terms & Conditions</Label>
-          <Textarea
-            value={terms}
-            onChange={(e) => setTerms(e.target.value)}
-            placeholder="Enter lease terms and conditions"
-          />
         </div>
       </div>
 
