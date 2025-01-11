@@ -37,7 +37,7 @@ export const ProductCard = ({ product, onClick, onEdit }: ProductCardProps) => {
           )
         `)
         .eq('product_id', product.id)
-        .single();
+        .maybeSingle();
 
       if (recipeError) throw recipeError;
       return recipeData;
