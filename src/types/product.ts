@@ -13,6 +13,7 @@ export interface Product {
   supplier_id?: string;
   storage_location?: string;
   unit_of_measurement?: string;
+  product_type: 'basic' | 'composite';
   created_at: string;
   updated_at: string;
 }
