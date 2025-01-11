@@ -49,7 +49,7 @@ export const ProductCard = ({ product, onClick, onEdit }: ProductCardProps) => {
     if (onClick) {
       onClick(product);
     } else {
-      navigate(`/source/${product.source_id}/products/${product.id}`);
+      navigate(`/source/${product.source_id}/types/products/${product.id}`);
     }
   };
 

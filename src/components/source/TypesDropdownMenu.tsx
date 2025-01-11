@@ -20,15 +20,15 @@ export const TypesDropdownMenu = () => {
   // Map type names to their respective routes
   const getTypeRoute = (typeName: string) => {
     const routeMap: { [key: string]: string } = {
-      "Products": "products",
-      "Services": "services",
-      "Inventory": "inventory",
-      "Employment Income": "employment",
-      "Gifts and Grants": "gifts",
-      "Investment Income": "investment",
-      "Other Income": "other"
+      "Products": "types/products",
+      "Services": "types/services",
+      "Inventory": "types/inventory",
+      "Employment Income": "types/employment",
+      "Gifts and Grants": "types/gifts",
+      "Investment Income": "types/investment",
+      "Other Income": "types/other"
     };
-    return routeMap[typeName] || typeName.toLowerCase().replace(/\s+/g, '-');
+    return routeMap[typeName] || `types/${typeName.toLowerCase().replace(/\s+/g, '-')}`;
   };
 
   return (
@@ -41,7 +41,7 @@ export const TypesDropdownMenu = () => {
               {enabledTypes.map((type) => (
                 <ListItem 
                   key={type.id}
-                  href={`income/${getTypeRoute(type.name)}`} 
+                  href={getTypeRoute(type.name)} 
                   title={type.name}
                 >
                   {type.description || `Manage ${type.name.toLowerCase()}`}
