@@ -33,7 +33,10 @@ export const ProductGrid = ({ sourceId, onProductClick }: ProductGridProps) => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data;
+      return (data as Product[]).map(product => ({
+        ...product,
+        product_type: product.product_type as 'basic' | 'composite'
+      }));
     }
   });
 

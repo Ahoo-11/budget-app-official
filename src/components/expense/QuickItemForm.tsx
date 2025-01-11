@@ -36,7 +36,8 @@ export const QuickItemForm = ({ sourceId, onSuccess }: QuickItemFormProps) => {
           purchase_cost: parseFloat(purchaseCost),
           price: type === "product" ? parseFloat(price) : parseFloat(purchaseCost),
           category: type === "product" ? "Product" : "inventory",
-          subcategory: type === "product" ? "Product" : "Inventory Item"
+          subcategory: type === "product" ? "Product" : "Inventory Item",
+          product_type: 'basic' as const
         })
         .select()
         .single();
@@ -48,7 +49,7 @@ export const QuickItemForm = ({ sourceId, onSuccess }: QuickItemFormProps) => {
         description: "Item added successfully",
       });
 
-      onSuccess(data);
+      onSuccess(data as Product);
     } catch (error) {
       console.error('Error adding item:', error);
       toast({

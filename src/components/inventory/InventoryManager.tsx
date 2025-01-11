@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { InventoryForm } from "./InventoryForm";
 import { InventorySheet } from "./InventorySheet";
+import { Product } from "@/types/product";
 
 interface InventoryManagerProps {
   sourceId: string;
@@ -31,7 +32,10 @@ export const InventoryManager = ({ sourceId }: InventoryManagerProps) => {
         .order('name');
       
       if (error) throw error;
-      return data;
+      return (data as Product[]).map(item => ({
+        ...item,
+        product_type: item.product_type as 'basic' | 'composite'
+      }));
     }
   });
 
