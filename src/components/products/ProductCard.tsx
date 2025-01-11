@@ -1,7 +1,5 @@
 import { Product } from "@/types/product";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Edit } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
@@ -9,10 +7,9 @@ import { useNavigate } from "react-router-dom";
 interface ProductCardProps {
   product: Product;
   onClick?: (product: Product) => void;
-  onEdit?: (product: Product) => void;
 }
 
-export const ProductCard = ({ product, onClick, onEdit }: ProductCardProps) => {
+export const ProductCard = ({ product, onClick }: ProductCardProps) => {
   const navigate = useNavigate();
   
   const { data: recipe } = useQuery({
@@ -55,9 +52,7 @@ export const ProductCard = ({ product, onClick, onEdit }: ProductCardProps) => {
 
   return (
     <Card
-      className={`relative overflow-hidden group ${
-        onClick || !onEdit ? "cursor-pointer" : ""
-      }`}
+      className="relative overflow-hidden group cursor-pointer"
       onClick={handleCardClick}
     >
       {product.image_url && (
@@ -71,25 +66,11 @@ export const ProductCard = ({ product, onClick, onEdit }: ProductCardProps) => {
       )}
 
       <CardContent className="p-4">
-        <div className="flex justify-between items-start mb-2">
-          <div>
-            <h3 className="font-medium">{product.name}</h3>
-            <p className="text-sm text-muted-foreground">
-              MVR {product.price.toFixed(2)}
-            </p>
-          </div>
-          {onEdit && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={(e) => {
-                e.stopPropagation();
-                onEdit(product);
-              }}
-            >
-              <Edit className="h-4 w-4" />
-            </Button>
-          )}
+        <div className="mb-2">
+          <h3 className="font-medium">{product.name}</h3>
+          <p className="text-sm text-muted-foreground">
+            MVR {product.price.toFixed(2)}
+          </p>
         </div>
 
         {product.product_type === 'basic' ? (
