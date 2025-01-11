@@ -60,7 +60,6 @@ export const ProductGrid = ({ sourceId, onProductClick }: ProductGridProps) => {
             key={product.id}
             product={product}
             onClick={onProductClick ? () => onProductClick(product) : undefined}
-            onEdit={onProductClick ? undefined : () => setEditingProduct(product)}
           />
         ))}
       </div>
