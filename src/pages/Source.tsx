@@ -126,6 +126,7 @@ const Source = () => {
         </div>
 
         <div className="flex-1 overflow-auto p-4">
+
           <Routes>
             <Route path="/" element={<OrderInterface sourceId={sourceId!} />} />
             <Route path="products" element={<ProductGrid sourceId={sourceId!} />} />
@@ -141,6 +142,7 @@ const Source = () => {
             <Route path="settings" element={<TypeSettings sourceId={sourceId!} />} />
             <Route path="expense" element={<ExpenseInterface sourceId={sourceId!} />} />
           </Routes>
+
         </div>
       </Tabs>
     </div>
@@ -148,3 +150,4 @@ const Source = () => {
 };
 
 export default Source;
+
