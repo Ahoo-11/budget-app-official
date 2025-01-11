@@ -29,6 +29,7 @@ export const ProductGrid = ({ sourceId, onProductClick }: ProductGridProps) => {
         .from('products')
         .select('*')
         .eq('source_id', sourceId)
+        .neq('category', 'inventory')  // Filter out inventory items
         .order('created_at', { ascending: false });
 
       if (error) throw error;
