@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { Product } from "@/types/product";
@@ -10,6 +10,7 @@ import { ProductBasicInfo } from "./form/ProductBasicInfo";
 import { ProductCategories } from "./form/ProductCategories";
 import { ProductInventory } from "./form/ProductInventory";
 import { ProductSupplier } from "./form/ProductSupplier";
+import { RecipeBuilder } from "./form/RecipeBuilder";
 
 interface ProductFormProps {
   sourceId: string;
@@ -21,6 +22,12 @@ export const ProductForm = ({ sourceId, onSuccess, product }: ProductFormProps) 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>(product?.image_url || "");
+  const [productType, setProductType] = useState<'basic' | 'composite'>(product?.product_type as 'basic' | 'composite' || 'basic');
+  const [ingredients, setIngredients] = useState<Array<{
+    id: string;
+    quantity: number;
+    unit_of_measurement: string;
+  }>>([]);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -65,27 +72,105 @@ export const ProductForm = ({ sourceId, onSuccess, product }: ProductFormProps) 
         subcategory: formData.get('subcategory') as string,
         description: formData.get('description') as string,
         image_url: imageUrl,
-        purchase_cost: formData.get('purchase_cost') ? parseFloat(formData.get('purchase_cost') as string) : null,
-        minimum_stock_level: formData.get('minimum_stock_level') ? parseFloat(formData.get('minimum_stock_level') as string) : 0,
-        current_stock: formData.get('current_stock') ? parseFloat(formData.get('current_stock') as string) : 0,
-        supplier_id: formData.get('supplier_id') as string || null,
-        storage_location: formData.get('storage_location') as string || null,
+        product_type: productType,
+        purchase_cost: productType === 'basic' ? (formData.get('purchase_cost') ? parseFloat(formData.get('purchase_cost') as string) : null) : null,
+        minimum_stock_level: productType === 'basic' ? (formData.get('minimum_stock_level') ? parseFloat(formData.get('minimum_stock_level') as string) : 0) : null,
+        current_stock: productType === 'basic' ? (formData.get('current_stock') ? parseFloat(formData.get('current_stock') as string) : 0) : null,
+        supplier_id: productType === 'basic' ? (formData.get('supplier_id') as string || null) : null,
+        storage_location: productType === 'basic' ? (formData.get('storage_location') as string || null) : null,
         unit_of_measurement: formData.get('unit_of_measurement') as string || null,
       };
 
       if (product) {
-        const { error } = await supabase
+        // Update existing product
+        const { error: productError } = await supabase
           .from('products')
           .update(productData)
           .eq('id', product.id);
 
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from('products')
-          .insert([productData]);
+        if (productError) throw productError;
 
-        if (error) throw error;
+        if (productType === 'composite') {
+          // Update recipe
+          const { data: existingRecipe } = await supabase
+            .from('product_recipes')
+            .select('id')
+            .eq('product_id', product.id)
+            .single();
+
+          if (existingRecipe) {
+            // Update existing recipe
+            const { error: recipeError } = await supabase
+              .from('product_recipes')
+              .update({
+                name: productData.name,
+                description: productData.description,
+              })
+              .eq('id', existingRecipe.id);
+
+            if (recipeError) throw recipeError;
+
+            // Delete existing ingredients
+            await supabase
+              .from('recipe_ingredients')
+              .delete()
+              .eq('recipe_id', existingRecipe.id);
+
+            // Insert new ingredients
+            if (ingredients.length > 0) {
+              const { error: ingredientsError } = await supabase
+                .from('recipe_ingredients')
+                .insert(
+                  ingredients.map(ingredient => ({
+                    recipe_id: existingRecipe.id,
+                    ingredient_id: ingredient.id,
+                    quantity: ingredient.quantity,
+                    unit_of_measurement: ingredient.unit_of_measurement,
+                  }))
+                );
+
+              if (ingredientsError) throw ingredientsError;
+            }
+          }
+        }
+      } else {
+        // Insert new product
+        const { data: newProduct, error: productError } = await supabase
+          .from('products')
+          .insert([productData])
+          .select()
+          .single();
+
+        if (productError) throw productError;
+
+        if (productType === 'composite' && ingredients.length > 0) {
+          // Create recipe
+          const { data: recipe, error: recipeError } = await supabase
+            .from('product_recipes')
+            .insert({
+              product_id: newProduct.id,
+              name: productData.name,
+              description: productData.description,
+            })
+            .select()
+            .single();
+
+          if (recipeError) throw recipeError;
+
+          // Insert ingredients
+          const { error: ingredientsError } = await supabase
+            .from('recipe_ingredients')
+            .insert(
+              ingredients.map(ingredient => ({
+                recipe_id: recipe.id,
+                ingredient_id: ingredient.id,
+                quantity: ingredient.quantity,
+                unit_of_measurement: ingredient.unit_of_measurement,
+              }))
+            );
+
+          if (ingredientsError) throw ingredientsError;
+        }
       }
 
       toast({
@@ -115,27 +200,36 @@ export const ProductForm = ({ sourceId, onSuccess, product }: ProductFormProps) 
         isSubmitting={isSubmitting}
       />
 
-      <div className="grid grid-cols-2 gap-4">
-        <ProductBasicInfo
-          defaultValues={product}
-          isSubmitting={isSubmitting}
-        />
+      <ProductBasicInfo
+        defaultValues={product}
+        isSubmitting={isSubmitting}
+        onProductTypeChange={setProductType}
+      />
 
-        <ProductCategories
-          defaultValues={product}
-          isSubmitting={isSubmitting}
-        />
+      {productType === 'basic' ? (
+        <>
+          <ProductCategories
+            defaultValues={product}
+            isSubmitting={isSubmitting}
+          />
 
-        <ProductInventory
-          defaultValues={product}
-          isSubmitting={isSubmitting}
-        />
+          <ProductInventory
+            defaultValues={product}
+            isSubmitting={isSubmitting}
+          />
 
-        <ProductSupplier
-          defaultValue={product?.supplier_id}
+          <ProductSupplier
+            defaultValue={product?.supplier_id}
+            isSubmitting={isSubmitting}
+          />
+        </>
+      ) : (
+        <RecipeBuilder
+          sourceId={sourceId}
           isSubmitting={isSubmitting}
+          onIngredientsChange={setIngredients}
         />
-      </div>
+      )}
 
       <Button type="submit" disabled={isSubmitting} className="w-full">
         {isSubmitting ? (

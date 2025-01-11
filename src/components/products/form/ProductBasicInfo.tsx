@@ -1,66 +1,75 @@
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Product } from "@/types/product";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 interface ProductBasicInfoProps {
-  defaultValues?: {
-    name?: string;
-    price?: number;
-    purchase_cost?: number;
-    description?: string;
-  };
+  defaultValues?: Product;
   isSubmitting: boolean;
+  onProductTypeChange?: (type: 'basic' | 'composite') => void;
 }
 
-export const ProductBasicInfo = ({ defaultValues, isSubmitting }: ProductBasicInfoProps) => {
+export const ProductBasicInfo = ({
+  defaultValues,
+  isSubmitting,
+  onProductTypeChange,
+}: ProductBasicInfoProps) => {
   return (
-    <>
-      <div className="col-span-2">
-        <label className="block text-sm font-medium mb-2">Name</label>
+    <div className="space-y-4">
+      <div>
+        <Label>Product Type</Label>
+        <RadioGroup
+          defaultValue={defaultValues?.product_type || 'basic'}
+          onValueChange={(value: 'basic' | 'composite') => onProductTypeChange?.(value)}
+          className="flex gap-4 mt-2"
+          disabled={isSubmitting || !!defaultValues}
+        >
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="basic" id="basic" />
+            <Label htmlFor="basic">Basic Product</Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="composite" id="composite" />
+            <Label htmlFor="composite">Composite Product</Label>
+          </div>
+        </RadioGroup>
+      </div>
+
+      <div>
+        <Label htmlFor="name">Name</Label>
         <Input
+          id="name"
           name="name"
-          required
-          placeholder="Product name"
           defaultValue={defaultValues?.name}
           disabled={isSubmitting}
+          required
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-2">Selling Price</label>
+        <Label htmlFor="price">Price</Label>
         <Input
+          id="price"
           name="price"
           type="number"
-          step="0.01"
           min="0"
-          required
-          placeholder="0.00"
+          step="0.01"
           defaultValue={defaultValues?.price}
           disabled={isSubmitting}
+          required
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-2">Purchase Cost</label>
-        <Input
-          name="purchase_cost"
-          type="number"
-          step="0.01"
-          min="0"
-          placeholder="0.00"
-          defaultValue={defaultValues?.purchase_cost}
-          disabled={isSubmitting}
-        />
-      </div>
-
-      <div className="col-span-2">
-        <label className="block text-sm font-medium mb-2">Description</label>
+        <Label htmlFor="description">Description</Label>
         <Textarea
+          id="description"
           name="description"
-          placeholder="Product description"
-          defaultValue={defaultValues?.description}
+          defaultValue={defaultValues?.description || ""}
           disabled={isSubmitting}
         />
       </div>
-    </>
+    </div>
   );
 };
