@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Edit } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 interface ProductCardProps {
   product: Product;
@@ -14,7 +14,6 @@ interface ProductCardProps {
 
 export const ProductCard = ({ product, onClick, onEdit }: ProductCardProps) => {
   const navigate = useNavigate();
-  const location = useLocation();
   
   const { data: recipe } = useQuery({
     queryKey: ['product-recipe', product.id],
@@ -50,11 +49,7 @@ export const ProductCard = ({ product, onClick, onEdit }: ProductCardProps) => {
     if (onClick) {
       onClick(product);
     } else {
-      // Construct the path based on the current location
-      const basePath = location.pathname.includes('/income/products') 
-        ? '/income/products'
-        : '/products';
-      navigate(`${basePath}/${product.id}`);
+      navigate(`/source/${product.source_id}/products/${product.id}`);
     }
   };
 

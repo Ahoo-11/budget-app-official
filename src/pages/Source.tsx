@@ -129,7 +129,7 @@ const Source = () => {
           <Routes>
             <Route path="/" element={<OrderInterface sourceId={sourceId!} />} />
             <Route path="income/products" element={<ProductsIncome sourceId={sourceId!} />} />
-            <Route path="income/products/:productId" element={<ProductDetail />} />
+            <Route path="products/:productId" element={<ProductDetail />} />
             <Route path="products" element={<ProductGrid sourceId={sourceId!} />} />
             <Route path="services" element={<ServiceGrid sourceId={sourceId!} />} />
             <Route path="income/employment" element={<EmploymentIncome sourceId={sourceId!} />} />
