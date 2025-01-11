@@ -3,15 +3,17 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Product } from "@/types/product";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Package, DollarSign, AlertTriangle, BarChart3 } from "lucide-react";
+import { ArrowLeft, Package, AlertTriangle, BarChart3 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
+import { useToast } from "@/components/ui/use-toast";
 
 export const ProductDetail = () => {
   const { productId } = useParams();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
-  const { data: product, isLoading } = useQuery({
+  const { data: product, isLoading, error } = useQuery({
     queryKey: ['product', productId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -20,7 +22,24 @@ export const ProductDetail = () => {
         .eq('id', productId)
         .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        toast({
+          variant: "destructive",
+          title: "Error loading product",
+          description: error.message,
+        });
+        throw error;
+      }
+
+      if (!data) {
+        toast({
+          variant: "destructive",
+          title: "Product not found",
+          description: "The requested product could not be found.",
+        });
+        throw new Error("Product not found");
+      }
+
       return data as Product;
     }
   });
@@ -33,8 +52,13 @@ export const ProductDetail = () => {
     );
   }
 
-  if (!product) {
-    return <div>Product not found</div>;
+  if (error || !product) {
+    return (
+      <div className="text-center p-4">
+        <h2 className="text-xl font-semibold text-red-600">Error Loading Product</h2>
+        <p className="text-muted-foreground mt-2">Please try refreshing the page.</p>
+      </div>
+    );
   }
 
   return (
@@ -82,7 +106,7 @@ export const ProductDetail = () => {
               <CardContent className="pt-6">
                 <div className="text-sm text-muted-foreground">Price</div>
                 <div className="text-2xl font-bold">
-                  ${product.price.toFixed(2)}
+                  MVR {product.price.toFixed(2)}
                 </div>
               </CardContent>
             </Card>
