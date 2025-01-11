@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CategoryManager } from "@/components/source/CategoryManager";
 import { SupplierManager } from "@/components/source/SupplierManager";
 import { ExpenseInterface } from "@/components/expense/ExpenseInterface";
-import { InventoryManager } from "@/components/inventory/InventoryManager";
+import { InventoryIncome } from "@/components/income/InventoryIncome";
 import { useToast } from "@/hooks/use-toast";
 import { TypeSettings } from "@/components/source/TypeSettings";
 import { TypesDropdownMenu } from "@/components/source/TypesDropdownMenu";
@@ -78,7 +78,6 @@ const Source = () => {
     );
   }
 
-  // Helper function to determine active tab
   const getActiveTab = (): TabValue => {
     if (location.pathname.includes('/categories')) return 'categories';
     if (location.pathname.includes('/suppliers')) return 'suppliers';
@@ -87,7 +86,6 @@ const Source = () => {
     return 'income';
   };
 
-  // Navigation handler
   const handleTabChange = (value: TabValue) => {
     switch (value) {
       case 'categories':
@@ -129,8 +127,9 @@ const Source = () => {
             <Route path="types/products" element={<ProductsList sourceId={sourceId!} />} />
             <Route path="types/products/:productId" element={<ProductDetail />} />
             <Route path="types/services" element={<ServiceGrid sourceId={sourceId!} />} />
-            <Route path="income/employment" element={<EmploymentIncome sourceId={sourceId!} />} />
-            <Route path="income/gifts" element={<GiftsIncome sourceId={sourceId!} />} />
+            <Route path="types/inventory" element={<InventoryIncome sourceId={sourceId!} />} />
+            <Route path="types/employment" element={<EmploymentIncome sourceId={sourceId!} />} />
+            <Route path="types/gifts" element={<GiftsIncome sourceId={sourceId!} />} />
             <Route path="categories" element={<CategoryManager sourceId={sourceId!} />} />
             <Route path="suppliers" element={<SupplierManager />} />
             <Route path="settings" element={<TypeSettings sourceId={sourceId!} />} />
