@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Edit } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
 interface ProductCardProps {
   product: Product;
@@ -12,6 +13,7 @@ interface ProductCardProps {
 }
 
 export const ProductCard = ({ product, onClick, onEdit }: ProductCardProps) => {
+  const navigate = useNavigate();
   const { data: recipe } = useQuery({
     queryKey: ['product-recipe', product.id],
     queryFn: async () => {
@@ -42,12 +44,20 @@ export const ProductCard = ({ product, onClick, onEdit }: ProductCardProps) => {
     enabled: product.product_type === 'composite'
   });
 
+  const handleCardClick = () => {
+    if (onClick) {
+      onClick(product);
+    } else {
+      navigate(`products/${product.id}`);
+    }
+  };
+
   return (
     <Card
       className={`relative overflow-hidden group ${
-        onClick ? "cursor-pointer" : ""
+        onClick || !onEdit ? "cursor-pointer" : ""
       }`}
-      onClick={() => onClick?.(product)}
+      onClick={handleCardClick}
     >
       {product.image_url && (
         <div className="aspect-square overflow-hidden">

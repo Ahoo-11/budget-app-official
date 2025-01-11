@@ -19,6 +19,7 @@ import { GiftsIncome } from "@/components/income/GiftsIncome";
 import { ProductsIncome } from "@/components/income/ProductsIncome";
 import { ServicesIncome } from "@/components/income/ServicesIncome";
 import { InventoryIncome } from "@/components/income/InventoryIncome";
+import { ProductDetail } from "@/components/products/ProductDetail";
 
 type TabValue = 'income' | 'expense' | 'categories' | 'suppliers' | 'settings';
 
@@ -128,6 +129,7 @@ const Source = () => {
           <Routes>
             <Route path="/" element={<OrderInterface sourceId={sourceId!} />} />
             <Route path="products" element={<ProductGrid sourceId={sourceId!} />} />
+            <Route path="products/:productId" element={<ProductDetail />} />
             <Route path="services" element={<ServiceGrid sourceId={sourceId!} />} />
             <Route path="income/employment" element={<EmploymentIncome sourceId={sourceId!} />} />
             <Route path="income/gifts" element={<GiftsIncome sourceId={sourceId!} />} />
