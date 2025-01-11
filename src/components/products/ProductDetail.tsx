@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { useParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Product } from "@/types/product";
 import { BarChart3 } from "lucide-react";
@@ -15,6 +16,9 @@ import { OverviewTab } from "./detail/tabs/OverviewTab";
 export const ProductDetail = () => {
   const { productId } = useParams();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedProduct, setEditedProduct] = useState<Partial<Product>>({});
 
   const { data: product, isLoading, error } = useQuery({
     queryKey: ['product', productId],
@@ -47,6 +51,47 @@ export const ProductDetail = () => {
     }
   });
 
+  const updateProductMutation = useMutation({
+    mutationFn: async (updatedProduct: Partial<Product>) => {
+      const { error } = await supabase
+        .from('products')
+        .update(updatedProduct)
+        .eq('id', productId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['product', productId] });
+      toast({
+        title: "Success",
+        description: "Product updated successfully",
+      });
+      setIsEditing(false);
+    },
+    onError: (error) => {
+      toast({
+        variant: "destructive",
+        title: "Error updating product",
+        description: error.message,
+      });
+    },
+  });
+
+  const handleEditClick = () => {
+    setEditedProduct(product || {});
+    setIsEditing(true);
+  };
+
+  const handleSaveClick = () => {
+    if (!editedProduct) return;
+    updateProductMutation.mutate(editedProduct);
+  };
+
+  const handleCancelClick = () => {
+    setEditedProduct({});
+    setIsEditing(false);
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[200px]">
@@ -66,15 +111,38 @@ export const ProductDetail = () => {
 
   return (
     <div className="space-y-6">
-      <ProductHeader name={product.name} />
+      <ProductHeader 
+        name={product.name}
+        isEditing={isEditing}
+        onEditClick={handleEditClick}
+        onSaveClick={handleSaveClick}
+        onCancelClick={handleCancelClick}
+        editedName={editedProduct.name}
+        onNameChange={(name) => setEditedProduct(prev => ({ ...prev, name }))}
+      />
 
       <div className="grid md:grid-cols-[300px,1fr] gap-6">
         <div className="space-y-4">
-          <ProductImage imageUrl={product.image_url} name={product.name} />
-          <QuickStats currentStock={product.current_stock} price={product.price} />
+          <ProductImage 
+            imageUrl={product.image_url} 
+            name={product.name}
+            isEditing={isEditing}
+            onImageChange={(file) => {
+              // Handle image upload
+            }}
+          />
+          <QuickStats 
+            currentStock={product.current_stock} 
+            price={product.price}
+            isEditing={isEditing}
+            onStockChange={(stock) => setEditedProduct(prev => ({ ...prev, current_stock: stock }))}
+            onPriceChange={(price) => setEditedProduct(prev => ({ ...prev, price }))}
+          />
           <AlertCards 
             currentStock={product.current_stock} 
-            minimumStockLevel={product.minimum_stock_level} 
+            minimumStockLevel={product.minimum_stock_level}
+            isEditing={isEditing}
+            onMinStockChange={(level) => setEditedProduct(prev => ({ ...prev, minimum_stock_level: level }))}
           />
         </div>
 
@@ -87,11 +155,15 @@ export const ProductDetail = () => {
                 <TabsTrigger value="recipe">Recipe</TabsTrigger>
               )}
               <TabsTrigger value="analytics">Analytics</TabsTrigger>
-              <TabsTrigger value="settings">Settings</TabsTrigger>
             </TabsList>
 
             <TabsContent value="overview">
-              <OverviewTab product={product} />
+              <OverviewTab 
+                product={product}
+                isEditing={isEditing}
+                editedProduct={editedProduct}
+                onProductChange={setEditedProduct}
+              />
             </TabsContent>
 
             <TabsContent value="stock">
@@ -119,14 +191,6 @@ export const ProductDetail = () => {
                     <BarChart3 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                     <p className="text-muted-foreground">Analytics coming soon...</p>
                   </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="settings">
-              <Card>
-                <CardContent className="pt-6">
-                  Settings coming soon...
                 </CardContent>
               </Card>
             </TabsContent>

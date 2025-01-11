@@ -1,11 +1,15 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Product } from "@/types/product";
+import { Input } from "@/components/ui/input";
 
 interface OverviewTabProps {
   product: Product;
+  isEditing?: boolean;
+  editedProduct?: Partial<Product>;
+  onProductChange?: (product: Partial<Product>) => void;
 }
 
-export const OverviewTab = ({ product }: OverviewTabProps) => {
+export const OverviewTab = ({ product, isEditing, editedProduct, onProductChange }: OverviewTabProps) => {
   return (
     <div className="space-y-4">
       <Card>
@@ -13,7 +17,16 @@ export const OverviewTab = ({ product }: OverviewTabProps) => {
           <dl className="grid grid-cols-2 gap-4">
             <div>
               <dt className="text-sm text-muted-foreground">Category</dt>
-              <dd className="font-medium">{product.category || 'Uncategorized'}</dd>
+              {isEditing ? (
+                <Input
+                  value={editedProduct?.category || ''}
+                  onChange={(e) => onProductChange?.({ ...editedProduct, category: e.target.value })}
+                  className="mt-1"
+                  placeholder="Category"
+                />
+              ) : (
+                <dd className="font-medium">{product.category || 'Uncategorized'}</dd>
+              )}
             </div>
             <div>
               <dt className="text-sm text-muted-foreground">Type</dt>
@@ -21,11 +34,29 @@ export const OverviewTab = ({ product }: OverviewTabProps) => {
             </div>
             <div>
               <dt className="text-sm text-muted-foreground">Unit</dt>
-              <dd className="font-medium">{product.unit_of_measurement || 'N/A'}</dd>
+              {isEditing ? (
+                <Input
+                  value={editedProduct?.unit_of_measurement || ''}
+                  onChange={(e) => onProductChange?.({ ...editedProduct, unit_of_measurement: e.target.value })}
+                  className="mt-1"
+                  placeholder="Unit of measurement"
+                />
+              ) : (
+                <dd className="font-medium">{product.unit_of_measurement || 'N/A'}</dd>
+              )}
             </div>
             <div>
               <dt className="text-sm text-muted-foreground">Min. Stock</dt>
-              <dd className="font-medium">{product.minimum_stock_level || 'Not set'}</dd>
+              {isEditing ? (
+                <Input
+                  type="number"
+                  value={editedProduct?.minimum_stock_level || 0}
+                  onChange={(e) => onProductChange?.({ ...editedProduct, minimum_stock_level: Number(e.target.value) })}
+                  className="mt-1"
+                />
+              ) : (
+                <dd className="font-medium">{product.minimum_stock_level || 'Not set'}</dd>
+              )}
             </div>
           </dl>
         </CardContent>
@@ -35,7 +66,16 @@ export const OverviewTab = ({ product }: OverviewTabProps) => {
         <Card>
           <CardContent className="pt-6">
             <h3 className="font-medium mb-2">Description</h3>
-            <p className="text-sm text-muted-foreground">{product.description}</p>
+            {isEditing ? (
+              <Input
+                value={editedProduct?.description || ''}
+                onChange={(e) => onProductChange?.({ ...editedProduct, description: e.target.value })}
+                className="mt-1"
+                placeholder="Description"
+              />
+            ) : (
+              <p className="text-sm text-muted-foreground">{product.description}</p>
+            )}
           </CardContent>
         </Card>
       )}
