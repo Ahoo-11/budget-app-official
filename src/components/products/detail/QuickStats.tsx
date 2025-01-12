@@ -27,6 +27,7 @@ export const QuickStats = ({
               value={currentStock || 0}
               onChange={(e) => onStockChange?.(Number(e.target.value))}
               className="mt-1"
+              min={0}
             />
           ) : (
             <div className="text-2xl font-bold">
@@ -45,6 +46,7 @@ export const QuickStats = ({
               onChange={(e) => onPriceChange?.(Number(e.target.value))}
               className="mt-1"
               step="0.01"
+              min={0}
             />
           ) : (
             <div className="text-2xl font-bold">
