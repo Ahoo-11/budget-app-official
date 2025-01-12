@@ -66,14 +66,16 @@ export const ProductForm = ({ sourceId, onSuccess, product }: ProductFormProps) 
         imageUrl = publicUrl;
       }
 
-      const productData: Partial<Product> = {
+      // Ensure required fields are included
+      const productData = {
         source_id: sourceId,
         name: formData.get('name') as string,
+        product_type: productType,
+        price: 0, // Default value, will be updated below
+        image_url: imageUrl,
+        description: formData.get('description') as string,
         category: formData.get('category') as string,
         subcategory: formData.get('subcategory') as string,
-        description: formData.get('description') as string,
-        image_url: imageUrl,
-        product_type: productType,
         unit_of_measurement: formData.get('unit_of_measurement') as string,
       };
 
@@ -89,7 +91,7 @@ export const ProductForm = ({ sourceId, onSuccess, product }: ProductFormProps) 
         productData.consignment_supplier_price = parseFloat(formData.get('consignmentSupplierPrice') as string);
         productData.consignment_selling_price = parseFloat(formData.get('consignmentSellingPrice') as string);
         productData.price = productData.consignment_selling_price;
-        productData.supplier_id = formData.get('supplier_id') as string || null;
+        productData.supplier_id = formData.get('supplier_id') as string;
         productData.current_stock = formData.get('current_stock') ? parseFloat(formData.get('current_stock') as string) : 0;
       }
 
