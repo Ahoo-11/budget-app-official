@@ -135,6 +135,8 @@ export const ProductDetail = () => {
             currentStock={product.current_stock} 
             price={product.price}
             isEditing={isEditing}
+            editedStock={editedProduct.current_stock}
+            editedPrice={editedProduct.price}
             onStockChange={(stock) => setEditedProduct(prev => ({ ...prev, current_stock: stock }))}
             onPriceChange={(price) => setEditedProduct(prev => ({ ...prev, price }))}
           />

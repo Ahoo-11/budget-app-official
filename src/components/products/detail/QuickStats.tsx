@@ -7,6 +7,8 @@ interface QuickStatsProps {
   isEditing?: boolean;
   onStockChange?: (stock: number) => void;
   onPriceChange?: (price: number) => void;
+  editedStock?: number | null;
+  editedPrice?: number;
 }
 
 export const QuickStats = ({ 
@@ -14,8 +16,13 @@ export const QuickStats = ({
   price, 
   isEditing,
   onStockChange,
-  onPriceChange
+  onPriceChange,
+  editedStock,
+  editedPrice
 }: QuickStatsProps) => {
+  const displayStock = isEditing ? editedStock : currentStock;
+  const displayPrice = isEditing ? editedPrice : price;
+
   return (
     <div className="grid grid-cols-2 gap-4">
       <Card>
@@ -24,14 +31,14 @@ export const QuickStats = ({
           {isEditing ? (
             <Input
               type="number"
-              value={currentStock || 0}
+              value={displayStock || 0}
               onChange={(e) => onStockChange?.(Number(e.target.value))}
               className="mt-1"
               min={0}
             />
           ) : (
             <div className="text-2xl font-bold">
-              {currentStock || 0}
+              {displayStock || 0}
             </div>
           )}
         </CardContent>
@@ -42,7 +49,7 @@ export const QuickStats = ({
           {isEditing ? (
             <Input
               type="number"
-              value={price}
+              value={displayPrice}
               onChange={(e) => onPriceChange?.(Number(e.target.value))}
               className="mt-1"
               step="0.01"
@@ -50,7 +57,7 @@ export const QuickStats = ({
             />
           ) : (
             <div className="text-2xl font-bold">
-              MVR {price.toFixed(2)}
+              MVR {displayPrice.toFixed(2)}
             </div>
           )}
         </CardContent>
