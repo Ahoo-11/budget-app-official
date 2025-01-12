@@ -339,6 +339,8 @@ export type Database = {
       products: {
         Row: {
           category: string | null
+          consignment_selling_price: number | null
+          consignment_supplier_price: number | null
           created_at: string
           current_stock: number | null
           description: string | null
@@ -358,6 +360,8 @@ export type Database = {
         }
         Insert: {
           category?: string | null
+          consignment_selling_price?: number | null
+          consignment_supplier_price?: number | null
           created_at?: string
           current_stock?: number | null
           description?: string | null
@@ -377,6 +381,8 @@ export type Database = {
         }
         Update: {
           category?: string | null
+          consignment_selling_price?: number | null
+          consignment_supplier_price?: number | null
           created_at?: string
           current_stock?: number | null
           description?: string | null
@@ -677,6 +683,7 @@ export type Database = {
           created_by: string
           expiry_date: string | null
           id: string
+          is_consignment_return: boolean | null
           movement_type: string
           notes: string | null
           product_id: string
@@ -689,6 +696,7 @@ export type Database = {
           created_by: string
           expiry_date?: string | null
           id?: string
+          is_consignment_return?: boolean | null
           movement_type: string
           notes?: string | null
           product_id: string
@@ -701,6 +709,7 @@ export type Database = {
           created_by?: string
           expiry_date?: string | null
           id?: string
+          is_consignment_return?: boolean | null
           movement_type?: string
           notes?: string | null
           product_id?: string
@@ -1059,6 +1068,7 @@ export type Database = {
       }
     }
     Enums: {
+      product_type_enum: "basic" | "composite" | "consignment"
       recurring_frequency: "daily" | "weekly" | "monthly" | "yearly"
       template_type: "business" | "personal"
       transaction_status: "pending" | "completed" | "partially_paid"

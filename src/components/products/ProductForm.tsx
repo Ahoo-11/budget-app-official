@@ -22,7 +22,9 @@ export const ProductForm = ({ sourceId, onSuccess, product }: ProductFormProps) 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>(product?.image_url || "");
-  const [productType, setProductType] = useState<'basic' | 'composite'>(product?.product_type as 'basic' | 'composite' || 'basic');
+  const [productType, setProductType] = useState<'basic' | 'composite' | 'consignment'>(
+    product?.product_type || 'basic'
+  );
   const [ingredients, setIngredients] = useState<Array<{
     id: string;
     quantity: number;
@@ -64,22 +66,32 @@ export const ProductForm = ({ sourceId, onSuccess, product }: ProductFormProps) 
         imageUrl = publicUrl;
       }
 
-      const productData = {
+      const productData: Partial<Product> = {
         source_id: sourceId,
         name: formData.get('name') as string,
-        price: parseFloat(formData.get('price') as string),
         category: formData.get('category') as string,
         subcategory: formData.get('subcategory') as string,
         description: formData.get('description') as string,
         image_url: imageUrl,
         product_type: productType,
-        purchase_cost: productType === 'basic' ? (formData.get('purchase_cost') ? parseFloat(formData.get('purchase_cost') as string) : null) : null,
-        minimum_stock_level: productType === 'basic' ? (formData.get('minimum_stock_level') ? parseFloat(formData.get('minimum_stock_level') as string) : 0) : null,
-        current_stock: productType === 'basic' ? (formData.get('current_stock') ? parseFloat(formData.get('current_stock') as string) : 0) : null,
-        supplier_id: productType === 'basic' ? (formData.get('supplier_id') as string || null) : null,
-        storage_location: productType === 'basic' ? (formData.get('storage_location') as string || null) : null,
-        unit_of_measurement: formData.get('unit_of_measurement') as string || null,
+        unit_of_measurement: formData.get('unit_of_measurement') as string,
       };
+
+      // Handle different product types
+      if (productType === 'basic') {
+        productData.price = parseFloat(formData.get('price') as string);
+        productData.purchase_cost = formData.get('purchase_cost') ? parseFloat(formData.get('purchase_cost') as string) : null;
+        productData.minimum_stock_level = formData.get('minimum_stock_level') ? parseFloat(formData.get('minimum_stock_level') as string) : 0;
+        productData.current_stock = formData.get('current_stock') ? parseFloat(formData.get('current_stock') as string) : 0;
+        productData.supplier_id = formData.get('supplier_id') as string || null;
+        productData.storage_location = formData.get('storage_location') as string || null;
+      } else if (productType === 'consignment') {
+        productData.consignment_supplier_price = parseFloat(formData.get('consignmentSupplierPrice') as string);
+        productData.consignment_selling_price = parseFloat(formData.get('consignmentSellingPrice') as string);
+        productData.price = productData.consignment_selling_price;
+        productData.supplier_id = formData.get('supplier_id') as string || null;
+        productData.current_stock = formData.get('current_stock') ? parseFloat(formData.get('current_stock') as string) : 0;
+      }
 
       if (product) {
         // Update existing product
@@ -206,7 +218,7 @@ export const ProductForm = ({ sourceId, onSuccess, product }: ProductFormProps) 
         onProductTypeChange={setProductType}
       />
 
-      {productType === 'basic' ? (
+      {productType === 'basic' && (
         <>
           <ProductCategories
             defaultValues={product}
@@ -223,7 +235,17 @@ export const ProductForm = ({ sourceId, onSuccess, product }: ProductFormProps) 
             isSubmitting={isSubmitting}
           />
         </>
-      ) : (
+      )}
+
+      {productType === 'consignment' && (
+        <ProductSupplier
+          defaultValue={product?.supplier_id}
+          isSubmitting={isSubmitting}
+          required
+        />
+      )}
+
+      {productType === 'composite' && (
         <RecipeBuilder
           sourceId={sourceId}
           isSubmitting={isSubmitting}
