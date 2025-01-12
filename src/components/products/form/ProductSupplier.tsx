@@ -11,9 +11,10 @@ import {
 interface ProductSupplierProps {
   defaultValue?: string;
   isSubmitting: boolean;
+  required?: boolean;
 }
 
-export const ProductSupplier = ({ defaultValue, isSubmitting }: ProductSupplierProps) => {
+export const ProductSupplier = ({ defaultValue, isSubmitting, required }: ProductSupplierProps) => {
   const { data: suppliers = [] } = useQuery({
     queryKey: ['suppliers'],
     queryFn: async () => {
@@ -30,7 +31,7 @@ export const ProductSupplier = ({ defaultValue, isSubmitting }: ProductSupplierP
   return (
     <div className="col-span-2">
       <label className="block text-sm font-medium mb-2">Supplier</label>
-      <Select name="supplier_id" defaultValue={defaultValue}>
+      <Select name="supplier_id" defaultValue={defaultValue} required={required}>
         <SelectTrigger>
           <SelectValue placeholder="Select supplier" />
         </SelectTrigger>

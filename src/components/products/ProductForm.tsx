@@ -149,7 +149,7 @@ export const ProductForm = ({ sourceId, onSuccess, product }: ProductFormProps) 
         // Insert new product
         const { data: newProduct, error: productError } = await supabase
           .from('products')
-          .insert([productData])
+          .insert(productData)
           .select()
           .single();
 
