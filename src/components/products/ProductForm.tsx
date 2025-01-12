@@ -67,7 +67,7 @@ export const ProductForm = ({ sourceId, onSuccess, product }: ProductFormProps) 
       }
 
       // Ensure required fields are included
-      const productData = {
+      const productData: Partial<Product> = {
         source_id: sourceId,
         name: formData.get('name') as string,
         product_type: productType,
