@@ -66,12 +66,17 @@ export const ProductForm = ({ sourceId, onSuccess, product }: ProductFormProps) 
         imageUrl = publicUrl;
       }
 
-      // Ensure required fields are included
-      const productData: Partial<Product> = {
+      // Create base product data with required fields
+      const baseProductData = {
         source_id: sourceId,
         name: formData.get('name') as string,
         product_type: productType,
-        price: 0, // Default value, will be updated below
+        price: 0,
+      };
+
+      // Add optional fields
+      const productData = {
+        ...baseProductData,
         image_url: imageUrl,
         description: formData.get('description') as string,
         category: formData.get('category') as string,
