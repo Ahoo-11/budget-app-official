@@ -18,6 +18,11 @@ interface ProductFormProps {
   product?: Product;
 }
 
+// Define the minimum required fields for a product
+type RequiredProductFields = Pick<Product, 'source_id' | 'name' | 'product_type' | 'price'>;
+type OptionalProductFields = Partial<Omit<Product, keyof RequiredProductFields>>;
+type ProductInput = RequiredProductFields & OptionalProductFields;
+
 export const ProductForm = ({ sourceId, onSuccess, product }: ProductFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -67,7 +72,7 @@ export const ProductForm = ({ sourceId, onSuccess, product }: ProductFormProps) 
       }
 
       // Create base product data with required fields
-      const baseProductData: Partial<Product> = {
+      const baseProductData: RequiredProductFields = {
         source_id: sourceId,
         name: formData.get('name') as string,
         product_type: productType,
@@ -75,7 +80,7 @@ export const ProductForm = ({ sourceId, onSuccess, product }: ProductFormProps) 
       };
 
       // Add optional fields
-      const productData: Partial<Product> = {
+      const productData: ProductInput = {
         ...baseProductData,
         image_url: imageUrl,
         description: formData.get('description') as string,
