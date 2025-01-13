@@ -28,20 +28,22 @@ export const SessionManager = ({ sourceId }: { sourceId: string }) => {
         .select('*')
         .eq('source_id', sourceId)
         .eq('status', 'active')
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
-      return data as Session;
+      return data as Session | null;
     },
     enabled: !!sourceId
   });
 
   const handleCloseSession = async () => {
+    if (!activeSession) return;
+    
     try {
       const { error } = await supabase
         .from('sessions')
         .update({ status: 'closed', end_time: new Date().toISOString() })
-        .eq('id', activeSession?.id);
+        .eq('id', activeSession.id);
 
       if (error) throw error;
 
@@ -64,7 +66,39 @@ export const SessionManager = ({ sourceId }: { sourceId: string }) => {
   }
 
   if (!activeSession) {
-    return <div>No active session found</div>;
+    return (
+      <Card className="p-6">
+        <div className="text-center">
+          <p className="text-muted-foreground">No active session found</p>
+          <Button 
+            onClick={async () => {
+              try {
+                const { error } = await supabase
+                  .from('sessions')
+                  .insert([{ source_id: sourceId }]);
+                
+                if (error) throw error;
+                
+                toast({
+                  title: "Success",
+                  description: "New session started",
+                });
+              } catch (error) {
+                console.error('Error creating session:', error);
+                toast({
+                  title: "Error",
+                  description: "Failed to create session",
+                  variant: "destructive",
+                });
+              }
+            }}
+            className="mt-4"
+          >
+            Start New Session
+          </Button>
+        </div>
+      </Card>
+    );
   }
 
   return (

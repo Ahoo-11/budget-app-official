@@ -2,11 +2,13 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { SessionManager } from "@/components/session/SessionManager";
 import { DailyTransactionsChart } from "@/components/DailyTransactionsChart";
-import { addDays, subDays } from "date-fns";
+import { subDays } from "date-fns";
 import { useState } from "react";
+import { DateRange } from "@/components/ui/date-range-picker";
+import { Transaction } from "@/types/transaction";
 
 export default function Index() {
-  const [dateRange, setDateRange] = useState({
+  const [dateRange, setDateRange] = useState<DateRange>({
     from: subDays(new Date(), 7),
     to: new Date(),
   });
@@ -30,11 +32,11 @@ export default function Index() {
       const { data, error } = await supabase
         .from('transactions')
         .select('*')
-        .gte('date', dateRange.from.toISOString())
-        .lte('date', dateRange.to.toISOString());
+        .gte('date', dateRange.from?.toISOString() || '')
+        .lte('date', dateRange.to?.toISOString() || '');
       
       if (error) throw error;
-      return data;
+      return data as Transaction[];
     }
   });
 
