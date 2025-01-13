@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
-import { LockClosedIcon, BanknoteIcon, ArrowDownIcon, ArrowUpIcon } from "lucide-react";
+import { LockIcon, BanknoteIcon, ArrowDownIcon, ArrowUpIcon } from "lucide-react";
 import { format } from "date-fns";
 
 interface Session {
@@ -81,7 +81,7 @@ export const SessionManager = ({ sourceId }: { sourceId: string }) => {
           onClick={handleCloseSession}
           className="flex items-center gap-2"
         >
-          <LockClosedIcon className="w-4 h-4" />
+          <LockIcon className="w-4 h-4" />
           Close Session
         </Button>
       </div>
