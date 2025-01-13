@@ -49,6 +49,8 @@ export type Database = {
           items: Json
           paid_amount: number
           payer_id: string | null
+          payment_method: Database["public"]["Enums"]["payment_method"]
+          session_id: string | null
           source_id: string
           status: string
           subtotal: number
@@ -66,6 +68,8 @@ export type Database = {
           items?: Json
           paid_amount?: number
           payer_id?: string | null
+          payment_method?: Database["public"]["Enums"]["payment_method"]
+          session_id?: string | null
           source_id: string
           status: string
           subtotal?: number
@@ -83,6 +87,8 @@ export type Database = {
           items?: Json
           paid_amount?: number
           payer_id?: string | null
+          payment_method?: Database["public"]["Enums"]["payment_method"]
+          session_id?: string | null
           source_id?: string
           status?: string
           subtotal?: number
@@ -104,6 +110,13 @@ export type Database = {
             columns: ["payer_id"]
             isOneToOne: false
             referencedRelation: "payers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bills_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
             referencedColumns: ["id"]
           },
           {
@@ -162,8 +175,10 @@ export type Database = {
           is_recurring: boolean | null
           minimum_stock: number | null
           name: string
+          payment_method: Database["public"]["Enums"]["payment_method"]
           photo_url: string | null
           remarks: string | null
+          session_id: string | null
           source_id: string | null
           subcategory_id: string | null
           tags: string[] | null
@@ -182,8 +197,10 @@ export type Database = {
           is_recurring?: boolean | null
           minimum_stock?: number | null
           name: string
+          payment_method?: Database["public"]["Enums"]["payment_method"]
           photo_url?: string | null
           remarks?: string | null
+          session_id?: string | null
           source_id?: string | null
           subcategory_id?: string | null
           tags?: string[] | null
@@ -202,8 +219,10 @@ export type Database = {
           is_recurring?: boolean | null
           minimum_stock?: number | null
           name?: string
+          payment_method?: Database["public"]["Enums"]["payment_method"]
           photo_url?: string | null
           remarks?: string | null
+          session_id?: string | null
           source_id?: string | null
           subcategory_id?: string | null
           tags?: string[] | null
@@ -218,6 +237,13 @@ export type Database = {
             columns: ["type_id"]
             isOneToOne: false
             referencedRelation: "types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "income_entries_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
             referencedColumns: ["id"]
           },
           {
@@ -530,6 +556,59 @@ export type Database = {
           },
         ]
       }
+      sessions: {
+        Row: {
+          consolidated_by: string | null
+          created_at: string
+          end_time: string | null
+          id: string
+          source_id: string
+          start_time: string
+          status: Database["public"]["Enums"]["session_status"]
+          total_cash: number
+          total_expenses: number
+          total_sales: number
+          total_transfer: number
+          updated_at: string
+        }
+        Insert: {
+          consolidated_by?: string | null
+          created_at?: string
+          end_time?: string | null
+          id?: string
+          source_id: string
+          start_time?: string
+          status?: Database["public"]["Enums"]["session_status"]
+          total_cash?: number
+          total_expenses?: number
+          total_sales?: number
+          total_transfer?: number
+          updated_at?: string
+        }
+        Update: {
+          consolidated_by?: string | null
+          created_at?: string
+          end_time?: string | null
+          id?: string
+          source_id?: string
+          start_time?: string
+          status?: Database["public"]["Enums"]["session_status"]
+          total_cash?: number
+          total_expenses?: number
+          total_sales?: number
+          total_transfer?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sessions_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       source_payer_settings: {
         Row: {
           created_at: string
@@ -798,8 +877,10 @@ export type Database = {
           next_occurrence: string | null
           parent_transaction_id: string | null
           payer_id: string | null
+          payment_method: Database["public"]["Enums"]["payment_method"]
           recurring_frequency: string | null
           remaining_amount: number | null
+          session_id: string | null
           source_id: string
           status: Database["public"]["Enums"]["transaction_status"]
           total_amount: number | null
@@ -820,8 +901,10 @@ export type Database = {
           next_occurrence?: string | null
           parent_transaction_id?: string | null
           payer_id?: string | null
+          payment_method?: Database["public"]["Enums"]["payment_method"]
           recurring_frequency?: string | null
           remaining_amount?: number | null
+          session_id?: string | null
           source_id: string
           status?: Database["public"]["Enums"]["transaction_status"]
           total_amount?: number | null
@@ -842,8 +925,10 @@ export type Database = {
           next_occurrence?: string | null
           parent_transaction_id?: string | null
           payer_id?: string | null
+          payment_method?: Database["public"]["Enums"]["payment_method"]
           recurring_frequency?: string | null
           remaining_amount?: number | null
+          session_id?: string | null
           source_id?: string
           status?: Database["public"]["Enums"]["transaction_status"]
           total_amount?: number | null
@@ -870,6 +955,13 @@ export type Database = {
             columns: ["payer_id"]
             isOneToOne: false
             referencedRelation: "payers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
             referencedColumns: ["id"]
           },
           {
@@ -1068,8 +1160,10 @@ export type Database = {
       }
     }
     Enums: {
+      payment_method: "cash" | "transfer"
       product_type_enum: "basic" | "composite" | "consignment"
       recurring_frequency: "daily" | "weekly" | "monthly" | "yearly"
+      session_status: "active" | "closing" | "closed"
       template_type: "business" | "personal"
       transaction_status: "pending" | "completed" | "partially_paid"
       user_role_type:
