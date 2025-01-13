@@ -15,7 +15,7 @@ import { format, parseISO } from "date-fns";
 interface DailyTransactionsChartProps {
   transactions: Transaction[];
   dateRange: DateRange;
-  onDateRangeChange?: (range: DateRange) => void;  // Made optional with ?
+  onDateRangeChange?: (range: DateRange) => void;
 }
 
 export const DailyTransactionsChart = ({

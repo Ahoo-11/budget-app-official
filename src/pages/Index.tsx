@@ -4,7 +4,7 @@ import { SessionManager } from "@/components/session/SessionManager";
 import { DailyTransactionsChart } from "@/components/DailyTransactionsChart";
 import { subDays } from "date-fns";
 import { useState } from "react";
-import { DateRange } from "@/components/ui/date-range-picker";
+import { DateRange } from "react-day-picker";
 import { Transaction } from "@/types/transaction";
 
 export default function Index() {
@@ -36,11 +36,20 @@ export default function Index() {
         .lte('date', dateRange.to?.toISOString() || '');
       
       if (error) throw error;
-      return data as Transaction[];
+      
+      // Ensure the type field is correctly typed as "income" | "expense"
+      return (data || []).map(transaction => ({
+        ...transaction,
+        type: transaction.type as "income" | "expense"
+      })) as Transaction[];
     }
   });
 
   const defaultSourceId = sources?.[0]?.id;
+
+  const handleDateRangeChange = (newRange: DateRange) => {
+    setDateRange(newRange);
+  };
 
   return (
     <div className="space-y-6">
@@ -48,7 +57,7 @@ export default function Index() {
       <DailyTransactionsChart 
         transactions={transactions} 
         dateRange={dateRange}
-        onDateRangeChange={setDateRange}
+        onDateRangeChange={handleDateRangeChange}
       />
     </div>
   );
