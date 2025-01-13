@@ -67,7 +67,7 @@ export const ProductForm = ({ sourceId, onSuccess, product }: ProductFormProps) 
       }
 
       // Create base product data with required fields
-      const baseProductData = {
+      const baseProductData: Partial<Product> = {
         source_id: sourceId,
         name: formData.get('name') as string,
         product_type: productType,
@@ -75,7 +75,7 @@ export const ProductForm = ({ sourceId, onSuccess, product }: ProductFormProps) 
       };
 
       // Add optional fields
-      const productData = {
+      const productData: Partial<Product> = {
         ...baseProductData,
         image_url: imageUrl,
         description: formData.get('description') as string,
