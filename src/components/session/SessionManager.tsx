@@ -77,15 +77,15 @@ export const SessionManager = ({ sourceId }: { sourceId: string }) => {
 
   const handleStartSession = async () => {
     try {
-      // First check if there's an active session using a single query
+      // First, try to fetch any existing active session
       const { data: existingSession, error: checkError } = await supabase
         .from('sessions')
-        .select('id')
+        .select('*')
         .eq('source_id', sourceId)
         .eq('status', 'active')
-        .single();
+        .maybeSingle();
 
-      if (checkError && checkError.code !== 'PGRST116') { // PGRST116 means no rows returned
+      if (checkError) {
         console.error('Error checking existing session:', checkError);
         throw checkError;
       }
@@ -93,15 +93,10 @@ export const SessionManager = ({ sourceId }: { sourceId: string }) => {
       if (existingSession) {
         console.log('Found existing active session:', existingSession);
         await refetch();
-        toast({
-          title: "Session already active",
-          description: "There is already an active session for this source.",
-          variant: "destructive",
-        });
         return;
       }
 
-      // Create new session with explicit values
+      // If no active session exists, create a new one
       const { error: createError } = await supabase
         .from('sessions')
         .insert({
@@ -114,7 +109,15 @@ export const SessionManager = ({ sourceId }: { sourceId: string }) => {
           total_expenses: 0
         });
 
-      if (createError) throw createError;
+      if (createError) {
+        if (createError.code === '23505') {
+          // If we hit the unique constraint, it means a session was created
+          // between our check and insert. Just refetch to get the latest state.
+          await refetch();
+          return;
+        }
+        throw createError;
+      }
 
       await refetch();
       
