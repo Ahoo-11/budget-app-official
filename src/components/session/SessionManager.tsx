@@ -8,7 +8,7 @@ import { format } from "date-fns";
 import { useEffect } from "react";
 import { Session } from "@supabase/supabase-js";
 
-interface Session {
+interface SessionData {
   id: string;
   source_id: string;
   status: 'active' | 'closing' | 'closed';
@@ -43,7 +43,7 @@ export const SessionManager = ({ sourceId }: { sourceId: string }) => {
       }
 
       console.log('Active session data:', data);
-      return data as Session | null;
+      return data as SessionData | null;
     },
     enabled: !!sourceId,
     refetchInterval: 30000,
