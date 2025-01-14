@@ -20,6 +20,8 @@ import { ProductsList } from "@/components/types/ProductsList";
 import { ProductDetail } from "@/components/products/ProductDetail";
 import { SessionManager } from "@/components/session/SessionManager";
 
+type TabValue = 'income' | 'expense' | 'categories' | 'suppliers' | 'settings';
+
 const Source = () => {
   const { sourceId } = useParams();
   const { toast } = useToast();
