@@ -18,8 +18,7 @@ import { EmploymentIncome } from "@/components/income/EmploymentIncome";
 import { GiftsIncome } from "@/components/income/GiftsIncome";
 import { ProductsList } from "@/components/types/ProductsList";
 import { ProductDetail } from "@/components/products/ProductDetail";
-
-type TabValue = 'income' | 'expense' | 'categories' | 'suppliers' | 'settings';
+import { SessionManager } from "@/components/session/SessionManager";
 
 const Source = () => {
   const { sourceId } = useParams();
@@ -107,7 +106,8 @@ const Source = () => {
 
   return (
     <div className="flex flex-col h-full">
-      <Tabs value={getActiveTab()} onValueChange={handleTabChange} className="w-full">
+      <SessionManager sourceId={sourceId!} />
+      <Tabs value={getActiveTab()} onValueChange={handleTabChange} className="w-full mt-6">
         <div className="flex items-center justify-between border-b px-4">
           <div className="flex items-center space-x-2">
             <TabsList className="bg-background">

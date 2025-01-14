@@ -562,6 +562,8 @@ export type Database = {
           created_at: string
           end_time: string | null
           id: string
+          reconciliation_notes: string | null
+          reconciliation_time: string | null
           source_id: string
           start_time: string
           status: Database["public"]["Enums"]["session_status"]
@@ -570,12 +572,15 @@ export type Database = {
           total_sales: number
           total_transfer: number
           updated_at: string
+          verified_cash_amount: number | null
         }
         Insert: {
           consolidated_by?: string | null
           created_at?: string
           end_time?: string | null
           id?: string
+          reconciliation_notes?: string | null
+          reconciliation_time?: string | null
           source_id: string
           start_time?: string
           status?: Database["public"]["Enums"]["session_status"]
@@ -584,12 +589,15 @@ export type Database = {
           total_sales?: number
           total_transfer?: number
           updated_at?: string
+          verified_cash_amount?: number | null
         }
         Update: {
           consolidated_by?: string | null
           created_at?: string
           end_time?: string | null
           id?: string
+          reconciliation_notes?: string | null
+          reconciliation_time?: string | null
           source_id?: string
           start_time?: string
           status?: Database["public"]["Enums"]["session_status"]
@@ -598,6 +606,7 @@ export type Database = {
           total_sales?: number
           total_transfer?: number
           updated_at?: string
+          verified_cash_amount?: number | null
         }
         Relationships: [
           {
@@ -1163,7 +1172,7 @@ export type Database = {
       payment_method: "cash" | "transfer"
       product_type_enum: "basic" | "composite" | "consignment"
       recurring_frequency: "daily" | "weekly" | "monthly" | "yearly"
-      session_status: "active" | "closing" | "closed"
+      session_status: "active" | "closing" | "closed" | "reconciled"
       template_type: "business" | "personal"
       transaction_status: "pending" | "completed" | "partially_paid"
       user_role_type:
