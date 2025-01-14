@@ -33,11 +33,6 @@ export const SessionManager = ({ sourceId }: { sourceId: string }) => {
 
       if (error) {
         console.error('Error fetching session:', error);
-        toast({
-          title: "Error fetching session",
-          description: error.message,
-          variant: "destructive",
-        });
         throw error;
       }
 
@@ -45,7 +40,7 @@ export const SessionManager = ({ sourceId }: { sourceId: string }) => {
       return data as Session | null;
     },
     enabled: !!sourceId,
-    refetchInterval: 30000, // Refresh every 30 seconds
+    refetchInterval: 30000,
     retry: 1,
   });
 
@@ -82,41 +77,45 @@ export const SessionManager = ({ sourceId }: { sourceId: string }) => {
 
   const handleStartSession = async () => {
     try {
-      console.log('Checking for existing active session...');
+      // First check if there's an active session using a single query
       const { data: existingSession, error: checkError } = await supabase
         .from('sessions')
         .select('id')
         .eq('source_id', sourceId)
         .eq('status', 'active')
-        .maybeSingle();
+        .single();
 
-      if (checkError) {
+      if (checkError && checkError.code !== 'PGRST116') { // PGRST116 means no rows returned
         console.error('Error checking existing session:', checkError);
         throw checkError;
       }
 
       if (existingSession) {
         console.log('Found existing active session:', existingSession);
+        await refetch();
         toast({
           title: "Session already active",
           description: "There is already an active session for this source.",
           variant: "destructive",
         });
-        await refetch();
         return;
       }
 
-      console.log('Creating new session for source:', sourceId);
-      const { error } = await supabase
+      // Create new session with explicit values
+      const { error: createError } = await supabase
         .from('sessions')
-        .insert([{ 
+        .insert({
           source_id: sourceId,
           status: 'active',
-          start_time: new Date().toISOString()
-        }]);
-      
-      if (error) throw error;
-      
+          start_time: new Date().toISOString(),
+          total_cash: 0,
+          total_transfer: 0,
+          total_sales: 0,
+          total_expenses: 0
+        });
+
+      if (createError) throw createError;
+
       await refetch();
       
       toast({
