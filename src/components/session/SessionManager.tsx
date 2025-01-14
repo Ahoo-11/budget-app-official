@@ -76,6 +76,27 @@ export const SessionManager = ({ sourceId }: { sourceId: string }) => {
 
   const handleStartSession = async () => {
     try {
+      // First, check if there's already an active session
+      const { data: existingSession, error: checkError } = await supabase
+        .from('sessions')
+        .select('id')
+        .eq('source_id', sourceId)
+        .eq('status', 'active')
+        .maybeSingle();
+
+      if (checkError) throw checkError;
+
+      if (existingSession) {
+        toast({
+          title: "Session already active",
+          description: "There is already an active session for this source.",
+          variant: "destructive",
+        });
+        await refetch();
+        return;
+      }
+
+      // If no active session, create a new one
       const { error } = await supabase
         .from('sessions')
         .insert([{ source_id: sourceId }]);
@@ -88,11 +109,11 @@ export const SessionManager = ({ sourceId }: { sourceId: string }) => {
         title: "Success",
         description: "New session started",
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating session:', error);
       toast({
         title: "Error",
-        description: "Failed to create session",
+        description: error.message || "Failed to create session",
         variant: "destructive",
       });
     }
