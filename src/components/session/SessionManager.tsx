@@ -20,9 +20,10 @@ interface Session {
 export const SessionManager = ({ sourceId }: { sourceId: string }) => {
   const { toast } = useToast();
 
-  const { data: activeSession, isLoading, refetch } = useQuery({
+  const { data: activeSession, isLoading, error, refetch } = useQuery({
     queryKey: ['active-session', sourceId],
     queryFn: async () => {
+      console.log('Fetching active session for source:', sourceId);
       const { data, error } = await supabase
         .from('sessions')
         .select('*')
@@ -31,6 +32,7 @@ export const SessionManager = ({ sourceId }: { sourceId: string }) => {
         .maybeSingle();
 
       if (error) {
+        console.error('Error fetching session:', error);
         toast({
           title: "Error fetching session",
           description: error.message,
@@ -38,16 +40,20 @@ export const SessionManager = ({ sourceId }: { sourceId: string }) => {
         });
         throw error;
       }
+
+      console.log('Active session data:', data);
       return data as Session | null;
     },
     enabled: !!sourceId,
     refetchInterval: 30000, // Refresh every 30 seconds
+    retry: 1,
   });
 
   const handleCloseSession = async () => {
     if (!activeSession) return;
     
     try {
+      console.log('Closing session:', activeSession.id);
       const { error } = await supabase
         .from('sessions')
         .update({ 
@@ -62,13 +68,13 @@ export const SessionManager = ({ sourceId }: { sourceId: string }) => {
 
       toast({
         title: "Session closed",
-        description: "A new session has been started automatically.",
+        description: "The session has been closed successfully.",
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error closing session:', error);
       toast({
         title: "Error",
-        description: "Failed to close session",
+        description: error.message || "Failed to close session",
         variant: "destructive",
       });
     }
@@ -76,7 +82,7 @@ export const SessionManager = ({ sourceId }: { sourceId: string }) => {
 
   const handleStartSession = async () => {
     try {
-      // First, check if there's already an active session
+      console.log('Checking for existing active session...');
       const { data: existingSession, error: checkError } = await supabase
         .from('sessions')
         .select('id')
@@ -84,9 +90,13 @@ export const SessionManager = ({ sourceId }: { sourceId: string }) => {
         .eq('status', 'active')
         .maybeSingle();
 
-      if (checkError) throw checkError;
+      if (checkError) {
+        console.error('Error checking existing session:', checkError);
+        throw checkError;
+      }
 
       if (existingSession) {
+        console.log('Found existing active session:', existingSession);
         toast({
           title: "Session already active",
           description: "There is already an active session for this source.",
@@ -96,10 +106,14 @@ export const SessionManager = ({ sourceId }: { sourceId: string }) => {
         return;
       }
 
-      // If no active session, create a new one
+      console.log('Creating new session for source:', sourceId);
       const { error } = await supabase
         .from('sessions')
-        .insert([{ source_id: sourceId }]);
+        .insert([{ 
+          source_id: sourceId,
+          status: 'active',
+          start_time: new Date().toISOString()
+        }]);
       
       if (error) throw error;
       
@@ -110,14 +124,24 @@ export const SessionManager = ({ sourceId }: { sourceId: string }) => {
         description: "New session started",
       });
     } catch (error: any) {
-      console.error('Error creating session:', error);
+      console.error('Error managing session:', error);
       toast({
         title: "Error",
-        description: error.message || "Failed to create session",
+        description: error.message || "Failed to manage session",
         variant: "destructive",
       });
     }
   };
+
+  if (error) {
+    return (
+      <Card className="p-6">
+        <div className="text-center text-red-500">
+          <p>Error loading session: {error.message}</p>
+        </div>
+      </Card>
+    );
+  }
 
   if (isLoading) {
     return (
