@@ -24,11 +24,19 @@ const Stats = () => {
   const { data: allTransactions = [] } = useQuery({
     queryKey: ['transactions', date],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('transactions')
-        .select('*')
-        .gte('date', date.from?.toISOString() || '')
-        .lte('date', date.to?.toISOString() || '');
+        .select('*');
+      
+      if (date.from) {
+        query = query.gte('date', date.from.toISOString());
+      }
+      
+      if (date.to) {
+        query = query.lte('date', date.to.toISOString());
+      }
+      
+      const { data, error } = await query;
       
       if (error) throw error;
       
@@ -123,6 +131,6 @@ const Stats = () => {
       </div>
     </div>
   );
-}
+};
 
 export default Stats;
