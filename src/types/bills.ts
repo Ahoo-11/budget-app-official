@@ -33,6 +33,7 @@ export interface BillDBRow {
   payer_id?: string | null;
   type_id?: string | null;
   paid_amount: number;
+  payment_method: 'cash' | 'transfer';
 }
 
 export interface Bill extends Omit<BillDBRow, 'items'> {
