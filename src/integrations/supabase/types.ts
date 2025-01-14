@@ -1155,6 +1155,18 @@ export type Database = {
         }
         Returns: undefined
       }
+      get_session_stats: {
+        Args: {
+          source_id: string
+        }
+        Returns: {
+          total_sessions: number
+          active_sessions: number
+          closed_sessions: number
+          avg_duration: unknown
+          status_lengths: Json
+        }[]
+      }
       has_full_access: {
         Args: {
           user_id: string
