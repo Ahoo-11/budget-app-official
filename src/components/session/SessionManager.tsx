@@ -5,6 +5,8 @@ import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { LockIcon, BanknoteIcon, ArrowDownIcon, ArrowUpIcon, Loader2Icon } from "lucide-react";
 import { format } from "date-fns";
+import { useEffect } from "react";
+import { Session } from "@supabase/supabase-js";
 
 interface Session {
   id: string;
@@ -48,7 +50,7 @@ export const SessionManager = ({ sourceId }: { sourceId: string }) => {
     retry: 1,
   });
 
-  // Query bills for active session
+  // Query bills for active session with real-time updates
   const { data: sessionBills = [], isLoading: isLoadingBills } = useQuery({
     queryKey: ['session-bills', activeSession?.id],
     queryFn: async () => {
@@ -58,14 +60,42 @@ export const SessionManager = ({ sourceId }: { sourceId: string }) => {
         .from('bills')
         .select('*')
         .eq('session_id', activeSession.id)
-        .neq('status', 'cancelled');  // Only exclude cancelled bills
+        .neq('status', 'cancelled');
 
       if (error) throw error;
       return data as Bill[];
     },
     enabled: !!activeSession?.id,
-    refetchInterval: 30000
   });
+
+  // Set up real-time subscription for bills
+  useEffect(() => {
+    if (!activeSession?.id) return;
+
+    console.log('Setting up real-time subscription for session bills');
+    const channel = supabase
+      .channel('session-bills')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'bills',
+          filter: `session_id=eq.${activeSession.id}`
+        },
+        (payload) => {
+          console.log('Real-time bill update received:', payload);
+          // Refetch bills when any changes occur
+          refetch();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log('Cleaning up real-time subscription');
+      supabase.removeChannel(channel);
+    };
+  }, [activeSession?.id, refetch]);
 
   // Calculate totals from bills
   const totals = sessionBills.reduce((acc, bill) => ({
