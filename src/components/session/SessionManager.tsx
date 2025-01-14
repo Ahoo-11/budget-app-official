@@ -11,16 +11,20 @@ interface Session {
   source_id: string;
   status: 'active' | 'closing' | 'closed';
   start_time: string;
-  total_cash: number;
-  total_transfer: number;
-  total_sales: number;
-  total_expenses: number;
+}
+
+interface Bill {
+  id: string;
+  total: number;
+  payment_method: 'cash' | 'transfer';
+  status: string;
 }
 
 export const SessionManager = ({ sourceId }: { sourceId: string }) => {
   const { toast } = useToast();
 
-  const { data: activeSession, isLoading, error, refetch } = useQuery({
+  // Query active session
+  const { data: activeSession, isLoading: isLoadingSession, error: sessionError, refetch } = useQuery({
     queryKey: ['active-session', sourceId],
     queryFn: async () => {
       console.log('Fetching active session for source:', sourceId);
@@ -42,6 +46,42 @@ export const SessionManager = ({ sourceId }: { sourceId: string }) => {
     enabled: !!sourceId,
     refetchInterval: 30000,
     retry: 1,
+  });
+
+  // Query bills for active session
+  const { data: sessionBills = [], isLoading: isLoadingBills } = useQuery({
+    queryKey: ['session-bills', activeSession?.id],
+    queryFn: async () => {
+      if (!activeSession?.id) return [];
+      
+      const { data, error } = await supabase
+        .from('bills')
+        .select('*')
+        .eq('session_id', activeSession.id)
+        .eq('status', 'paid');
+
+      if (error) throw error;
+      return data as Bill[];
+    },
+    enabled: !!activeSession?.id,
+    refetchInterval: 30000
+  });
+
+  // Calculate totals from bills
+  const totals = sessionBills.reduce((acc, bill) => {
+    if (bill.status === 'cancelled') return acc;
+    
+    return {
+      total_cash: acc.total_cash + (bill.payment_method === 'cash' ? bill.total : 0),
+      total_transfer: acc.total_transfer + (bill.payment_method === 'transfer' ? bill.total : 0),
+      total_sales: acc.total_sales + bill.total,
+      total_expenses: acc.total_expenses // Expenses would need separate handling
+    };
+  }, {
+    total_cash: 0,
+    total_transfer: 0,
+    total_sales: 0,
+    total_expenses: 0
   });
 
   const handleCloseSession = async () => {
@@ -81,10 +121,6 @@ export const SessionManager = ({ sourceId }: { sourceId: string }) => {
         source_id: sourceId,
         status: 'active' as const,
         start_time: new Date().toISOString(),
-        total_cash: 0,
-        total_transfer: 0,
-        total_sales: 0,
-        total_expenses: 0
       };
 
       const { error: createError } = await supabase
@@ -111,17 +147,17 @@ export const SessionManager = ({ sourceId }: { sourceId: string }) => {
     }
   };
 
-  if (error) {
+  if (sessionError) {
     return (
       <Card className="p-6">
         <div className="text-center text-red-500">
-          <p>Error loading session: {error.message}</p>
+          <p>Error loading session: {sessionError.message}</p>
         </div>
       </Card>
     );
   }
 
-  if (isLoading) {
+  if (isLoadingSession || isLoadingBills) {
     return (
       <Card className="p-6">
         <div className="flex items-center justify-center space-x-2">
@@ -179,7 +215,7 @@ export const SessionManager = ({ sourceId }: { sourceId: string }) => {
             <span className="text-sm font-medium">Cash</span>
           </div>
           <p className="text-2xl font-bold mt-2">
-            MVR {activeSession.total_cash.toFixed(2)}
+            MVR {totals.total_cash.toFixed(2)}
           </p>
         </Card>
 
@@ -189,7 +225,7 @@ export const SessionManager = ({ sourceId }: { sourceId: string }) => {
             <span className="text-sm font-medium">Transfer</span>
           </div>
           <p className="text-2xl font-bold mt-2">
-            MVR {activeSession.total_transfer.toFixed(2)}
+            MVR {totals.total_transfer.toFixed(2)}
           </p>
         </Card>
 
@@ -199,7 +235,7 @@ export const SessionManager = ({ sourceId }: { sourceId: string }) => {
             <span className="text-sm font-medium">Total Sales</span>
           </div>
           <p className="text-2xl font-bold mt-2">
-            MVR {activeSession.total_sales.toFixed(2)}
+            MVR {totals.total_sales.toFixed(2)}
           </p>
         </Card>
 
@@ -209,7 +245,7 @@ export const SessionManager = ({ sourceId }: { sourceId: string }) => {
             <span className="text-sm font-medium">Total Expenses</span>
           </div>
           <p className="text-2xl font-bold mt-2">
-            MVR {activeSession.total_expenses.toFixed(2)}
+            MVR {totals.total_expenses.toFixed(2)}
           </p>
         </Card>
       </div>
