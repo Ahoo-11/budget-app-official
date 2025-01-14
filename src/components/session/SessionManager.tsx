@@ -77,45 +77,21 @@ export const SessionManager = ({ sourceId }: { sourceId: string }) => {
 
   const handleStartSession = async () => {
     try {
-      // First, try to fetch any existing active session
-      const { data: existingSession, error: checkError } = await supabase
-        .from('sessions')
-        .select('*')
-        .eq('source_id', sourceId)
-        .eq('status', 'active')
-        .maybeSingle();
+      const newSession = {
+        source_id: sourceId,
+        status: 'active',
+        start_time: new Date().toISOString(),
+        total_cash: 0,
+        total_transfer: 0,
+        total_sales: 0,
+        total_expenses: 0
+      };
 
-      if (checkError) {
-        console.error('Error checking existing session:', checkError);
-        throw checkError;
-      }
-
-      if (existingSession) {
-        console.log('Found existing active session:', existingSession);
-        await refetch();
-        return;
-      }
-
-      // If no active session exists, create a new one
       const { error: createError } = await supabase
         .from('sessions')
-        .insert({
-          source_id: sourceId,
-          status: 'active',
-          start_time: new Date().toISOString(),
-          total_cash: 0,
-          total_transfer: 0,
-          total_sales: 0,
-          total_expenses: 0
-        });
+        .insert([newSession]);
 
       if (createError) {
-        if (createError.code === '23505') {
-          // If we hit the unique constraint, it means a session was created
-          // between our check and insert. Just refetch to get the latest state.
-          await refetch();
-          return;
-        }
         throw createError;
       }
 
@@ -126,10 +102,10 @@ export const SessionManager = ({ sourceId }: { sourceId: string }) => {
         description: "New session started",
       });
     } catch (error: any) {
-      console.error('Error managing session:', error);
+      console.error('Error creating session:', error);
       toast({
         title: "Error",
-        description: error.message || "Failed to manage session",
+        description: error.message || "Failed to create session",
         variant: "destructive",
       });
     }
