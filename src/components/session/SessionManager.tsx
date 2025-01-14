@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { LockIcon, BanknoteIcon, ArrowDownIcon, ArrowUpIcon, Loader2Icon } from "lucide-react";
 import { format } from "date-fns";
 
@@ -58,7 +58,7 @@ export const SessionManager = ({ sourceId }: { sourceId: string }) => {
         .from('bills')
         .select('*')
         .eq('session_id', activeSession.id)
-        .eq('status', 'paid');
+        .neq('status', 'cancelled');  // Only exclude cancelled bills
 
       if (error) throw error;
       return data as Bill[];
@@ -68,16 +68,12 @@ export const SessionManager = ({ sourceId }: { sourceId: string }) => {
   });
 
   // Calculate totals from bills
-  const totals = sessionBills.reduce((acc, bill) => {
-    if (bill.status === 'cancelled') return acc;
-    
-    return {
-      total_cash: acc.total_cash + (bill.payment_method === 'cash' ? bill.total : 0),
-      total_transfer: acc.total_transfer + (bill.payment_method === 'transfer' ? bill.total : 0),
-      total_sales: acc.total_sales + bill.total,
-      total_expenses: acc.total_expenses // Expenses would need separate handling
-    };
-  }, {
+  const totals = sessionBills.reduce((acc, bill) => ({
+    total_cash: acc.total_cash + (bill.payment_method === 'cash' ? bill.total : 0),
+    total_transfer: acc.total_transfer + (bill.payment_method === 'transfer' ? bill.total : 0),
+    total_sales: acc.total_sales + bill.total,
+    total_expenses: acc.total_expenses
+  }), {
     total_cash: 0,
     total_transfer: 0,
     total_sales: 0,
