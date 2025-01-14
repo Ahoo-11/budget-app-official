@@ -79,7 +79,7 @@ export const SessionManager = ({ sourceId }: { sourceId: string }) => {
     try {
       const newSession = {
         source_id: sourceId,
-        status: 'active',
+        status: 'active' as const,
         start_time: new Date().toISOString(),
         total_cash: 0,
         total_transfer: 0,
@@ -89,7 +89,7 @@ export const SessionManager = ({ sourceId }: { sourceId: string }) => {
 
       const { error: createError } = await supabase
         .from('sessions')
-        .insert([newSession]);
+        .insert(newSession);
 
       if (createError) {
         throw createError;
