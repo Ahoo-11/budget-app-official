@@ -6,6 +6,7 @@ import { useState } from "react";
 import { serializeBillItems } from "@/types/bills";
 import { BillStatusSelect } from "./BillStatusSelect";
 import { BillPaymentDialog } from "./BillPaymentDialog";
+import { DollarSign } from "lucide-react";
 
 interface BillListItemProps {
   bill: Bill;
@@ -18,7 +19,6 @@ export const BillListItem = ({ bill }: BillListItemProps) => {
   const queryClient = useQueryClient();
 
   const handleStatusChange = async (newStatus: Bill['status']) => {
-    // If selecting partially_paid, show payment dialog
     if (newStatus === 'partially_paid') {
       setShowPaymentDialog(true);
       return;
@@ -27,10 +27,8 @@ export const BillListItem = ({ bill }: BillListItemProps) => {
     try {
       setIsUpdating(true);
       
-      // Prepare update data
       const updateData = {
         status: newStatus,
-        // If paid status, set paid_amount to total bill amount
         paid_amount: newStatus === 'paid' ? bill.total : 0,
         items: serializeBillItems(bill.items)
       };
@@ -109,6 +107,12 @@ export const BillListItem = ({ bill }: BillListItemProps) => {
             <p className="text-sm text-muted-foreground">
               Items: {bill.items.length}
             </p>
+            {bill.payment_method && (
+              <p className="text-sm text-muted-foreground flex items-center gap-1">
+                <DollarSign className="h-4 w-4" />
+                Payment: {bill.payment_method.charAt(0).toUpperCase() + bill.payment_method.slice(1)}
+              </p>
+            )}
           </div>
           <div className="text-right">
             <p className="font-medium">Total: MVR {bill.total?.toFixed(2)}</p>
