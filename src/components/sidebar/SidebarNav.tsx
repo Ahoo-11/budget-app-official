@@ -1,37 +1,34 @@
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Home, Settings } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
-import { cn } from "@/lib/utils";
+import { Home, FileText, BarChart3, Settings2 } from "lucide-react";
 
 export function SidebarNav() {
-  const location = useLocation();
-  
   return (
-    <nav className="space-y-2">
-      <Link to="/" >
-        <Button 
-          variant="ghost"
-          className={cn(
-            "w-full justify-start",
-            location.pathname === "/" && "bg-accent text-accent-foreground font-medium"
-          )}
-        >
+    <div className="space-y-1">
+      <Link to="/">
+        <Button variant="ghost" className="w-full justify-start">
           <Home className="mr-2 h-4 w-4" />
           Home
         </Button>
       </Link>
+      <Link to="/reports">
+        <Button variant="ghost" className="w-full justify-start">
+          <FileText className="mr-2 h-4 w-4" />
+          Reports
+        </Button>
+      </Link>
+      <Link to="/stats">
+        <Button variant="ghost" className="w-full justify-start">
+          <BarChart3 className="mr-2 h-4 w-4" />
+          Stats
+        </Button>
+      </Link>
       <Link to="/settings">
-        <Button 
-          variant="ghost"
-          className={cn(
-            "w-full justify-start",
-            location.pathname === "/settings" && "bg-accent text-accent-foreground font-medium"
-          )}
-        >
-          <Settings className="mr-2 h-4 w-4" />
+        <Button variant="ghost" className="w-full justify-start">
+          <Settings2 className="mr-2 h-4 w-4" />
           Settings
         </Button>
       </Link>
-    </nav>
+    </div>
   );
 }

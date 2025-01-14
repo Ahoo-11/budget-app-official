@@ -9,6 +9,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useTransactions } from "@/hooks/useTransactions";
 import { TransactionTypeDistribution } from "@/components/stats/TransactionTypeDistribution";
 import { TransactionReports } from "@/components/stats/TransactionReports";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Transaction } from "@/types/transaction";
 
 const Stats = () => {
   const [date, setDate] = useState<DateRange>({
@@ -17,6 +20,24 @@ const Stats = () => {
   });
   const [selectedSource, setSelectedSource] = useState("");
   const { transactions } = useTransactions(selectedSource);
+
+  const { data: allTransactions = [] } = useQuery({
+    queryKey: ['transactions', date],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('transactions')
+        .select('*')
+        .gte('date', date.from?.toISOString() || '')
+        .lte('date', date.to?.toISOString() || '');
+      
+      if (error) throw error;
+      
+      return (data || []).map(transaction => ({
+        ...transaction,
+        type: transaction.type as "income" | "expense"
+      })) as Transaction[];
+    }
+  });
 
   return (
     <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">
@@ -80,7 +101,7 @@ const Stats = () => {
               </Card>
             </div>
             <DailyTransactionsChart
-              transactions={transactions}
+              transactions={allTransactions}
               dateRange={date}
             />
           </TabsContent>
@@ -102,6 +123,6 @@ const Stats = () => {
       </div>
     </div>
   );
-};
+}
 
 export default Stats;
