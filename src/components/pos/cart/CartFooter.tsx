@@ -20,6 +20,7 @@ interface CartFooterProps {
   discount: number;
   finalTotal: number;
   isSubmitting?: boolean;
+  disabled?: boolean;
   onDiscountChange: (discount: number) => void;
   onCheckout: () => void;
   onCancelBill: () => void;
@@ -32,6 +33,7 @@ export const CartFooter = ({
   discount,
   finalTotal,
   isSubmitting = false,
+  disabled = false,
   onDiscountChange,
   onCheckout,
   onCancelBill,
@@ -61,6 +63,7 @@ export const CartFooter = ({
               value={discount}
               onChange={(e) => onDiscountChange(Number(e.target.value))}
               className="h-8"
+              disabled={disabled}
             />
           </div>
           <div className="text-sm text-right pt-5">
@@ -81,6 +84,7 @@ export const CartFooter = ({
               <Button
                 variant="outline"
                 className="flex-1 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
+                disabled={disabled}
               >
                 <Trash2 className="w-4 h-4 mr-2" />
                 Cancel Bill
@@ -108,7 +112,7 @@ export const CartFooter = ({
           <Button
             className="flex-1 bg-black text-white hover:bg-black/90"
             onClick={onCheckout}
-            disabled={isSubmitting}
+            disabled={isSubmitting || disabled}
           >
             {isSubmitting ? (
               <>
