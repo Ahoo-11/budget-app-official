@@ -10,6 +10,19 @@ export const useBillManager = (sourceId: string) => {
     try {
       setIsSubmitting(true);
 
+      // First get active session
+      const { data: activeSession } = await supabase
+        .from('sessions')
+        .select('id')
+        .eq('source_id', sourceId)
+        .eq('status', 'active')
+        .single();
+
+      if (!activeSession?.id) {
+        toast.error("No active session found. Please start a new session.");
+        return null;
+      }
+
       const { data: bill, error } = await supabase
         .from("bills")
         .insert({
@@ -18,7 +31,8 @@ export const useBillManager = (sourceId: string) => {
           status: "pending",
           total: items.reduce((sum, item) => sum + item.price * item.quantity, 0),
           user_id: (await supabase.auth.getUser()).data.user?.id,
-          date: new Date().toISOString()
+          date: new Date().toISOString(),
+          session_id: activeSession.id
         })
         .select()
         .single();
