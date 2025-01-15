@@ -7,6 +7,10 @@ import { useCartManager } from "./cart/CartManager";
 import { useCartCalculations } from "@/hooks/cart/useCartCalculations";
 import { useCartPayment } from "@/hooks/cart/useCartPayment";
 import { useBillUpdates } from "@/hooks/bills/useBillUpdates";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 interface OrderCartProps {
   selectedProducts: BillProduct[];
@@ -45,6 +49,21 @@ export const OrderCart = ({
     handleDateChange,
   } = useBillUpdates();
 
+  const { data: activeSession } = useQuery({
+    queryKey: ['active-session', sourceId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('sessions')
+        .select('*')
+        .eq('source_id', sourceId)
+        .eq('status', 'active')
+        .maybeSingle();
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const {
     handleCheckout,
     handleCancelBill,
@@ -73,6 +92,15 @@ export const OrderCart = ({
         onPayerSelect={handlePayerSelect}
         onDateChange={handleDateChange}
       />
+
+      {!activeSession && (
+        <Alert variant="destructive" className="m-4">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            No active session found. Please start a new session to create bills.
+          </AlertDescription>
+        </Alert>
+      )}
 
       <div className="border-t p-4">
         <h3 className="font-medium text-lg">Order Summary</h3>
@@ -103,6 +131,7 @@ export const OrderCart = ({
             onCancelBill={handleCancelBill}
             selectedPayerId={selectedPayerId}
             isSubmitting={isPaymentSubmitting || isBillSubmitting || isCartSubmitting}
+            disabled={!activeSession}
           />
         </>
       )}

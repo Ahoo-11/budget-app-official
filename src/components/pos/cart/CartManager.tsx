@@ -34,6 +34,19 @@ export const useCartManager = ({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("User not authenticated");
 
+      // Check for active session
+      const { data: activeSession } = await supabase
+        .from('sessions')
+        .select('id')
+        .eq('source_id', sourceId)
+        .eq('status', 'active')
+        .maybeSingle();
+
+      if (!activeSession?.id) {
+        toast.error("No active session found. Please start a new session before creating bills.");
+        return;
+      }
+
       // Create bill first
       const { data: bill, error: billError } = await supabase
         .from('bills')
@@ -47,7 +60,8 @@ export const useCartManager = ({
           total: finalTotal,
           paid_amount: paidAmount,
           status: paidAmount >= finalTotal ? 'paid' : paidAmount > 0 ? 'partially_paid' : 'pending',
-          date: new Date().toISOString()
+          date: new Date().toISOString(),
+          session_id: activeSession.id
         })
         .select()
         .single();
@@ -56,11 +70,11 @@ export const useCartManager = ({
 
       // Create stock movements for products
       const stockMovements = selectedProducts
-        .filter(item => item.type === 'product') // Only process products, not services
+        .filter(item => item.type === 'product')
         .map(product => ({
           product_id: product.id,
           movement_type: 'sale',
-          quantity: -product.quantity, // Negative quantity for sales
+          quantity: -product.quantity,
           unit_cost: product.purchase_cost || 0,
           notes: `Bill: ${bill.id}`,
           created_by: user.id

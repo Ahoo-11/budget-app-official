@@ -6,17 +6,28 @@ import { toast } from "sonner";
 export const useBillManager = (sourceId: string) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const getActiveSession = async () => {
+    const { data: activeSession, error } = await supabase
+      .from('sessions')
+      .select('id')
+      .eq('source_id', sourceId)
+      .eq('status', 'active')
+      .maybeSingle();
+
+    if (error) {
+      console.error("Error fetching active session:", error);
+      throw error;
+    }
+
+    return activeSession;
+  };
+
   const createBill = async (items: BillProduct[]) => {
     try {
       setIsSubmitting(true);
 
       // First get active session
-      const { data: activeSession } = await supabase
-        .from('sessions')
-        .select('id')
-        .eq('source_id', sourceId)
-        .eq('status', 'active')
-        .single();
+      const activeSession = await getActiveSession();
 
       if (!activeSession?.id) {
         toast.error("No active session found. Please start a new session.");
