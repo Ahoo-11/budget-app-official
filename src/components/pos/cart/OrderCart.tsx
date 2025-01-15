@@ -1,9 +1,9 @@
 import { BillProduct } from "@/types/bills";
-import { CartHeader } from "./cart/CartHeader";
-import { CartItems } from "./cart/CartItems";
-import { CartFooter } from "./cart/CartFooter";
-import { PaymentMethodSelector } from "./cart/PaymentMethodSelector";
-import { useCartManager } from "./cart/CartManager";
+import { CartHeader } from "./CartHeader";
+import { CartItems } from "./CartItems";
+import { CartFooter } from "./CartFooter";
+import { PaymentMethodSelector } from "./PaymentMethodSelector";
+import { useCartManager } from "./CartManager";
 import { useCartCalculations } from "@/hooks/cart/useCartCalculations";
 import { useBillUpdates } from "@/hooks/bills/useBillUpdates";
 import { useQuery } from "@tanstack/react-query";
