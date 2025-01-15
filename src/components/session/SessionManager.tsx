@@ -6,7 +6,6 @@ import { useToast } from "@/hooks/use-toast";
 import { LockIcon, BanknoteIcon, ArrowDownIcon, ArrowUpIcon, Loader2Icon } from "lucide-react";
 import { format } from "date-fns";
 import { useEffect } from "react";
-import { Session } from "@supabase/supabase-js";
 
 interface SessionData {
   id: string;
@@ -223,9 +222,14 @@ export const SessionManager = ({ sourceId }: { sourceId: string }) => {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
           <h2 className="text-2xl font-bold">Active Session</h2>
-          <p className="text-muted-foreground">
-            Started: {format(new Date(activeSession.start_time), 'PPp')}
-          </p>
+          <div className="space-y-1">
+            <p className="text-muted-foreground">
+              Started: {format(new Date(activeSession.start_time), 'PPp')}
+            </p>
+            <p className="text-xs text-muted-foreground font-mono">
+              ID: {activeSession.id}
+            </p>
+          </div>
         </div>
         <Button
           variant="destructive"
