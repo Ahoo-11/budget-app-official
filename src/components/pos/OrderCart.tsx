@@ -2,15 +2,15 @@ import { BillProduct } from "@/types/bills";
 import { CartHeader } from "./cart/CartHeader";
 import { CartItems } from "./cart/CartItems";
 import { CartFooter } from "./cart/CartFooter";
-import { PaymentInput } from "./cart/PaymentInput";
+import { PaymentMethodSelector } from "./cart/PaymentMethodSelector";
 import { useCartManager } from "./cart/CartManager";
 import { useCartCalculations } from "@/hooks/cart/useCartCalculations";
-import { useCartPayment } from "@/hooks/cart/useCartPayment";
 import { useBillUpdates } from "@/hooks/bills/useBillUpdates";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
+import { useState } from "react";
 
 interface OrderCartProps {
   selectedProducts: BillProduct[];
@@ -27,11 +27,7 @@ export const OrderCart = ({
   sourceId,
   setSelectedProducts,
 }: OrderCartProps) => {
-  const {
-    isSubmitting: isPaymentSubmitting,
-    paidAmount,
-    setPaidAmount,
-  } = useCartPayment();
+  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'transfer'>('transfer');
 
   const {
     discount,
@@ -71,7 +67,8 @@ export const OrderCart = ({
   } = useCartManager({
     sourceId,
     selectedProducts,
-    setSelectedProducts
+    setSelectedProducts,
+    paymentMethod
   });
 
   const handleCheckoutClick = () => {
@@ -79,8 +76,7 @@ export const OrderCart = ({
       subtotal,
       discount,
       gstAmount,
-      finalTotal,
-      paidAmount
+      finalTotal
     );
   };
 
@@ -115,10 +111,9 @@ export const OrderCart = ({
       {selectedProducts.length > 0 && (
         <>
           <div className="border-t p-4">
-            <PaymentInput
-              total={finalTotal}
-              paidAmount={paidAmount}
-              onPaidAmountChange={setPaidAmount}
+            <PaymentMethodSelector
+              method={paymentMethod}
+              onMethodChange={setPaymentMethod}
             />
           </div>
           <CartFooter
@@ -130,8 +125,9 @@ export const OrderCart = ({
             onCheckout={handleCheckoutClick}
             onCancelBill={handleCancelBill}
             selectedPayerId={selectedPayerId}
-            isSubmitting={isPaymentSubmitting || isBillSubmitting || isCartSubmitting}
+            isSubmitting={isBillSubmitting || isCartSubmitting}
             disabled={!activeSession}
+            paymentMethod={paymentMethod}
           />
         </>
       )}

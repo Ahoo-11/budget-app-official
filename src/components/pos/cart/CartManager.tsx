@@ -7,12 +7,14 @@ interface CartManagerProps {
   sourceId: string;
   selectedProducts: BillProduct[];
   setSelectedProducts: (products: BillProduct[]) => void;
+  paymentMethod: 'cash' | 'transfer';
 }
 
 export const useCartManager = ({
   sourceId,
   selectedProducts,
-  setSelectedProducts
+  setSelectedProducts,
+  paymentMethod
 }: CartManagerProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -21,7 +23,6 @@ export const useCartManager = ({
     discount: number,
     gstAmount: number,
     finalTotal: number,
-    paidAmount: number = 0
   ) => {
     if (!sourceId || selectedProducts.length === 0) {
       toast.error("No items in cart");
@@ -30,11 +31,9 @@ export const useCartManager = ({
 
     setIsSubmitting(true);
     try {
-      // Get current user
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("User not authenticated");
 
-      // Check for active session
       const { data: activeSession } = await supabase
         .from('sessions')
         .select('id')
@@ -47,7 +46,6 @@ export const useCartManager = ({
         return;
       }
 
-      // Create bill first
       const { data: bill, error: billError } = await supabase
         .from('bills')
         .insert({
@@ -58,17 +56,16 @@ export const useCartManager = ({
           discount: discount,
           gst: gstAmount,
           total: finalTotal,
-          paid_amount: paidAmount,
-          status: paidAmount >= finalTotal ? 'paid' : paidAmount > 0 ? 'partially_paid' : 'pending',
+          status: 'paid',
           date: new Date().toISOString(),
-          session_id: activeSession.id
+          session_id: activeSession.id,
+          payment_method: paymentMethod
         })
         .select()
         .single();
 
       if (billError) throw billError;
 
-      // Create stock movements for products
       const stockMovements = selectedProducts
         .filter(item => item.type === 'product')
         .map(product => ({
@@ -87,7 +84,6 @@ export const useCartManager = ({
 
         if (stockError) throw stockError;
 
-        // Update product stock levels
         for (const product of selectedProducts.filter(item => item.type === 'product')) {
           const { error: updateError } = await supabase
             .from('products')
@@ -100,7 +96,6 @@ export const useCartManager = ({
         }
       }
 
-      // Clear cart and show success message
       setSelectedProducts([]);
       toast.success("Bill created successfully and stock updated");
 
