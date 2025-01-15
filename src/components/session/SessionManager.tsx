@@ -63,6 +63,7 @@ export const SessionManager = ({ sourceId }: { sourceId: string }) => {
         .neq('status', 'cancelled');
 
       if (error) throw error;
+      console.log('Session bills:', data);
       return data as Bill[];
     },
     enabled: !!activeSession?.id,
@@ -85,7 +86,6 @@ export const SessionManager = ({ sourceId }: { sourceId: string }) => {
         },
         (payload) => {
           console.log('Real-time bill update received:', payload);
-          // Refetch bills when any changes occur
           refetch();
         }
       )
@@ -109,6 +109,41 @@ export const SessionManager = ({ sourceId }: { sourceId: string }) => {
     total_sales: 0,
     total_expenses: 0
   });
+
+  const handleStartSession = async () => {
+    try {
+      const newSession = {
+        source_id: sourceId,
+        status: 'active' as const,
+        start_time: new Date().toISOString(),
+      };
+
+      const { data: createdSession, error: createError } = await supabase
+        .from('sessions')
+        .insert(newSession)
+        .select()
+        .single();
+
+      if (createError) {
+        throw createError;
+      }
+
+      console.log('Created new session:', createdSession);
+      await refetch();
+      
+      toast({
+        title: "Success",
+        description: "New session started",
+      });
+    } catch (error: any) {
+      console.error('Error creating session:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create session",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleCloseSession = async () => {
     if (!activeSession) return;
@@ -136,38 +171,6 @@ export const SessionManager = ({ sourceId }: { sourceId: string }) => {
       toast({
         title: "Error",
         description: error.message || "Failed to close session",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleStartSession = async () => {
-    try {
-      const newSession = {
-        source_id: sourceId,
-        status: 'active' as const,
-        start_time: new Date().toISOString(),
-      };
-
-      const { error: createError } = await supabase
-        .from('sessions')
-        .insert(newSession);
-
-      if (createError) {
-        throw createError;
-      }
-
-      await refetch();
-      
-      toast({
-        title: "Success",
-        description: "New session started",
-      });
-    } catch (error: any) {
-      console.error('Error creating session:', error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to create session",
         variant: "destructive",
       });
     }
