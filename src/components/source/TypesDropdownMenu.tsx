@@ -26,7 +26,8 @@ export const TypesDropdownMenu = () => {
       "Employment Income": "types/employment",
       "Gifts and Grants": "types/gifts",
       "Investment Income": "types/investment",
-      "Other Income": "types/other"
+      "Other Income": "types/other",
+      "Consignments": "types/consignments"
     };
     return routeMap[typeName] || `types/${typeName.toLowerCase().replace(/\s+/g, '-')}`;
   };
