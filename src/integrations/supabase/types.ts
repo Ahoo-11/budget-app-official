@@ -375,7 +375,7 @@ export type Database = {
           minimum_stock_level: number | null
           name: string
           price: number
-          product_type: string
+          product_type: Database["public"]["Enums"]["product_type_enum"]
           purchase_cost: number | null
           source_id: string
           storage_location: string | null
@@ -396,7 +396,7 @@ export type Database = {
           minimum_stock_level?: number | null
           name: string
           price: number
-          product_type?: string
+          product_type?: Database["public"]["Enums"]["product_type_enum"]
           purchase_cost?: number | null
           source_id: string
           storage_location?: string | null
@@ -417,7 +417,7 @@ export type Database = {
           minimum_stock_level?: number | null
           name?: string
           price?: number
-          product_type?: string
+          product_type?: Database["public"]["Enums"]["product_type_enum"]
           purchase_cost?: number | null
           source_id?: string
           storage_location?: string | null
