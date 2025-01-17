@@ -26,12 +26,12 @@ export const ConsignmentDetail = ({ consignmentId }: ConsignmentDetailProps) => 
           suppliers (
             name,
             contact_info,
-            address
-          ),
-          supplier_settlement_terms!inner (
-            settlement_frequency,
-            payment_terms,
-            commission_rate
+            address,
+            supplier_settlement_terms (
+              settlement_frequency,
+              payment_terms,
+              commission_rate
+            )
           )
         `)
         .eq('id', consignmentId)
@@ -87,10 +87,10 @@ export const ConsignmentDetail = ({ consignmentId }: ConsignmentDetailProps) => 
       contact_info: consignment.suppliers.contact_info,
       address: consignment.suppliers.address
     } : undefined,
-    supplier_settlement_terms: consignment.supplier_settlement_terms ? {
-      settlement_frequency: consignment.supplier_settlement_terms.settlement_frequency,
-      payment_terms: consignment.supplier_settlement_terms.payment_terms,
-      commission_rate: consignment.supplier_settlement_terms.commission_rate
+    supplier_settlement_terms: consignment.suppliers?.supplier_settlement_terms?.[0] ? {
+      settlement_frequency: consignment.suppliers.supplier_settlement_terms[0].settlement_frequency,
+      payment_terms: consignment.suppliers.supplier_settlement_terms[0].payment_terms,
+      commission_rate: consignment.suppliers.supplier_settlement_terms[0].commission_rate
     } : undefined
   };
 
