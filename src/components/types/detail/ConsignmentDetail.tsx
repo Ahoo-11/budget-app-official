@@ -28,7 +28,7 @@ export const ConsignmentDetail = ({ consignmentId }: ConsignmentDetailProps) => 
             contact_info,
             address
           ),
-          supplier_settlement_terms (
+          supplier_settlement_terms!inner (
             settlement_frequency,
             payment_terms,
             commission_rate
@@ -79,15 +79,30 @@ export const ConsignmentDetail = ({ consignmentId }: ConsignmentDetailProps) => 
     );
   }
 
+  // Transform the data to match the expected types
+  const transformedConsignment = {
+    ...consignment,
+    suppliers: consignment.suppliers ? {
+      name: consignment.suppliers.name,
+      contact_info: consignment.suppliers.contact_info,
+      address: consignment.suppliers.address
+    } : undefined,
+    supplier_settlement_terms: consignment.supplier_settlement_terms ? {
+      settlement_frequency: consignment.supplier_settlement_terms.settlement_frequency,
+      payment_terms: consignment.supplier_settlement_terms.payment_terms,
+      commission_rate: consignment.supplier_settlement_terms.commission_rate
+    } : undefined
+  };
+
   return (
     <div className="space-y-6">
-      <ConsignmentHeader consignment={consignment} />
+      <ConsignmentHeader consignment={transformedConsignment} />
       
       <div className="grid gap-6 md:grid-cols-2">
         <ConsignmentImage imageUrl={consignment.image_url} name={consignment.name} />
         <div className="space-y-6">
-          <ConsignmentQuickStats consignment={consignment} />
-          <ConsignmentAlertCards consignment={consignment} />
+          <ConsignmentQuickStats consignment={transformedConsignment} />
+          <ConsignmentAlertCards consignment={transformedConsignment} />
         </div>
       </div>
 
@@ -99,7 +114,7 @@ export const ConsignmentDetail = ({ consignmentId }: ConsignmentDetailProps) => 
             <TabsTrigger value="history">Stock History</TabsTrigger>
           </TabsList>
           <TabsContent value="overview">
-            <ConsignmentOverviewTab consignment={consignment} />
+            <ConsignmentOverviewTab consignment={transformedConsignment} />
           </TabsContent>
           <TabsContent value="settlements">
             Settlement history coming soon...

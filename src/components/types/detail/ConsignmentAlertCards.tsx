@@ -11,6 +11,7 @@ interface ConsignmentAlertCardsProps {
     supplier_settlement_terms?: {
       settlement_frequency: string;
       payment_terms: number;
+      commission_rate?: number | null;
     } | null;
   };
 }
@@ -53,6 +54,9 @@ export const ConsignmentAlertCards = ({ consignment }: ConsignmentAlertCardsProp
             <p className="text-sm text-muted-foreground">
               Settlement: Every {consignment.supplier_settlement_terms.settlement_frequency} |
               Payment Terms: {consignment.supplier_settlement_terms.payment_terms} days
+              {consignment.supplier_settlement_terms.commission_rate && (
+                <> | Commission: {consignment.supplier_settlement_terms.commission_rate}%</>
+              )}
             </p>
           )}
         </CardContent>
