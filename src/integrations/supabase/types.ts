@@ -164,6 +164,128 @@ export type Database = {
           },
         ]
       }
+      consignment_settlements: {
+        Row: {
+          consignment_id: string
+          created_at: string
+          id: string
+          notes: string | null
+          payment_date: string | null
+          quantity_sold: number
+          settlement_date: string
+          status: string
+          supplier_amount: number
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          consignment_id: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          payment_date?: string | null
+          quantity_sold: number
+          settlement_date: string
+          status?: string
+          supplier_amount: number
+          total_amount: number
+          updated_at?: string
+        }
+        Update: {
+          consignment_id?: string
+          created_at?: string
+          id?: string
+          notes?: string | null
+          payment_date?: string | null
+          quantity_sold?: number
+          settlement_date?: string
+          status?: string
+          supplier_amount?: number
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "consignment_settlements_consignment_id_fkey"
+            columns: ["consignment_id"]
+            isOneToOne: false
+            referencedRelation: "consignments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      consignments: {
+        Row: {
+          category: string | null
+          created_at: string
+          current_stock: number | null
+          description: string | null
+          id: string
+          image_url: string | null
+          minimum_stock_level: number | null
+          name: string
+          selling_price: number
+          source_id: string
+          storage_location: string | null
+          subcategory: string | null
+          supplier_id: string
+          unit_cost: number
+          unit_of_measurement: string | null
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          current_stock?: number | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          minimum_stock_level?: number | null
+          name: string
+          selling_price: number
+          source_id: string
+          storage_location?: string | null
+          subcategory?: string | null
+          supplier_id: string
+          unit_cost: number
+          unit_of_measurement?: string | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          current_stock?: number | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          minimum_stock_level?: number | null
+          name?: string
+          selling_price?: number
+          source_id?: string
+          storage_location?: string | null
+          subcategory?: string | null
+          supplier_id?: string
+          unit_cost?: number
+          unit_of_measurement?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "consignments_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "sources"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "consignments_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       income_entries: {
         Row: {
           amount: number
@@ -365,8 +487,6 @@ export type Database = {
       products: {
         Row: {
           category: string | null
-          consignment_selling_price: number | null
-          consignment_supplier_price: number | null
           created_at: string
           current_stock: number | null
           description: string | null
@@ -386,8 +506,6 @@ export type Database = {
         }
         Insert: {
           category?: string | null
-          consignment_selling_price?: number | null
-          consignment_supplier_price?: number | null
           created_at?: string
           current_stock?: number | null
           description?: string | null
@@ -407,8 +525,6 @@ export type Database = {
         }
         Update: {
           category?: string | null
-          consignment_selling_price?: number | null
-          consignment_supplier_price?: number | null
           created_at?: string
           current_stock?: number | null
           description?: string | null
@@ -810,6 +926,47 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supplier_settlement_terms: {
+        Row: {
+          commission_rate: number | null
+          created_at: string
+          id: string
+          is_active: boolean | null
+          payment_terms: number
+          settlement_frequency: string
+          supplier_id: string
+          updated_at: string
+        }
+        Insert: {
+          commission_rate?: number | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          payment_terms: number
+          settlement_frequency: string
+          supplier_id: string
+          updated_at?: string
+        }
+        Update: {
+          commission_rate?: number | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          payment_terms?: number
+          settlement_frequency?: string
+          supplier_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_settlement_terms_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: true
+            referencedRelation: "suppliers"
             referencedColumns: ["id"]
           },
         ]
