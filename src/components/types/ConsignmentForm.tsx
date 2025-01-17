@@ -46,20 +46,20 @@ export const ConsignmentForm = ({ sourceId, onSuccess }: ConsignmentFormProps) =
     const consignmentData = {
       source_id: sourceId,
       supplier_id: selectedSupplier,
-      name: formData.get('name'),
-      description: formData.get('description'),
+      name: String(formData.get('name')),
+      description: formData.get('description') ? String(formData.get('description')) : null,
       unit_cost: parseFloat(formData.get('unit_cost') as string),
       selling_price: parseFloat(formData.get('selling_price') as string),
       current_stock: parseInt(formData.get('current_stock') as string),
       minimum_stock_level: parseInt(formData.get('minimum_stock_level') as string),
-      unit_of_measurement: formData.get('unit_of_measurement'),
-      storage_location: formData.get('storage_location'),
+      unit_of_measurement: formData.get('unit_of_measurement') ? String(formData.get('unit_of_measurement')) : null,
+      storage_location: formData.get('storage_location') ? String(formData.get('storage_location')) : null,
     };
 
     try {
       const { error } = await supabase
         .from('consignments')
-        .insert([consignmentData]);
+        .insert(consignmentData);
 
       if (error) throw error;
 
