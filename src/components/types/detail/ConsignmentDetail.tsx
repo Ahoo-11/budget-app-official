@@ -67,8 +67,10 @@ export const ConsignmentDetail = () => {
       console.log("Successfully fetched consignment data:", data);
       return data;
     },
-    onError: (error) => {
-      console.error("Query error handler:", error);
+    meta: {
+      errorHandler: (error: Error) => {
+        console.error("Query error handler:", error);
+      }
     }
   });
 
