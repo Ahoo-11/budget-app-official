@@ -1,23 +1,26 @@
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { useParams } from "react-router-dom";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Card } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
+import { BarChart3 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent } from "@/components/ui/card";
+import { useToast } from "@/components/ui/use-toast";
 import { ConsignmentHeader } from "./ConsignmentHeader";
 import { ConsignmentImage } from "./ConsignmentImage";
 import { ConsignmentQuickStats } from "./ConsignmentQuickStats";
 import { ConsignmentAlertCards } from "./ConsignmentAlertCards";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ConsignmentOverviewTab } from "./tabs/ConsignmentOverviewTab";
 
-interface ConsignmentDetailProps {
-  consignmentId: string;
-}
+export const ConsignmentDetail = () => {
+  const { consignmentId } = useParams();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedConsignment, setEditedConsignment] = useState<any>({});
 
-export const ConsignmentDetail = ({ consignmentId }: ConsignmentDetailProps) => {
   const { data: consignment, isLoading, error } = useQuery({
-    queryKey: ['consignments', consignmentId],
+    queryKey: ['consignment', consignmentId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('consignments')
@@ -35,95 +38,165 @@ export const ConsignmentDetail = ({ consignmentId }: ConsignmentDetailProps) => 
           )
         `)
         .eq('id', consignmentId)
-        .single();
+        .maybeSingle();
+
+      if (error) {
+        toast({
+          variant: "destructive",
+          title: "Error loading consignment",
+          description: error.message,
+        });
+        throw error;
+      }
+
+      if (!data) {
+        toast({
+          variant: "destructive",
+          title: "Consignment not found",
+          description: "The requested consignment could not be found.",
+        });
+        throw new Error("Consignment not found");
+      }
+
+      return data;
+    }
+  });
+
+  const updateConsignmentMutation = useMutation({
+    mutationFn: async (updatedConsignment: any) => {
+      const { error } = await supabase
+        .from('consignments')
+        .update(updatedConsignment)
+        .eq('id', consignmentId);
 
       if (error) throw error;
-      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['consignment', consignmentId] });
+      toast({
+        title: "Success",
+        description: "Consignment updated successfully",
+      });
+      setIsEditing(false);
+    },
+    onError: (error) => {
+      toast({
+        variant: "destructive",
+        title: "Error updating consignment",
+        description: error.message,
+      });
     },
   });
 
+  const handleEditClick = () => {
+    setEditedConsignment(consignment || {});
+    setIsEditing(true);
+  };
+
+  const handleSaveClick = () => {
+    if (!editedConsignment) return;
+    updateConsignmentMutation.mutate(editedConsignment);
+  };
+
+  const handleCancelClick = () => {
+    setEditedConsignment({});
+    setIsEditing(false);
+  };
+
   if (isLoading) {
     return (
-      <div className="space-y-6">
-        <Skeleton className="h-12 w-full" />
-        <div className="grid gap-6 md:grid-cols-2">
-          <Skeleton className="h-[300px]" />
-          <div className="space-y-6">
-            <Skeleton className="h-24" />
-            <Skeleton className="h-24" />
-          </div>
-        </div>
+      <div className="flex items-center justify-center min-h-[200px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-white"></div>
       </div>
     );
   }
 
-  if (error) {
+  if (error || !consignment) {
     return (
-      <Alert variant="destructive">
-        <AlertCircle className="h-4 w-4" />
-        <AlertDescription>
-          Error loading consignment details. Please try again later.
-        </AlertDescription>
-      </Alert>
+      <div className="text-center p-4">
+        <h2 className="text-xl font-semibold text-red-600">Error Loading Consignment</h2>
+        <p className="text-muted-foreground mt-2">Please try refreshing the page.</p>
+      </div>
     );
   }
-
-  if (!consignment) {
-    return (
-      <Alert>
-        <AlertCircle className="h-4 w-4" />
-        <AlertDescription>
-          Consignment not found.
-        </AlertDescription>
-      </Alert>
-    );
-  }
-
-  // Transform the data to match the expected types
-  const transformedConsignment = {
-    ...consignment,
-    suppliers: consignment.suppliers ? {
-      name: consignment.suppliers.name,
-      contact_info: consignment.suppliers.contact_info,
-      address: consignment.suppliers.address
-    } : undefined,
-    supplier_settlement_terms: consignment.suppliers?.supplier_settlement_terms?.[0] ? {
-      settlement_frequency: consignment.suppliers.supplier_settlement_terms[0].settlement_frequency,
-      payment_terms: consignment.suppliers.supplier_settlement_terms[0].payment_terms,
-      commission_rate: consignment.suppliers.supplier_settlement_terms[0].commission_rate
-    } : undefined
-  };
 
   return (
     <div className="space-y-6">
-      <ConsignmentHeader consignment={transformedConsignment} />
-      
-      <div className="grid gap-6 md:grid-cols-2">
-        <ConsignmentImage imageUrl={consignment.image_url} name={consignment.name} />
+      <ConsignmentHeader 
+        name={consignment.name}
+        isEditing={isEditing}
+        onEditClick={handleEditClick}
+        onSaveClick={handleSaveClick}
+        onCancelClick={handleCancelClick}
+        editedName={editedConsignment.name}
+        onNameChange={(name) => setEditedConsignment(prev => ({ ...prev, name }))}
+      />
+
+      <div className="grid md:grid-cols-[300px,1fr] gap-6">
+        <div className="space-y-4">
+          <ConsignmentImage 
+            imageUrl={consignment.image_url} 
+            name={consignment.name}
+            isEditing={isEditing}
+            onImageChange={(file) => {
+              // Handle image upload
+            }}
+          />
+          <ConsignmentQuickStats 
+            consignment={consignment}
+          />
+          <ConsignmentAlertCards 
+            consignment={consignment}
+          />
+        </div>
+
         <div className="space-y-6">
-          <ConsignmentQuickStats consignment={transformedConsignment} />
-          <ConsignmentAlertCards consignment={transformedConsignment} />
+          <Tabs defaultValue="overview" className="w-full">
+            <TabsList>
+              <TabsTrigger value="overview">Overview</TabsTrigger>
+              <TabsTrigger value="settlements">Settlements</TabsTrigger>
+              <TabsTrigger value="history">Stock History</TabsTrigger>
+              <TabsTrigger value="analytics">Analytics</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="overview">
+              <ConsignmentOverviewTab 
+                consignment={consignment}
+                isEditing={isEditing}
+                editedConsignment={editedConsignment}
+                onConsignmentChange={setEditedConsignment}
+              />
+            </TabsContent>
+
+            <TabsContent value="settlements">
+              <Card>
+                <CardContent className="pt-6">
+                  Settlement history coming soon...
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="history">
+              <Card>
+                <CardContent className="pt-6">
+                  Stock history coming soon...
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="analytics">
+              <Card>
+                <CardContent className="pt-6 flex items-center justify-center min-h-[200px]">
+                  <div className="text-center">
+                    <BarChart3 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground">Analytics coming soon...</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
-
-      <Card>
-        <Tabs defaultValue="overview" className="w-full">
-          <TabsList>
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="settlements">Settlements</TabsTrigger>
-            <TabsTrigger value="history">Stock History</TabsTrigger>
-          </TabsList>
-          <TabsContent value="overview">
-            <ConsignmentOverviewTab consignment={transformedConsignment} />
-          </TabsContent>
-          <TabsContent value="settlements">
-            Settlement history coming soon...
-          </TabsContent>
-          <TabsContent value="history">
-            Stock history coming soon...
-          </TabsContent>
-        </Tabs>
-      </Card>
     </div>
   );
 };
