@@ -13,7 +13,10 @@ import { ConsignmentAlertCards } from "./ConsignmentAlertCards";
 import { ConsignmentOverviewTab } from "./tabs/ConsignmentOverviewTab";
 
 export const ConsignmentDetail = () => {
+  console.log("ConsignmentDetail component mounted");
   const { consignmentId } = useParams();
+  console.log("ConsignmentId from params:", consignmentId);
+  
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
@@ -22,6 +25,7 @@ export const ConsignmentDetail = () => {
   const { data: consignment, isLoading, error } = useQuery({
     queryKey: ['consignment', consignmentId],
     queryFn: async () => {
+      console.log("Starting consignment fetch for ID:", consignmentId);
       const { data, error } = await supabase
         .from('consignments')
         .select(`
@@ -41,6 +45,7 @@ export const ConsignmentDetail = () => {
         .maybeSingle();
 
       if (error) {
+        console.error("Supabase query error:", error);
         toast({
           variant: "destructive",
           title: "Error loading consignment",
@@ -50,6 +55,7 @@ export const ConsignmentDetail = () => {
       }
 
       if (!data) {
+        console.log("No consignment found for ID:", consignmentId);
         toast({
           variant: "destructive",
           title: "Consignment not found",
@@ -58,7 +64,11 @@ export const ConsignmentDetail = () => {
         throw new Error("Consignment not found");
       }
 
+      console.log("Successfully fetched consignment data:", data);
       return data;
+    },
+    onError: (error) => {
+      console.error("Query error handler:", error);
     }
   });
 
@@ -104,6 +114,7 @@ export const ConsignmentDetail = () => {
   };
 
   if (isLoading) {
+    console.log("Rendering loading state");
     return (
       <div className="flex items-center justify-center min-h-[200px]">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-white"></div>
@@ -112,6 +123,7 @@ export const ConsignmentDetail = () => {
   }
 
   if (error || !consignment) {
+    console.log("Rendering error state:", error);
     return (
       <div className="text-center p-4">
         <h2 className="text-xl font-semibold text-red-600">Error Loading Consignment</h2>
@@ -119,6 +131,8 @@ export const ConsignmentDetail = () => {
       </div>
     );
   }
+
+  console.log("Rendering consignment detail view:", consignment);
 
   return (
     <div className="space-y-6">
