@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 
 interface ConsignmentOverviewTabProps {
   consignment: {
@@ -21,90 +22,122 @@ interface ConsignmentOverviewTabProps {
       commission_rate: number | null;
     } | null;
   };
+  isEditing?: boolean;
+  editedConsignment?: any;
+  onConsignmentChange?: (consignment: any) => void;
 }
 
-export const ConsignmentOverviewTab = ({ consignment }: ConsignmentOverviewTabProps) => {
+export const ConsignmentOverviewTab = ({ 
+  consignment, 
+  isEditing, 
+  editedConsignment, 
+  onConsignmentChange 
+}: ConsignmentOverviewTabProps) => {
   return (
-    <div className="p-6 space-y-6">
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Basic Information</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <div>
-              <span className="font-medium">Category:</span>{" "}
-              {consignment.category || "Uncategorized"}
-              {consignment.subcategory && ` / ${consignment.subcategory}`}
-            </div>
-            <div>
-              <span className="font-medium">Unit of Measurement:</span>{" "}
-              {consignment.unit_of_measurement || "N/A"}
-            </div>
-            <div>
-              <span className="font-medium">Storage Location:</span>{" "}
-              {consignment.storage_location || "Not specified"}
-            </div>
-          </CardContent>
-        </Card>
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Basic Information</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <span className="font-medium">Category:</span>{" "}
+            {isEditing ? (
+              <Input
+                value={editedConsignment?.category || ''}
+                onChange={(e) => onConsignmentChange?.({ ...editedConsignment, category: e.target.value })}
+                className="mt-1"
+                placeholder="Category"
+              />
+            ) : (
+              consignment.category || "Uncategorized"
+            )}
+            {consignment.subcategory && ` / ${consignment.subcategory}`}
+          </div>
+          <div>
+            <span className="font-medium">Unit of Measurement:</span>{" "}
+            {isEditing ? (
+              <Input
+                value={editedConsignment?.unit_of_measurement || ''}
+                onChange={(e) => onConsignmentChange?.({ ...editedConsignment, unit_of_measurement: e.target.value })}
+                className="mt-1"
+                placeholder="Unit of measurement"
+              />
+            ) : (
+              consignment.unit_of_measurement || "N/A"
+            )}
+          </div>
+          <div>
+            <span className="font-medium">Storage Location:</span>{" "}
+            {isEditing ? (
+              <Input
+                value={editedConsignment?.storage_location || ''}
+                onChange={(e) => onConsignmentChange?.({ ...editedConsignment, storage_location: e.target.value })}
+                className="mt-1"
+                placeholder="Storage location"
+              />
+            ) : (
+              consignment.storage_location || "Not specified"
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Pricing Details</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
+      <Card>
+        <CardHeader>
+          <CardTitle>Supplier Information</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <span className="font-medium">Supplier Name:</span>{" "}
+            {consignment.suppliers?.name}
+          </div>
+          {consignment.suppliers?.address && (
             <div>
-              <span className="font-medium">Unit Cost:</span>{" "}
-              ₱{consignment.unit_cost.toFixed(2)}
+              <span className="font-medium">Address:</span>{" "}
+              {consignment.suppliers.address}
             </div>
-            <div>
-              <span className="font-medium">Selling Price:</span>{" "}
-              ₱{consignment.selling_price.toFixed(2)}
-            </div>
-            <div>
-              <span className="font-medium">Margin:</span>{" "}
-              ₱{(consignment.selling_price - consignment.unit_cost).toFixed(2)} (
-              {(((consignment.selling_price - consignment.unit_cost) / consignment.unit_cost) * 100).toFixed(1)}%)
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="md:col-span-2">
-          <CardHeader>
-            <CardTitle>Supplier Information</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <div>
-              <span className="font-medium">Supplier Name:</span>{" "}
-              {consignment.suppliers?.name}
-            </div>
-            {consignment.suppliers?.address && (
+          )}
+          {consignment.supplier_settlement_terms && (
+            <>
               <div>
-                <span className="font-medium">Address:</span>{" "}
-                {consignment.suppliers.address}
+                <span className="font-medium">Settlement Frequency:</span>{" "}
+                {consignment.supplier_settlement_terms.settlement_frequency}
               </div>
-            )}
-            {consignment.supplier_settlement_terms && (
-              <>
+              <div>
+                <span className="font-medium">Payment Terms:</span>{" "}
+                {consignment.supplier_settlement_terms.payment_terms} days
+              </div>
+              {consignment.supplier_settlement_terms.commission_rate && (
                 <div>
-                  <span className="font-medium">Settlement Frequency:</span>{" "}
-                  {consignment.supplier_settlement_terms.settlement_frequency}
+                  <span className="font-medium">Commission Rate:</span>{" "}
+                  {consignment.supplier_settlement_terms.commission_rate}%
                 </div>
-                <div>
-                  <span className="font-medium">Payment Terms:</span>{" "}
-                  {consignment.supplier_settlement_terms.payment_terms} days
-                </div>
-                {consignment.supplier_settlement_terms.commission_rate && (
-                  <div>
-                    <span className="font-medium">Commission Rate:</span>{" "}
-                    {consignment.supplier_settlement_terms.commission_rate}%
-                  </div>
-                )}
-              </>
+              )}
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      {consignment.description && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Description</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isEditing ? (
+              <Input
+                value={editedConsignment?.description || ''}
+                onChange={(e) => onConsignmentChange?.({ ...editedConsignment, description: e.target.value })}
+                className="mt-1"
+                placeholder="Description"
+              />
+            ) : (
+              <p className="text-sm text-muted-foreground">{consignment.description}</p>
             )}
           </CardContent>
         </Card>
-      </div>
+      )}
     </div>
   );
 };
