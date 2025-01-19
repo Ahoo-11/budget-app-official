@@ -160,6 +160,13 @@ export const ConsignmentDetail = () => {
           />
           <ConsignmentQuickStats 
             consignment={consignment}
+            isEditing={isEditing}
+            editedStock={editedConsignment.current_stock}
+            editedUnitCost={editedConsignment.unit_cost}
+            editedSellingPrice={editedConsignment.selling_price}
+            onStockChange={(stock) => setEditedConsignment(prev => ({ ...prev, current_stock: stock }))}
+            onUnitCostChange={(cost) => setEditedConsignment(prev => ({ ...prev, unit_cost: cost }))}
+            onSellingPriceChange={(price) => setEditedConsignment(prev => ({ ...prev, selling_price: price }))}
           />
           <ConsignmentAlertCards 
             consignment={consignment}

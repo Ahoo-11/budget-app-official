@@ -1,4 +1,5 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 
 interface ConsignmentQuickStatsProps {
   consignment: {
@@ -7,35 +8,98 @@ interface ConsignmentQuickStatsProps {
     selling_price: number;
     unit_of_measurement: string | null;
   };
+  isEditing?: boolean;
+  onStockChange?: (stock: number) => void;
+  onUnitCostChange?: (cost: number) => void;
+  onSellingPriceChange?: (price: number) => void;
+  editedStock?: number | null;
+  editedUnitCost?: number;
+  editedSellingPrice?: number;
 }
 
-export const ConsignmentQuickStats = ({ consignment }: ConsignmentQuickStatsProps) => {
-  const margin = consignment.selling_price - consignment.unit_cost;
-  const marginPercentage = (margin / consignment.unit_cost) * 100;
+export const ConsignmentQuickStats = ({ 
+  consignment,
+  isEditing,
+  onStockChange,
+  onUnitCostChange,
+  onSellingPriceChange,
+  editedStock,
+  editedUnitCost,
+  editedSellingPrice
+}: ConsignmentQuickStatsProps) => {
+  const displayStock = isEditing ? editedStock : consignment.current_stock;
+  const displayUnitCost = isEditing ? editedUnitCost : consignment.unit_cost;
+  const displaySellingPrice = isEditing ? editedSellingPrice : consignment.selling_price;
+  const margin = displaySellingPrice - displayUnitCost;
+  const marginPercentage = (margin / displayUnitCost) * 100;
 
   return (
-    <div className="grid gap-4 md:grid-cols-2">
+    <div className="grid grid-cols-2 gap-4">
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Current Stock</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">
-            {consignment.current_stock || 0} {consignment.unit_of_measurement || 'units'}
-          </div>
+        <CardContent className="pt-6">
+          <div className="text-sm text-muted-foreground">Stock</div>
+          {isEditing ? (
+            <Input
+              type="number"
+              value={displayStock || 0}
+              onChange={(e) => onStockChange?.(Number(e.target.value))}
+              className="mt-1"
+              min={0}
+            />
+          ) : (
+            <div className="text-2xl font-bold">
+              {displayStock || 0} {consignment.unit_of_measurement || 'units'}
+            </div>
+          )}
         </CardContent>
       </Card>
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Margin</CardTitle>
-        </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
+          <div className="text-sm text-muted-foreground">Margin</div>
           <div className="text-2xl font-bold">
             {marginPercentage.toFixed(1)}%
           </div>
           <p className="text-xs text-muted-foreground">
-            ₱{margin.toFixed(2)} per unit
+            MVR {margin.toFixed(2)} per unit
           </p>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardContent className="pt-6">
+          <div className="text-sm text-muted-foreground">Unit Cost</div>
+          {isEditing ? (
+            <Input
+              type="number"
+              value={displayUnitCost}
+              onChange={(e) => onUnitCostChange?.(Number(e.target.value))}
+              className="mt-1"
+              step="0.01"
+              min={0}
+            />
+          ) : (
+            <div className="text-2xl font-bold">
+              MVR {displayUnitCost.toFixed(2)}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+      <Card>
+        <CardContent className="pt-6">
+          <div className="text-sm text-muted-foreground">Selling Price</div>
+          {isEditing ? (
+            <Input
+              type="number"
+              value={displaySellingPrice}
+              onChange={(e) => onSellingPriceChange?.(Number(e.target.value))}
+              className="mt-1"
+              step="0.01"
+              min={0}
+            />
+          ) : (
+            <div className="text-2xl font-bold">
+              MVR {displaySellingPrice.toFixed(2)}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
