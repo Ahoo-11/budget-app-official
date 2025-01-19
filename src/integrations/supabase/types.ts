@@ -222,6 +222,7 @@ export type Database = {
           description: string | null
           id: string
           image_url: string | null
+          measurement_unit_id: string | null
           minimum_stock_level: number | null
           name: string
           selling_price: number
@@ -240,6 +241,7 @@ export type Database = {
           description?: string | null
           id?: string
           image_url?: string | null
+          measurement_unit_id?: string | null
           minimum_stock_level?: number | null
           name: string
           selling_price: number
@@ -258,6 +260,7 @@ export type Database = {
           description?: string | null
           id?: string
           image_url?: string | null
+          measurement_unit_id?: string | null
           minimum_stock_level?: number | null
           name?: string
           selling_price?: number
@@ -270,6 +273,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "consignments_measurement_unit_id_fkey"
+            columns: ["measurement_unit_id"]
+            isOneToOne: false
+            referencedRelation: "measurement_units"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "consignments_source_id_fkey"
             columns: ["source_id"]
@@ -295,6 +305,7 @@ export type Database = {
           date: string
           id: string
           is_recurring: boolean | null
+          measurement_unit_id: string | null
           minimum_stock: number | null
           name: string
           payment_method: Database["public"]["Enums"]["payment_method"]
@@ -317,6 +328,7 @@ export type Database = {
           date: string
           id?: string
           is_recurring?: boolean | null
+          measurement_unit_id?: string | null
           minimum_stock?: number | null
           name: string
           payment_method?: Database["public"]["Enums"]["payment_method"]
@@ -339,6 +351,7 @@ export type Database = {
           date?: string
           id?: string
           is_recurring?: boolean | null
+          measurement_unit_id?: string | null
           minimum_stock?: number | null
           name?: string
           payment_method?: Database["public"]["Enums"]["payment_method"]
@@ -359,6 +372,13 @@ export type Database = {
             columns: ["type_id"]
             isOneToOne: false
             referencedRelation: "types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "income_entries_measurement_unit_id_fkey"
+            columns: ["measurement_unit_id"]
+            isOneToOne: false
+            referencedRelation: "measurement_units"
             referencedColumns: ["id"]
           },
           {
@@ -383,6 +403,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      measurement_units: {
+        Row: {
+          base_unit: string | null
+          conversion_factor: number | null
+          created_at: string
+          id: string
+          is_default: boolean | null
+          name: string
+          symbol: string
+          type: Database["public"]["Enums"]["measurement_unit_type"]
+          updated_at: string
+        }
+        Insert: {
+          base_unit?: string | null
+          conversion_factor?: number | null
+          created_at?: string
+          id?: string
+          is_default?: boolean | null
+          name: string
+          symbol: string
+          type: Database["public"]["Enums"]["measurement_unit_type"]
+          updated_at?: string
+        }
+        Update: {
+          base_unit?: string | null
+          conversion_factor?: number | null
+          created_at?: string
+          id?: string
+          is_default?: boolean | null
+          name?: string
+          symbol?: string
+          type?: Database["public"]["Enums"]["measurement_unit_type"]
+          updated_at?: string
+        }
+        Relationships: []
       }
       payers: {
         Row: {
@@ -492,6 +548,7 @@ export type Database = {
           description: string | null
           id: string
           image_url: string | null
+          measurement_unit_id: string | null
           minimum_stock_level: number | null
           name: string
           price: number
@@ -511,6 +568,7 @@ export type Database = {
           description?: string | null
           id?: string
           image_url?: string | null
+          measurement_unit_id?: string | null
           minimum_stock_level?: number | null
           name: string
           price: number
@@ -530,6 +588,7 @@ export type Database = {
           description?: string | null
           id?: string
           image_url?: string | null
+          measurement_unit_id?: string | null
           minimum_stock_level?: number | null
           name?: string
           price?: number
@@ -543,6 +602,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "products_measurement_unit_id_fkey"
+            columns: ["measurement_unit_id"]
+            isOneToOne: false
+            referencedRelation: "measurement_units"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "products_source_id_fkey"
             columns: ["source_id"]
@@ -591,6 +657,7 @@ export type Database = {
           created_at: string
           id: string
           ingredient_id: string
+          measurement_unit_id: string | null
           quantity: number
           recipe_id: string
           unit_of_measurement: string
@@ -600,6 +667,7 @@ export type Database = {
           created_at?: string
           id?: string
           ingredient_id: string
+          measurement_unit_id?: string | null
           quantity: number
           recipe_id: string
           unit_of_measurement: string
@@ -609,6 +677,7 @@ export type Database = {
           created_at?: string
           id?: string
           ingredient_id?: string
+          measurement_unit_id?: string | null
           quantity?: number
           recipe_id?: string
           unit_of_measurement?: string
@@ -620,6 +689,13 @@ export type Database = {
             columns: ["ingredient_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recipe_ingredients_measurement_unit_id_fkey"
+            columns: ["measurement_unit_id"]
+            isOneToOne: false
+            referencedRelation: "measurement_units"
             referencedColumns: ["id"]
           },
           {
@@ -1338,6 +1414,7 @@ export type Database = {
       }
     }
     Enums: {
+      measurement_unit_type: "weight" | "volume" | "length" | "unit" | "time"
       payment_method: "cash" | "transfer"
       product_type_enum: "basic" | "composite" | "consignment"
       recurring_frequency: "daily" | "weekly" | "monthly" | "yearly"
