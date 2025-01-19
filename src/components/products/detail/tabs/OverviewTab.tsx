@@ -32,69 +32,32 @@ export const OverviewTab = ({ product, isEditing, editedProduct, onProductChange
               <dt className="text-sm text-muted-foreground">Type</dt>
               <dd className="font-medium capitalize">{product.product_type}</dd>
             </div>
-            {product.product_type === 'consignment' ? (
-              <>
-                <div>
-                  <dt className="text-sm text-muted-foreground">Supplier Price</dt>
-                  {isEditing ? (
-                    <Input
-                      type="number"
-                      value={editedProduct?.consignment_supplier_price || 0}
-                      onChange={(e) => onProductChange?.({ ...editedProduct, consignment_supplier_price: Number(e.target.value) })}
-                      className="mt-1"
-                      min={0}
-                      step="0.01"
-                    />
-                  ) : (
-                    <dd className="font-medium">MVR {product.consignment_supplier_price?.toFixed(2) || '0.00'}</dd>
-                  )}
-                </div>
-                <div>
-                  <dt className="text-sm text-muted-foreground">Selling Price</dt>
-                  {isEditing ? (
-                    <Input
-                      type="number"
-                      value={editedProduct?.consignment_selling_price || 0}
-                      onChange={(e) => onProductChange?.({ ...editedProduct, consignment_selling_price: Number(e.target.value) })}
-                      className="mt-1"
-                      min={0}
-                      step="0.01"
-                    />
-                  ) : (
-                    <dd className="font-medium">MVR {product.consignment_selling_price?.toFixed(2) || '0.00'}</dd>
-                  )}
-                </div>
-              </>
-            ) : (
-              <>
-                <div>
-                  <dt className="text-sm text-muted-foreground">Unit</dt>
-                  {isEditing ? (
-                    <Input
-                      value={editedProduct?.unit_of_measurement || ''}
-                      onChange={(e) => onProductChange?.({ ...editedProduct, unit_of_measurement: e.target.value })}
-                      className="mt-1"
-                      placeholder="Unit of measurement"
-                    />
-                  ) : (
-                    <dd className="font-medium">{product.unit_of_measurement || 'N/A'}</dd>
-                  )}
-                </div>
-                <div>
-                  <dt className="text-sm text-muted-foreground">Min. Stock</dt>
-                  {isEditing ? (
-                    <Input
-                      type="number"
-                      value={editedProduct?.minimum_stock_level || 0}
-                      onChange={(e) => onProductChange?.({ ...editedProduct, minimum_stock_level: Number(e.target.value) })}
-                      className="mt-1"
-                    />
-                  ) : (
-                    <dd className="font-medium">{product.minimum_stock_level || 'Not set'}</dd>
-                  )}
-                </div>
-              </>
-            )}
+            <div>
+              <dt className="text-sm text-muted-foreground">Unit</dt>
+              {isEditing ? (
+                <Input
+                  value={editedProduct?.unit_of_measurement || ''}
+                  onChange={(e) => onProductChange?.({ ...editedProduct, unit_of_measurement: e.target.value })}
+                  className="mt-1"
+                  placeholder="Unit of measurement"
+                />
+              ) : (
+                <dd className="font-medium">{product.unit_of_measurement || 'N/A'}</dd>
+              )}
+            </div>
+            <div>
+              <dt className="text-sm text-muted-foreground">Min. Stock</dt>
+              {isEditing ? (
+                <Input
+                  type="number"
+                  value={editedProduct?.minimum_stock_level || 0}
+                  onChange={(e) => onProductChange?.({ ...editedProduct, minimum_stock_level: Number(e.target.value) })}
+                  className="mt-1"
+                />
+              ) : (
+                <dd className="font-medium">{product.minimum_stock_level || 'Not set'}</dd>
+              )}
+            </div>
           </dl>
         </CardContent>
       </Card>
@@ -102,13 +65,13 @@ export const OverviewTab = ({ product, isEditing, editedProduct, onProductChange
       {product.description && (
         <Card>
           <CardContent className="pt-6">
-            <h3 className="font-medium mb-2">Description</h3>
+            <h3 className="font-medium mb-2">Remarks</h3>
             {isEditing ? (
               <Input
                 value={editedProduct?.description || ''}
                 onChange={(e) => onProductChange?.({ ...editedProduct, description: e.target.value })}
                 className="mt-1"
-                placeholder="Description"
+                placeholder="Remarks"
               />
             ) : (
               <p className="text-sm text-muted-foreground">{product.description}</p>
