@@ -22,6 +22,8 @@ import { SessionManager } from "@/components/session/SessionManager";
 import { ConsignmentsList } from "@/components/types/ConsignmentsList";
 import { ConsignmentDetail } from "@/components/types/detail/ConsignmentDetail";
 
+type TabValue = 'income' | 'expense' | 'categories' | 'suppliers' | 'settings';
+
 const Source = () => {
   const { sourceId } = useParams();
   const { toast } = useToast();
