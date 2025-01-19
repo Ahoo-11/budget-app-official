@@ -20,8 +20,7 @@ import { ProductsList } from "@/components/types/ProductsList";
 import { ProductDetail } from "@/components/products/ProductDetail";
 import { SessionManager } from "@/components/session/SessionManager";
 import { ConsignmentsList } from "@/components/types/ConsignmentsList";
-
-type TabValue = 'income' | 'expense' | 'categories' | 'suppliers' | 'settings';
+import { ConsignmentDetail } from "@/components/types/detail/ConsignmentDetail";
 
 const Source = () => {
   const { sourceId } = useParams();
@@ -61,25 +60,6 @@ const Source = () => {
     retry: 1
   });
 
-  if (isLoading) {
-    return (
-      <div className="animate-pulse">
-        <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
-        <div className="h-12 bg-gray-200 rounded mb-4"></div>
-        <div className="h-64 bg-gray-200 rounded"></div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="text-center">
-        <h2 className="text-2xl font-semibold text-red-600">Error Loading Source</h2>
-        <p className="text-gray-600 mt-2">Please try refreshing the page.</p>
-      </div>
-    );
-  }
-
   const getActiveTab = (): TabValue => {
     if (location.pathname.includes('/categories')) return 'categories';
     if (location.pathname.includes('/suppliers')) return 'suppliers';
@@ -106,6 +86,25 @@ const Source = () => {
         navigate(`/source/${sourceId}`);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="animate-pulse">
+        <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
+        <div className="h-12 bg-gray-200 rounded mb-4"></div>
+        <div className="h-64 bg-gray-200 rounded"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center">
+        <h2 className="text-2xl font-semibold text-red-600">Error Loading Source</h2>
+        <p className="text-gray-600 mt-2">Please try refreshing the page.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-full">
@@ -134,6 +133,7 @@ const Source = () => {
             <Route path="types/employment" element={<EmploymentIncome sourceId={sourceId!} />} />
             <Route path="types/gifts" element={<GiftsIncome sourceId={sourceId!} />} />
             <Route path="types/consignments" element={<ConsignmentsList sourceId={sourceId!} />} />
+            <Route path="types/consignments/:consignmentId" element={<ConsignmentDetail />} />
             <Route path="categories" element={<CategoryManager sourceId={sourceId!} />} />
             <Route path="suppliers" element={<SupplierManager />} />
             <Route path="settings" element={<TypeSettings sourceId={sourceId!} />} />
