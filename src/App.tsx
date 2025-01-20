@@ -76,10 +76,6 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
         }
         if (event === 'SIGNED_OUT') {
           queryClient.clear();
-        }
-        // Handle auth errors
-        if (event === 'USER_DELETED' || event === 'SIGNED_OUT') {
-          queryClient.clear();
           toast({
             variant: "destructive",
             title: "Session Ended",
