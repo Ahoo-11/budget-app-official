@@ -28,7 +28,14 @@ export const ServiceGrid = ({ sourceId, services: propServices, onSelect }: Serv
     queryFn: async () => {
       const { data, error } = await supabase
         .from("services")
-        .select("*")
+        .select(`
+          *,
+          measurement_unit:measurement_unit_id(
+            id,
+            name,
+            symbol
+          )
+        `)
         .eq("source_id", sourceId)
         .order("name");
       
@@ -64,6 +71,11 @@ export const ServiceGrid = ({ sourceId, services: propServices, onSelect }: Serv
             {service.description && (
               <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
                 {service.description}
+              </p>
+            )}
+            {service.measurement_unit && (
+              <p className="text-xs text-muted-foreground">
+                Unit: {service.measurement_unit.name} ({service.measurement_unit.symbol})
               </p>
             )}
           </div>
