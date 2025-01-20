@@ -1,13 +1,12 @@
 import { useState } from "react";
 import { Service } from "@/types/service";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient, useMutation, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
+import { Loader2 } from "lucide-react";
+import { ServiceBasicInfo } from "./form/ServiceBasicInfo";
+import { ServicePricing } from "./form/ServicePricing";
 
 interface ServiceFormProps {
   sourceId: string;
@@ -54,14 +53,18 @@ export const ServiceForm = ({ sourceId, onSuccess, service }: ServiceFormProps) 
       };
 
       if (service) {
-        await supabase
+        const { error } = await supabase
           .from('services')
           .update(serviceData)
           .eq('id', service.id);
+          
+        if (error) throw error;
       } else {
-        await supabase
+        const { error } = await supabase
           .from('services')
           .insert([serviceData]);
+          
+        if (error) throw error;
       }
 
       toast({
@@ -71,11 +74,11 @@ export const ServiceForm = ({ sourceId, onSuccess, service }: ServiceFormProps) 
 
       queryClient.invalidateQueries({ queryKey: ['services'] });
       onSuccess?.();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving service:', error);
       toast({
         title: "Error",
-        description: "Failed to save service",
+        description: error.message || "Failed to save service",
         variant: "destructive",
       });
     } finally {
@@ -84,70 +87,33 @@ export const ServiceForm = ({ sourceId, onSuccess, service }: ServiceFormProps) 
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <Label>Name</Label>
-        <Input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          required
-          placeholder="Service name"
-        />
-      </div>
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <ServiceBasicInfo
+        name={name}
+        setName={setName}
+        description={description}
+        setDescription={setDescription}
+        category={category}
+        setCategory={setCategory}
+      />
 
-      <div>
-        <Label>Price</Label>
-        <Input
-          type="number"
-          value={price}
-          onChange={(e) => setPrice(e.target.value)}
-          required
-          min="0"
-          step="0.01"
-          placeholder="Service price"
-        />
-      </div>
+      <ServicePricing
+        price={price}
+        setPrice={setPrice}
+        measurementUnitId={measurementUnitId}
+        setMeasurementUnitId={setMeasurementUnitId}
+        measurementUnits={measurementUnits}
+      />
 
-      <div>
-        <Label>Category</Label>
-        <Input
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-          placeholder="Service category"
-        />
-      </div>
-
-      <div>
-        <Label>Measurement Unit</Label>
-        <Select value={measurementUnitId} onValueChange={setMeasurementUnitId}>
-          <SelectTrigger>
-            <SelectValue placeholder="Select unit" />
-          </SelectTrigger>
-          <SelectContent>
-            {measurementUnits.map((unit) => (
-              <SelectItem key={unit.id} value={unit.id}>
-                {unit.name} ({unit.symbol})
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div>
-        <Label>Description</Label>
-        <Textarea
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="Service description"
-        />
-      </div>
-
-      <Button
-        type="submit"
-        disabled={isSubmitting}
-        className="w-full"
-      >
-        {isSubmitting ? "Saving..." : service ? "Update Service" : "Create Service"}
+      <Button type="submit" disabled={isSubmitting} className="w-full">
+        {isSubmitting ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            {service ? "Updating..." : "Creating..."}
+          </>
+        ) : (
+          service ? "Update Service" : "Create Service"
+        )}
       </Button>
     </form>
   );

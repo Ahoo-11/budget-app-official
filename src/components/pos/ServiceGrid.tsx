@@ -1,11 +1,10 @@
 import { Service } from "@/types/service";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
 import { useState } from "react";
 import { ServiceForm } from "@/components/services/ServiceForm";
 import { useNavigate } from "react-router-dom";
+import { ServiceCard } from "@/components/services/ServiceCard";
 import {
   Dialog,
   DialogContent,
@@ -17,9 +16,15 @@ interface ServiceGridProps {
   sourceId: string;
   services?: Service[];
   onSelect?: (service: Service) => void;
+  onAddService?: () => void;
 }
 
-export const ServiceGrid = ({ sourceId, services: propServices, onSelect }: ServiceGridProps) => {
+export const ServiceGrid = ({ 
+  sourceId, 
+  services: propServices, 
+  onSelect,
+  onAddService 
+}: ServiceGridProps) => {
   const [isAddingService, setIsAddingService] = useState(false);
   const navigate = useNavigate();
   
@@ -30,7 +35,7 @@ export const ServiceGrid = ({ sourceId, services: propServices, onSelect }: Serv
         .from("services")
         .select(`
           *,
-          measurement_unit:measurement_unit_id(
+          measurement_unit:measurement_unit_id (
             id,
             name,
             symbol
@@ -39,7 +44,10 @@ export const ServiceGrid = ({ sourceId, services: propServices, onSelect }: Serv
         .eq("source_id", sourceId)
         .order("name");
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching services:', error);
+        throw error;
+      }
       return data as Service[];
     },
     enabled: !propServices && !!sourceId,
@@ -54,31 +62,22 @@ export const ServiceGrid = ({ sourceId, services: propServices, onSelect }: Serv
   };
 
   if (isLoading) {
-    return <div>Loading services...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-[200px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-white"></div>
+      </div>
+    );
   }
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3">
         {services.map((service) => (
-          <div
+          <ServiceCard
             key={service.id}
-            className="cursor-pointer p-4 border rounded-lg hover:bg-gray-50 space-y-2"
+            service={service}
             onClick={() => handleServiceClick(service)}
-          >
-            <h3 className="font-medium text-sm">{service.name}</h3>
-            <p className="text-sm text-muted-foreground">MVR {service.price.toFixed(2)}</p>
-            {service.description && (
-              <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                {service.description}
-              </p>
-            )}
-            {service.measurement_unit && (
-              <p className="text-xs text-muted-foreground">
-                Unit: {service.measurement_unit.name} ({service.measurement_unit.symbol})
-              </p>
-            )}
-          </div>
+          />
         ))}
       </div>
 
@@ -92,10 +91,13 @@ export const ServiceGrid = ({ sourceId, services: propServices, onSelect }: Serv
           </DialogHeader>
           <ServiceForm
             sourceId={sourceId}
-            onSuccess={() => setIsAddingService(false)}
+            onSuccess={() => {
+              setIsAddingService(false);
+              onAddService?.();
+            }}
           />
         </DialogContent>
       </Dialog>
     </div>
   );
-};
+}
