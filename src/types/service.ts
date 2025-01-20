@@ -7,4 +7,10 @@ export interface Service {
   description?: string;
   created_at: string;
   updated_at: string;
+  measurement_unit_id?: string;
+  measurement_unit?: {
+    id: string;
+    name: string;
+    symbol: string;
+  };
 }
