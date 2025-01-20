@@ -21,6 +21,7 @@ import { ProductDetail } from "@/components/products/ProductDetail";
 import { SessionManager } from "@/components/session/SessionManager";
 import { ConsignmentsList } from "@/components/types/ConsignmentsList";
 import { ConsignmentDetail } from "@/components/types/detail/ConsignmentDetail";
+import { ServicesList } from "@/components/types/ServicesList";
 
 type TabValue = 'income' | 'expense' | 'categories' | 'suppliers' | 'settings';
 
@@ -130,7 +131,7 @@ const Source = () => {
             <Route path="/" element={<OrderInterface sourceId={sourceId!} />} />
             <Route path="types/products" element={<ProductsList sourceId={sourceId!} />} />
             <Route path="types/products/:productId" element={<ProductDetail />} />
-            <Route path="types/services" element={<ServiceGrid sourceId={sourceId!} />} />
+            <Route path="types/services" element={<ServicesList sourceId={sourceId!} />} />
             <Route path="types/inventory" element={<InventoryIncome sourceId={sourceId!} />} />
             <Route path="types/employment" element={<EmploymentIncome sourceId={sourceId!} />} />
             <Route path="types/gifts" element={<GiftsIncome sourceId={sourceId!} />} />
