@@ -4,8 +4,10 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { useQueryClient, useMutation } from "@tanstack/react-query";
+import { useQueryClient, useMutation, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
 interface ServiceFormProps {
   sourceId: string;
@@ -18,10 +20,24 @@ export const ServiceForm = ({ sourceId, onSuccess, service }: ServiceFormProps) 
   const [price, setPrice] = useState(service?.price?.toString() || "");
   const [category, setCategory] = useState(service?.category || "");
   const [description, setDescription] = useState(service?.description || "");
+  const [measurementUnitId, setMeasurementUnitId] = useState(service?.measurement_unit_id || "");
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  const { data: measurementUnits = [] } = useQuery({
+    queryKey: ['measurement-units'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('measurement_units')
+        .select('*')
+        .order('name');
+      
+      if (error) throw error;
+      return data;
+    }
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,6 +50,7 @@ export const ServiceForm = ({ sourceId, onSuccess, service }: ServiceFormProps) 
         price: parseFloat(price),
         category,
         description,
+        measurement_unit_id: measurementUnitId || null,
       };
 
       if (service) {
@@ -69,7 +86,7 @@ export const ServiceForm = ({ sourceId, onSuccess, service }: ServiceFormProps) 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label className="block text-sm font-medium mb-2">Name</label>
+        <Label>Name</Label>
         <Input
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -79,7 +96,7 @@ export const ServiceForm = ({ sourceId, onSuccess, service }: ServiceFormProps) 
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-2">Price</label>
+        <Label>Price</Label>
         <Input
           type="number"
           value={price}
@@ -92,7 +109,7 @@ export const ServiceForm = ({ sourceId, onSuccess, service }: ServiceFormProps) 
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-2">Category</label>
+        <Label>Category</Label>
         <Input
           value={category}
           onChange={(e) => setCategory(e.target.value)}
@@ -101,7 +118,23 @@ export const ServiceForm = ({ sourceId, onSuccess, service }: ServiceFormProps) 
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-2">Description</label>
+        <Label>Measurement Unit</Label>
+        <Select value={measurementUnitId} onValueChange={setMeasurementUnitId}>
+          <SelectTrigger>
+            <SelectValue placeholder="Select unit" />
+          </SelectTrigger>
+          <SelectContent>
+            {measurementUnits.map((unit) => (
+              <SelectItem key={unit.id} value={unit.id}>
+                {unit.name} ({unit.symbol})
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div>
+        <Label>Description</Label>
         <Textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
