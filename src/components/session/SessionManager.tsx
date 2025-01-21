@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { LockIcon, BanknoteIcon, ArrowDownIcon, ArrowUpIcon, Loader2Icon } from "lucide-react";
-import { format } from "date-fns";
+import { format, isValid } from "date-fns";
 import { useEffect } from "react";
 
 interface SessionData {
@@ -217,6 +217,12 @@ export const SessionManager = ({ sourceId }: { sourceId: string }) => {
     );
   }
 
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return isValid(date) ? format(date, 'PPp') : 'Invalid date';
+  };
+
   return (
     <Card className="p-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
@@ -224,7 +230,7 @@ export const SessionManager = ({ sourceId }: { sourceId: string }) => {
           <h2 className="text-2xl font-bold">Active Session</h2>
           <div className="space-y-1">
             <p className="text-muted-foreground">
-              Started: {format(new Date(activeSession.start_time), 'PPp')}
+              Started: {formatDate(activeSession.start_time)}
             </p>
             <p className="text-xs text-muted-foreground font-mono">
               ID: {activeSession.id}

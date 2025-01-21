@@ -713,6 +713,7 @@ export type Database = {
           created_at: string
           description: string | null
           id: string
+          measurement_unit_id: string | null
           name: string
           price: number
           source_id: string
@@ -723,6 +724,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          measurement_unit_id?: string | null
           name: string
           price: number
           source_id: string
@@ -733,12 +735,20 @@ export type Database = {
           created_at?: string
           description?: string | null
           id?: string
+          measurement_unit_id?: string | null
           name?: string
           price?: number
           source_id?: string
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "services_measurement_unit_id_fkey"
+            columns: ["measurement_unit_id"]
+            isOneToOne: false
+            referencedRelation: "measurement_units"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "services_source_id_fkey"
             columns: ["source_id"]
