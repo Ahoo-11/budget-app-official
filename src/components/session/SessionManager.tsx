@@ -24,46 +24,60 @@ interface Bill {
 export const SessionManager = ({ sourceId }: { sourceId: string }) => {
   const { toast } = useToast();
 
-  // Query active session
+  // Query active session with better error handling
   const { data: activeSession, isLoading: isLoadingSession, error: sessionError, refetch } = useQuery({
     queryKey: ['active-session', sourceId],
     queryFn: async () => {
       console.log('Fetching active session for source:', sourceId);
-      const { data, error } = await supabase
-        .from('sessions')
-        .select('*')
-        .eq('source_id', sourceId)
-        .eq('status', 'active')
-        .maybeSingle();
+      try {
+        const { data, error } = await supabase
+          .from('sessions')
+          .select('*')
+          .eq('source_id', sourceId)
+          .eq('status', 'active')
+          .maybeSingle();
 
-      if (error) {
-        console.error('Error fetching session:', error);
+        if (error) {
+          console.error('Error fetching session:', error);
+          throw error;
+        }
+
+        console.log('Active session data:', data);
+        return data as SessionData | null;
+      } catch (error) {
+        console.error('Session fetch error:', error);
         throw error;
       }
-
-      console.log('Active session data:', data);
-      return data as SessionData | null;
     },
     enabled: !!sourceId,
     refetchInterval: 30000,
     retry: 1,
   });
 
-  // Query bills for active session with real-time updates
+  // Query bills for active session with better error handling
   const { data: sessionBills = [], isLoading: isLoadingBills } = useQuery({
     queryKey: ['session-bills', activeSession?.id],
     queryFn: async () => {
       if (!activeSession?.id) return [];
       
-      const { data, error } = await supabase
-        .from('bills')
-        .select('*')
-        .eq('session_id', activeSession.id)
-        .neq('status', 'cancelled');
+      try {
+        const { data, error } = await supabase
+          .from('bills')
+          .select('*')
+          .eq('session_id', activeSession.id)
+          .neq('status', 'cancelled');
 
-      if (error) throw error;
-      console.log('Session bills:', data);
-      return data as Bill[];
+        if (error) {
+          console.error('Error fetching bills:', error);
+          throw error;
+        }
+
+        console.log('Session bills:', data);
+        return data as Bill[];
+      } catch (error) {
+        console.error('Bills fetch error:', error);
+        throw error;
+      }
     },
     enabled: !!activeSession?.id,
   });
@@ -124,6 +138,7 @@ export const SessionManager = ({ sourceId }: { sourceId: string }) => {
         .single();
 
       if (createError) {
+        console.error('Error creating session:', createError);
         throw createError;
       }
 
@@ -157,7 +172,10 @@ export const SessionManager = ({ sourceId }: { sourceId: string }) => {
         })
         .eq('id', activeSession.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error closing session:', error);
+        throw error;
+      }
 
       await refetch();
 
@@ -172,6 +190,17 @@ export const SessionManager = ({ sourceId }: { sourceId: string }) => {
         description: error.message || "Failed to close session",
         variant: "destructive",
       });
+    }
+  };
+
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return 'N/A';
+    try {
+      const date = new Date(dateString);
+      return isValid(date) ? format(date, 'PPp') : 'Invalid date';
+    } catch (error) {
+      console.error('Date formatting error:', error);
+      return 'Invalid date';
     }
   };
 
@@ -216,12 +245,6 @@ export const SessionManager = ({ sourceId }: { sourceId: string }) => {
       </Card>
     );
   }
-
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return 'N/A';
-    const date = new Date(dateString);
-    return isValid(date) ? format(date, 'PPp') : 'Invalid date';
-  };
 
   return (
     <Card className="p-6">
