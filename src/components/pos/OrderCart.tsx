@@ -13,19 +13,15 @@ import { AlertCircle } from "lucide-react";
 import { useState } from "react";
 
 interface OrderCartProps {
-  selectedProducts: BillProduct[];
-  onUpdateQuantity: (productId: string, quantity: number) => void;
-  onRemove: (productId: string) => void;
+  products: BillProduct[];
+  onProductsChange: (products: BillProduct[]) => void;
   sourceId: string;
-  setSelectedProducts: (products: BillProduct[]) => void;
 }
 
 export const OrderCart = ({
-  selectedProducts,
-  onUpdateQuantity,
-  onRemove,
+  products,
+  onProductsChange,
   sourceId,
-  setSelectedProducts,
 }: OrderCartProps) => {
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'transfer'>('transfer');
 
@@ -35,7 +31,19 @@ export const OrderCart = ({
     subtotal,
     gstAmount,
     finalTotal
-  } = useCartCalculations(selectedProducts);
+  } = useCartCalculations(products);
+
+  const handleUpdateQuantity = (productId: string, quantity: number) => {
+    onProductsChange(
+      products.map((p) =>
+        p.id === productId ? { ...p, quantity } : p
+      )
+    );
+  };
+
+  const handleRemoveProduct = (productId: string) => {
+    onProductsChange(products.filter((p) => p.id !== productId));
+  };
 
   const {
     isSubmitting: isBillSubmitting,
@@ -50,87 +58,59 @@ export const OrderCart = ({
     queryFn: async () => {
       const { data, error } = await supabase
         .from('sessions')
-        .select('*')
+        .select('id')
         .eq('source_id', sourceId)
         .eq('status', 'active')
         .maybeSingle();
 
       if (error) throw error;
       return data;
-    },
+    }
   });
 
-  const {
-    handleCheckout,
-    handleCancelBill,
-    isSubmitting: isCartSubmitting
-  } = useCartManager({
-    sourceId,
-    selectedProducts,
-    setSelectedProducts,
-    paymentMethod
-  });
-
-  const handleCheckoutClick = () => {
-    handleCheckout(
-      subtotal,
-      discount,
-      gstAmount,
-      finalTotal
+  if (!activeSession) {
+    return (
+      <Alert variant="destructive">
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>
+          No active session found. Please start a new session to create bills.
+        </AlertDescription>
+      </Alert>
     );
-  };
+  }
 
   return (
-    <div className="bg-white h-full flex flex-col border rounded-lg">
+    <div className="flex flex-col h-full">
       <CartHeader
-        selectedPayerId={selectedPayerId}
         date={date}
-        onPayerSelect={handlePayerSelect}
         onDateChange={handleDateChange}
+        selectedPayerId={selectedPayerId}
+        onPayerSelect={handlePayerSelect}
       />
-
-      {!activeSession && (
-        <Alert variant="destructive" className="m-4">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            No active session found. Please start a new session to create bills.
-          </AlertDescription>
-        </Alert>
-      )}
-
-      <div className="border-t p-4">
-        <h3 className="font-medium text-lg">Order Summary</h3>
-      </div>
 
       <CartItems
-        selectedProducts={selectedProducts}
-        onUpdateQuantity={onUpdateQuantity}
-        onRemove={onRemove}
+        products={products}
+        onUpdateQuantity={handleUpdateQuantity}
+        onRemove={handleRemoveProduct}
       />
 
-      {selectedProducts.length > 0 && (
-        <>
-          <div className="border-t p-4">
-            <PaymentMethodSelector
-              method={paymentMethod}
-              onMethodChange={setPaymentMethod}
-            />
-          </div>
-          <CartFooter
-            subtotal={subtotal}
-            gstAmount={gstAmount}
-            discount={discount}
-            finalTotal={finalTotal}
-            onDiscountChange={setDiscount}
-            onCheckout={handleCheckoutClick}
-            onCancelBill={handleCancelBill}
-            selectedPayerId={selectedPayerId}
-            isSubmitting={isBillSubmitting || isCartSubmitting}
-            disabled={!activeSession}
-            paymentMethod={paymentMethod}
-          />
-        </>
-      )}
+      <CartFooter
+        subtotal={subtotal}
+        discount={discount}
+        setDiscount={setDiscount}
+        gstAmount={gstAmount}
+        finalTotal={finalTotal}
+        sourceId={sourceId}
+        products={products}
+        onProductsChange={onProductsChange}
+        paymentMethod={paymentMethod}
+        isBillSubmitting={isBillSubmitting}
+      />
+
+      <PaymentMethodSelector
+        value={paymentMethod}
+        onChange={setPaymentMethod}
+      />
     </div>
   );
 };

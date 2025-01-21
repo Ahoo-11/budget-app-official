@@ -27,7 +27,14 @@ export const ProductGrid = ({ sourceId, onProductClick }: ProductGridProps) => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('products')
-        .select('*')
+        .select(`
+          *,
+          measurement_unit:measurement_unit_id (
+            id,
+            name,
+            symbol
+          )
+        `)
         .eq('source_id', sourceId)
         .order('created_at', { ascending: false });
 

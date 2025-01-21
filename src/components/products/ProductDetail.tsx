@@ -25,11 +25,19 @@ export const ProductDetail = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('products')
-        .select('*')
+        .select(`
+          *,
+          measurement_unit:measurement_unit_id (
+            id,
+            name,
+            symbol
+          )
+        `)
         .eq('id', productId)
         .maybeSingle();
 
       if (error) {
+        console.error('Error loading product:', error);
         toast({
           variant: "destructive",
           title: "Error loading product",
@@ -53,12 +61,20 @@ export const ProductDetail = () => {
 
   const updateProductMutation = useMutation({
     mutationFn: async (updatedProduct: Partial<Product>) => {
+      // Remove nested objects and computed fields
+      const { measurement_unit, created_at, updated_at, ...updateData } = updatedProduct;
+      
+      console.log('Updating product with data:', updateData);
+      
       const { error } = await supabase
         .from('products')
-        .update(updatedProduct)
+        .update(updateData)
         .eq('id', productId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating product:', error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['product', productId] });
@@ -68,11 +84,12 @@ export const ProductDetail = () => {
       });
       setIsEditing(false);
     },
-    onError: (error) => {
+    onError: (error: any) => {
+      console.error('Update error:', error);
       toast({
         variant: "destructive",
         title: "Error updating product",
-        description: error.message,
+        description: error.message || "Failed to update product",
       });
     },
   });

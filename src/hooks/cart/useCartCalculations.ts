@@ -2,10 +2,10 @@ import { useState } from "react";
 import { BillProduct } from "@/types/bills";
 import { calculateGSTFromTotal } from "@/utils/gst";
 
-export function useCartCalculations(selectedProducts: BillProduct[]) {
+export function useCartCalculations(products: BillProduct[] = []) {
   const [discount, setDiscount] = useState(0);
 
-  const subtotal = selectedProducts.reduce((total, item) => 
+  const subtotal = products.reduce((total, item) => 
     total + (item.price * item.quantity), 0
   );
 

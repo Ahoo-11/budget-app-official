@@ -1,17 +1,17 @@
 import { BillProduct } from "@/types/bills";
 
 interface CartItemsProps {
-  selectedProducts: BillProduct[];
+  products: BillProduct[];
   onUpdateQuantity: (productId: string, quantity: number) => void;
   onRemove: (productId: string) => void;
 }
 
 export const CartItems = ({
-  selectedProducts,
+  products,
   onUpdateQuantity,
   onRemove,
 }: CartItemsProps) => {
-  if (!selectedProducts.length) {
+  if (!products || !products.length) {
     return (
       <div className="flex-1 p-4 text-center text-muted-foreground">
         No items in cart
@@ -21,7 +21,7 @@ export const CartItems = ({
 
   return (
     <div className="flex-1 overflow-auto p-4 space-y-4">
-      {selectedProducts.map((product) => (
+      {products.map((product) => (
         <div key={product.id} className="flex justify-between items-center p-2 border rounded-lg">
           <div>
             <h4 className="font-medium">{product.name}</h4>

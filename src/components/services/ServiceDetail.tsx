@@ -21,11 +21,19 @@ export const ServiceDetail = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('services')
-        .select('*, measurement_units(*)')
+        .select(`
+          *,
+          measurement_unit:measurement_unit_id (
+            id,
+            name,
+            symbol
+          )
+        `)
         .eq('id', serviceId)
         .maybeSingle();
 
       if (error) {
+        console.error('Error loading service:', error);
         toast({
           variant: "destructive",
           title: "Error loading service",
@@ -34,18 +42,35 @@ export const ServiceDetail = () => {
         throw error;
       }
 
+      if (!data) {
+        toast({
+          variant: "destructive",
+          title: "Service not found",
+          description: "The requested service could not be found.",
+        });
+        throw new Error("Service not found");
+      }
+
       return data as Service;
     }
   });
 
   const updateServiceMutation = useMutation({
     mutationFn: async (updatedService: Partial<Service>) => {
+      // Remove any nested objects or computed fields before update
+      const { measurement_unit, created_at, updated_at, ...updateData } = updatedService;
+      
+      console.log('Updating service with data:', updateData);
+      
       const { error } = await supabase
         .from('services')
-        .update(updatedService)
+        .update(updateData)
         .eq('id', serviceId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating service:', error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['service', serviceId] });
@@ -55,11 +80,12 @@ export const ServiceDetail = () => {
       });
       setIsEditing(false);
     },
-    onError: (error) => {
+    onError: (error: any) => {
+      console.error('Update error:', error);
       toast({
         variant: "destructive",
         title: "Error updating service",
-        description: error.message,
+        description: error.message || "Failed to update service",
       });
     },
   });
@@ -71,6 +97,7 @@ export const ServiceDetail = () => {
 
   const handleSaveClick = () => {
     if (!editedService) return;
+    console.log('Saving edited service:', editedService);
     updateServiceMutation.mutate(editedService);
   };
 
