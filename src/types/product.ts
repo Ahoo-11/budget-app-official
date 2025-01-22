@@ -4,7 +4,6 @@ export interface Product {
   name: string;
   description?: string;
   category?: string;
-  subcategory?: string;
   price: number;
   product_type: 'basic' | 'composite';
   measurement_unit_id?: string;
@@ -13,12 +12,7 @@ export interface Product {
     name: string;
     symbol: string;
   };
-  current_stock?: number;
-  purchase_cost?: number;
-  minimum_stock_level?: number;
-  storage_location?: string;
-  unit_of_measurement?: string;
-  image_url?: string;
+  min_stock?: number;
   created_at: string;
   updated_at: string;
 }

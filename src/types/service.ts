@@ -5,7 +5,6 @@ export interface Service {
   price: number;
   category?: string;
   description?: string;
-  image_url?: string;
   created_at: string;
   updated_at: string;
   measurement_unit_id?: string;

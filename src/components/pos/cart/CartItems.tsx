@@ -1,35 +1,45 @@
 import { BillProduct } from "@/types/bills";
 
 interface CartItemsProps {
-  selectedProducts: BillProduct[];
+  products: BillProduct[];
   onUpdateQuantity: (productId: string, quantity: number) => void;
   onRemove: (productId: string) => void;
 }
 
 export const CartItems = ({
-  selectedProducts,
+  products,
   onUpdateQuantity,
-  onRemove
+  onRemove,
 }: CartItemsProps) => {
+  if (!products || !products.length) {
+    return (
+      <div className="flex-1 p-4 text-center text-muted-foreground">
+        No items in cart
+      </div>
+    );
+  }
+
   return (
-    <div className="flex-1 overflow-auto p-4">
-      {selectedProducts.map((product) => (
-        <div key={product.id} className="mb-4 flex items-center justify-between">
+    <div className="flex-1 overflow-auto p-4 space-y-4">
+      {products.map((product) => (
+        <div key={product.id} className="flex justify-between items-center p-2 border rounded-lg">
           <div>
-            <h3 className="font-medium">{product.name}</h3>
-            <p className="text-sm text-gray-500">MVR {product.price.toFixed(2)}</p>
+            <h4 className="font-medium">{product.name}</h4>
+            <p className="text-sm text-muted-foreground">
+              MVR {product.price.toFixed(2)} × {product.quantity}
+            </p>
           </div>
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center gap-2">
             <input
               type="number"
               min="1"
               value={product.quantity}
               onChange={(e) => onUpdateQuantity(product.id, parseInt(e.target.value) || 1)}
-              className="w-20 rounded border p-1"
+              className="w-16 px-2 py-1 border rounded"
             />
             <button
               onClick={() => onRemove(product.id)}
-              className="text-red-500 hover:text-red-700"
+              className="p-1 text-red-500 hover:text-red-600"
             >
               Remove
             </button>

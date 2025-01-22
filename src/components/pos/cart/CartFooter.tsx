@@ -1,6 +1,5 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
 
 interface CartFooterProps {
@@ -8,12 +7,12 @@ interface CartFooterProps {
   gstAmount: number;
   discount: number;
   finalTotal: number;
-  setDiscount: (discount: number) => void;
+  onDiscountChange: (discount: number) => void;
   onCheckout: () => void;
   onCancelBill: () => void;
-  selectedPayerId: string;
+  selectedPayerId?: string | null;
   isSubmitting: boolean;
-  disabled: boolean;
+  disabled?: boolean;
   paymentMethod: 'cash' | 'transfer';
 }
 
@@ -22,7 +21,7 @@ export const CartFooter = ({
   gstAmount,
   discount,
   finalTotal,
-  setDiscount,
+  onDiscountChange,
   onCheckout,
   onCancelBill,
   selectedPayerId,
@@ -32,59 +31,74 @@ export const CartFooter = ({
 }: CartFooterProps) => {
   return (
     <div className="border-t p-4 space-y-4">
-      <div className="space-y-2">
-        <div className="flex justify-between text-sm">
-          <span>Subtotal</span>
+      <div className="space-y-3">
+        <div className="flex justify-between items-center text-sm">
+          <span className="text-muted-foreground">Subtotal</span>
           <span>MVR {subtotal.toFixed(2)}</span>
         </div>
-
-        <div className="flex justify-between items-center">
-          <Label htmlFor="discount">Discount</Label>
-          <Input
-            id="discount"
-            type="number"
-            min="0"
-            value={discount}
-            onChange={(e) => setDiscount(parseFloat(e.target.value) || 0)}
-            className="w-24 text-right"
-          />
-        </div>
-
-        <div className="flex justify-between text-sm">
-          <span>GST (6%)</span>
+        
+        <div className="flex justify-between items-center text-sm">
+          <span className="text-muted-foreground">GST (8%)</span>
           <span>MVR {gstAmount.toFixed(2)}</span>
         </div>
 
-        <div className="flex justify-between font-medium text-lg pt-2 border-t">
-          <span>Total</span>
-          <span>MVR {finalTotal.toFixed(2)}</span>
+        <div className="flex items-center gap-2">
+          <div className="flex-1">
+            <label htmlFor="discount" className="text-sm text-muted-foreground">Discount</label>
+            <Input
+              id="discount"
+              type="number"
+              min="0"
+              step="0.01"
+              value={discount}
+              onChange={(e) => onDiscountChange(Number(e.target.value))}
+              className="h-8"
+              disabled={disabled}
+            />
+          </div>
+          <div className="text-sm text-right pt-5">
+            MVR {discount.toFixed(2)}
+          </div>
         </div>
       </div>
 
-      <div className="space-y-2">
-        <Button
-          className="w-full"
-          onClick={onCheckout}
-          disabled={disabled || isSubmitting || !selectedPayerId}
-        >
-          {isSubmitting ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Processing...
-            </>
-          ) : (
-            `Pay MVR ${finalTotal.toFixed(2)}`
-          )}
-        </Button>
-        
-        <Button
-          variant="outline"
-          className="w-full"
-          onClick={onCancelBill}
-          disabled={isSubmitting}
-        >
-          Cancel
-        </Button>
+      <div className="pt-3 border-t">
+        <div className="flex justify-between items-center font-medium text-lg">
+          <span>Total</span>
+          <span className={paymentMethod === 'cash' ? 'text-green-600' : 'text-blue-600'}>
+            MVR {finalTotal.toFixed(2)}
+          </span>
+        </div>
+
+        <div className="flex gap-2 mt-4">
+          <Button
+            variant="outline"
+            className="flex-1 border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
+            onClick={onCancelBill}
+            disabled={disabled}
+          >
+            Cancel Bill
+          </Button>
+
+          <Button
+            className={`flex-1 ${
+              paymentMethod === 'cash' 
+                ? 'bg-green-600 hover:bg-green-700' 
+                : 'bg-blue-600 hover:bg-blue-700'
+            }`}
+            onClick={onCheckout}
+            disabled={isSubmitting || disabled || (!selectedPayerId && paymentMethod === 'transfer')}
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Processing...
+              </>
+            ) : (
+              selectedPayerId ? "CHARGE TO ACCOUNT" : "CHECKOUT"
+            )}
+          </Button>
+        </div>
       </div>
     </div>
   );
