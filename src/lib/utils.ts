@@ -13,3 +13,7 @@ export function formatCurrency(amount: number): string {
     maximumFractionDigits: 2
   }).format(amount);
 }
+
+export function capitalize(str: string): string {
+  return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+}
