@@ -1,5 +1,4 @@
 import { BillProduct } from "@/types/bills";
-import { Button } from "@/components/ui/button";
 
 interface CartItemsProps {
   selectedProducts: BillProduct[];
@@ -10,37 +9,30 @@ interface CartItemsProps {
 export const CartItems = ({
   selectedProducts,
   onUpdateQuantity,
-  onRemove,
+  onRemove
 }: CartItemsProps) => {
   return (
-    <div className="space-y-4">
+    <div className="flex-1 overflow-auto p-4">
       {selectedProducts.map((product) => (
-        <div key={product.id} className="flex items-center justify-between p-4 border rounded-lg">
+        <div key={product.id} className="mb-4 flex items-center justify-between">
           <div>
-            <h4 className="font-medium">{product.name}</h4>
-            <p>Price: MVR {product.price.toFixed(2)}</p>
-            <p>Quantity: {product.quantity}</p>
+            <h3 className="font-medium">{product.name}</h3>
+            <p className="text-sm text-gray-500">MVR {product.price.toFixed(2)}</p>
           </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              onClick={() => onUpdateQuantity(product.id, product.quantity + 1)}
-            >
-              +
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => onUpdateQuantity(product.id, product.quantity - 1)}
-              disabled={product.quantity <= 1}
-            >
-              -
-            </Button>
-            <Button
-              variant="destructive"
+          <div className="flex items-center space-x-4">
+            <input
+              type="number"
+              min="1"
+              value={product.quantity}
+              onChange={(e) => onUpdateQuantity(product.id, parseInt(e.target.value) || 1)}
+              className="w-20 rounded border p-1"
+            />
+            <button
               onClick={() => onRemove(product.id)}
+              className="text-red-500 hover:text-red-700"
             >
               Remove
-            </Button>
+            </button>
           </div>
         </div>
       ))}

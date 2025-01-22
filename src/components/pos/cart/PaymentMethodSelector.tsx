@@ -1,30 +1,29 @@
-import { RadioGroup } from "@headlessui/react";
-import { Button } from "@/components/ui/button";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 
 interface PaymentMethodSelectorProps {
   method: 'cash' | 'transfer';
   onMethodChange: (method: 'cash' | 'transfer') => void;
 }
 
-export const PaymentMethodSelector = ({ method, onMethodChange }: PaymentMethodSelectorProps) => {
+export const PaymentMethodSelector = ({
+  method,
+  onMethodChange
+}: PaymentMethodSelectorProps) => {
   return (
-    <RadioGroup value={method} onChange={onMethodChange} className="flex space-x-4">
-      <RadioGroup.Option value="cash" className={({ checked }) => `flex items-center p-2 border rounded-lg ${checked ? 'bg-accent' : 'bg-background'}`}>
-        {({ checked }) => (
-          <>
-            <span className="mr-2">Cash</span>
-            {checked && <span className="text-green-500">✓</span>}
-          </>
-        )}
-      </RadioGroup.Option>
-      <RadioGroup.Option value="transfer" className={({ checked }) => `flex items-center p-2 border rounded-lg ${checked ? 'bg-accent' : 'bg-background'}`}>
-        {({ checked }) => (
-          <>
-            <span className="mr-2">Transfer</span>
-            {checked && <span className="text-green-500">✓</span>}
-          </>
-        )}
-      </RadioGroup.Option>
+    <RadioGroup
+      value={method}
+      onValueChange={onMethodChange}
+      className="flex space-x-4"
+    >
+      <div className="flex items-center space-x-2">
+        <RadioGroupItem value="cash" id="cash" />
+        <Label htmlFor="cash">Cash</Label>
+      </div>
+      <div className="flex items-center space-x-2">
+        <RadioGroupItem value="transfer" id="transfer" />
+        <Label htmlFor="transfer">Transfer</Label>
+      </div>
     </RadioGroup>
   );
 };
