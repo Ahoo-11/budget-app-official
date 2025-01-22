@@ -1,29 +1,37 @@
 import { useState } from "react";
+import { useParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { OrderContent } from "./OrderContent";
 import { OrderCart } from "./OrderCart";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { Product } from "@/types/product";
-import { Service } from "@/types/service";
 import { BillProduct } from "@/types/bills";
-import { useTypes } from "@/hooks/useTypes";
+import { supabase } from "@/integrations/supabase/client";
 
-interface OrderInterfaceProps {
-  sourceId: string;
+interface Product {
+  id: string;
+  name: string;
+  price: number;
+  type: "product";
+  source_id: string;
+  current_stock: number;
+  purchase_cost: number | null;
+  category?: string;
+  description?: string;
+  measurement_unit?: {
+    id: string;
+    name: string;
+    symbol: string;
+  };
 }
 
-export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
+export const OrderInterface = () => {
+  const { sourceId } = useParams<{ sourceId: string }>();
   const [selectedProducts, setSelectedProducts] = useState<BillProduct[]>([]);
-  const { types, isTypeEnabled } = useTypes(sourceId);
-  const enabledTypes = types.filter(type => isTypeEnabled(type.id));
 
-  // Fetch data for all enabled types
-  const { data: products = [] } = useQuery({
+  const { data: products } = useQuery<Product[]>({
     queryKey: ["products", sourceId],
+    enabled: !!sourceId,
     queryFn: async () => {
-      if (!enabledTypes.some(type => type.id === 'products')) return [];
-
       const { data, error } = await supabase
         .from("products")
         .select(`
@@ -34,119 +42,79 @@ export const OrderInterface = ({ sourceId }: OrderInterfaceProps) => {
             symbol
           )
         `)
-        .eq("source_id", sourceId)
-        .order("name");
+        .eq("source_id", sourceId);
 
       if (error) throw error;
-      return data as Product[];
+      return data.map(product => ({
+        ...product,
+        type: "product" as const
+      }));
     },
-    enabled: enabledTypes.some(type => type.id === 'products'),
   });
 
-  const { data: services = [] } = useQuery({
-    queryKey: ["services", sourceId],
-    queryFn: async () => {
-      if (!enabledTypes.some(type => type.id === 'services')) return [];
-
-      const { data, error } = await supabase
-        .from("services")
-        .select(`
-          *,
-          measurement_unit:measurement_unit_id (
-            id,
-            name,
-            symbol
-          )
-        `)
-        .eq("source_id", sourceId)
-        .order("name");
-
-      if (error) throw error;
-      return data as Service[];
-    },
-    enabled: enabledTypes.some(type => type.id === 'services'),
-  });
+  if (!sourceId) {
+    return null;
+  }
 
   const handleProductSelect = (product: Product) => {
-    const existingProduct = selectedProducts.find(p => p.id === product.id);
-    if (existingProduct) {
-      setSelectedProducts(
-        selectedProducts.map(p =>
+    setSelectedProducts(prev => {
+      const existingProduct = prev.find(p => p.id === product.id);
+      
+      if (existingProduct) {
+        return prev.map(p =>
           p.id === product.id
             ? { ...p, quantity: p.quantity + 1 }
             : p
-        )
-      );
-    } else {
-      setSelectedProducts([
-        ...selectedProducts,
-        {
-          id: product.id,
-          name: product.name,
-          price: product.price,
-          quantity: 1,
-          type: "product",
-          source_id: product.source_id,
-          current_stock: product.current_stock,
-          purchase_cost: product.purchase_cost,
-          category: product.category,
-          description: product.description,
-          image_url: product.image_url,
-          measurement_unit_id: product.measurement_unit_id,
-          measurement_unit: product.measurement_unit
-        },
-      ]);
-    }
+        );
+      }
+
+      const billProduct: BillProduct = {
+        id: product.id,
+        type: "product",
+        name: product.name,
+        price: product.price,
+        quantity: 1,
+        source_id: product.source_id,
+        current_stock: product.current_stock,
+        purchase_cost: product.purchase_cost,
+        category: product.category,
+        description: product.description,
+        measurement_unit: product.measurement_unit,
+      };
+
+      return [...prev, billProduct];
+    });
   };
 
-  const handleServiceSelect = (service: Service) => {
-    const existingService = selectedProducts.find(p => p.id === service.id);
-    if (existingService) {
-      setSelectedProducts(
-        selectedProducts.map(p =>
-          p.id === service.id
-            ? { ...p, quantity: p.quantity + 1 }
-            : p
-        )
-      );
-    } else {
-      setSelectedProducts([
-        ...selectedProducts,
-        {
-          id: service.id,
-          name: service.name,
-          price: service.price,
-          quantity: 1,
-          type: "service",
-          source_id: service.source_id,
-          current_stock: 0,
-          purchase_cost: null,
-          category: service.category,
-          description: service.description,
-          image_url: service.image_url,
-          measurement_unit_id: service.measurement_unit_id,
-          measurement_unit: service.measurement_unit
-        },
-      ]);
-    }
+  const handleUpdateQuantity = (id: string, quantity: number) => {
+    setSelectedProducts(prev =>
+      prev.map(p => (p.id === id ? { ...p, quantity } : p))
+    );
+  };
+
+  const handleRemoveProduct = (id: string) => {
+    setSelectedProducts(prev => prev.filter(p => p.id !== id));
+  };
+
+  const handleSuccess = () => {
+    setSelectedProducts([]);
   };
 
   return (
-    <div className="grid grid-cols-[1fr,400px] h-full gap-4">
-      <Card className="p-4">
+    <div className="flex h-full gap-4 p-4">
+      <Card className="flex-1 p-4">
         <OrderContent
-          products={products}
-          services={services}
           sourceId={sourceId}
           onProductSelect={handleProductSelect}
-          onServiceSelect={handleServiceSelect}
         />
       </Card>
-      <Card>
+      <Card className="w-[400px] p-4">
         <OrderCart
-          products={selectedProducts}
-          onProductsChange={setSelectedProducts}
           sourceId={sourceId}
+          selectedProducts={selectedProducts}
+          onUpdateQuantity={handleUpdateQuantity}
+          onRemoveProduct={handleRemoveProduct}
+          onSuccess={handleSuccess}
         />
       </Card>
     </div>

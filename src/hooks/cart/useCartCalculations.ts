@@ -6,7 +6,7 @@ export function useCartCalculations(products: BillProduct[] = []) {
   const [discount, setDiscount] = useState(0);
 
   const subtotal = products.reduce((total, item) => 
-    total + (item.price * item.quantity), 0
+    total + (item.unit_price * item.quantity), 0
   );
 
   // Calculate GST after discount
