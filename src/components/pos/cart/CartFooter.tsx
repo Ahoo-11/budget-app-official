@@ -8,7 +8,7 @@ interface CartFooterProps {
   gstAmount: number;
   discount: number;
   finalTotal: number;
-  onDiscountChange: (discount: number) => void;
+  setDiscount: (discount: number) => void;
   onCheckout: () => void;
   onCancelBill: () => void;
   selectedPayerId: string;
@@ -22,7 +22,7 @@ export const CartFooter = ({
   gstAmount,
   discount,
   finalTotal,
-  onDiscountChange,
+  setDiscount,
   onCheckout,
   onCancelBill,
   selectedPayerId,
@@ -45,7 +45,7 @@ export const CartFooter = ({
             type="number"
             min="0"
             value={discount}
-            onChange={(e) => onDiscountChange(parseFloat(e.target.value) || 0)}
+            onChange={(e) => setDiscount(parseFloat(e.target.value) || 0)}
             className="w-24 text-right"
           />
         </div>
