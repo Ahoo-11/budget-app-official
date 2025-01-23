@@ -1,12 +1,12 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-const SUPABASE_URL = "https://btzllgnzmjdxzdioulfu.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0emxsZ256bWpkeHpkaW91bGZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQxMTQ2MjUsImV4cCI6MjA0OTY5MDYyNX0._jtaTLJHipFUQAyP6ghzLzeDq8yuEMQd_PJ8T73tsx8";
+const supabaseUrl = 'https://btzllgnzmjdxzdioulfu.supabase.co';
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0emxsZ256bWpkeHpkaW91bGZ1Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTczNDExNDYyNSwiZXhwIjoyMDQ5NjkwNjI1fQ.TPL9pm9KAhKhhZ2DYNFSTOtoNiPExNI6p_hrv66T6TE';
 
 export const supabase = createClient<Database>(
-  SUPABASE_URL,
-  SUPABASE_ANON_KEY,
+  supabaseUrl,
+  supabaseAnonKey,
   {
     auth: {
       autoRefreshToken: true,

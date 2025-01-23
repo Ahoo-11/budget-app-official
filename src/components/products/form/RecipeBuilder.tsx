@@ -19,8 +19,7 @@ interface RecipeBuilderProps {
   isSubmitting: boolean;
   onIngredientsChange: (ingredients: Array<{
     id: string;
-    quantity: number;
-    unit_of_measurement: string;
+    content_quantity: number;
   }>) => void;
 }
 
@@ -31,8 +30,7 @@ export const RecipeBuilder = ({
 }: RecipeBuilderProps) => {
   const [ingredients, setIngredients] = useState<Array<{
     id: string;
-    quantity: number;
-    unit_of_measurement: string;
+    content_quantity: number;
   }>>([]);
 
   const { data: basicProducts = [] } = useQuery({
@@ -40,7 +38,19 @@ export const RecipeBuilder = ({
     queryFn: async () => {
       const { data, error } = await supabase
         .from('products')
-        .select('*')
+        .select(`
+          *,
+          measurement_unit:measurement_units!measurement_unit_id (
+            id,
+            name,
+            symbol
+          ),
+          content_unit:measurement_units!content_unit_id (
+            id,
+            name,
+            symbol
+          )
+        `)
         .eq('source_id', sourceId)
         .eq('product_type', 'basic')
         .order('name');
@@ -54,8 +64,7 @@ export const RecipeBuilder = ({
     if (basicProducts.length > 0) {
       const newIngredient = {
         id: basicProducts[0].id,
-        quantity: 1,
-        unit_of_measurement: basicProducts[0].unit_of_measurement || 'unit',
+        content_quantity: 0,
       };
       const updatedIngredients = [...ingredients, newIngredient];
       setIngredients(updatedIngredients);
@@ -102,53 +111,68 @@ export const RecipeBuilder = ({
         </div>
       )}
 
-      {ingredients.map((ingredient, index) => (
-        <div key={index} className="flex gap-2 items-start">
-          <Select
-            value={ingredient.id}
-            onValueChange={(value) => updateIngredient(index, 'id', value)}
-            disabled={isSubmitting}
-          >
-            <SelectTrigger className="flex-1">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {basicProducts.map((product) => (
-                <SelectItem key={product.id} value={product.id}>
-                  {product.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      {ingredients.map((ingredient, index) => {
+        const selectedProduct = basicProducts.find(p => p.id === ingredient.id);
+        const requiredUnits = selectedProduct?.content_per_unit 
+          ? Math.ceil(ingredient.content_quantity / selectedProduct.content_per_unit)
+          : 0;
+        
+        return (
+          <div key={index} className="p-4 border rounded-lg space-y-4">
+            <div className="flex gap-2 items-start">
+              <Select
+                value={ingredient.id}
+                onValueChange={(value) => updateIngredient(index, 'id', value)}
+                disabled={isSubmitting}
+              >
+                <SelectTrigger className="flex-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {basicProducts.map((product) => (
+                    <SelectItem key={product.id} value={product.id}>
+                      {product.name} ({product.content_per_unit} {product.content_unit?.symbol}/{product.measurement_unit?.symbol})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-          <Input
-            type="number"
-            min="0.01"
-            step="0.01"
-            value={ingredient.quantity}
-            onChange={(e) => updateIngredient(index, 'quantity', parseFloat(e.target.value) || 0)}
-            className="w-24"
-            disabled={isSubmitting}
-          />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => removeIngredient(index)}
+                disabled={isSubmitting}
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
 
-          <Input
-            value={ingredient.unit_of_measurement}
-            onChange={(e) => updateIngredient(index, 'unit_of_measurement', e.target.value)}
-            className="w-24"
-            disabled={isSubmitting}
-          />
-
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            onClick={() => removeIngredient(index)}
-            disabled={isSubmitting}
-          >
-            <X className="w-4 h-4" />
-          </Button>
-        </div>
-      ))}
+            <div>
+              <Label className="text-xs">Required Amount</Label>
+              <div className="flex gap-2 items-center">
+                <Input
+                  type="number"
+                  min="0.001"
+                  step="0.001"
+                  value={ingredient.content_quantity}
+                  onChange={(e) => updateIngredient(index, 'content_quantity', parseFloat(e.target.value) || 0)}
+                  className="w-32"
+                  disabled={isSubmitting}
+                />
+                <span className="text-sm text-muted-foreground">
+                  {selectedProduct?.content_unit?.symbol}
+                </span>
+              </div>
+              {selectedProduct && (
+                <div className="text-xs text-muted-foreground mt-1">
+                  Uses {requiredUnits} {selectedProduct.measurement_unit?.symbol}
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 };
