@@ -26,10 +26,32 @@ export const ProductCard = ({ product, onClick }: ProductCardProps) => {
           recipe_ingredients (
             id,
             quantity,
-            unit_of_measurement,
+            conversion_ratio,
+            purchase_unit:measurement_units!purchase_unit_id (
+              id,
+              name,
+              symbol
+            ),
+            sales_unit:measurement_units!sales_unit_id (
+              id,
+              name,
+              symbol
+            ),
             ingredient:products (
               id,
-              name
+              name,
+              current_stock,
+              measurement_unit:measurement_units (
+                id,
+                name,
+                symbol
+              ),
+              content_per_unit,
+              content_unit:measurement_units (
+                id,
+                name,
+                symbol
+              )
             )
           )
         `)
@@ -38,6 +60,20 @@ export const ProductCard = ({ product, onClick }: ProductCardProps) => {
 
       if (recipeError) throw recipeError;
       return recipeData;
+    },
+    enabled: product.product_type === 'composite'
+  });
+
+  const { data: availableQuantity } = useQuery({
+    queryKey: ['product-available-quantity', product.id],
+    queryFn: async () => {
+      if (product.product_type !== 'composite') return null;
+
+      const { data, error } = await supabase
+        .rpc('calculate_available_quantity', { product_id: product.id });
+
+      if (error) throw error;
+      return data;
     },
     enabled: product.product_type === 'composite'
   });
@@ -68,24 +104,51 @@ export const ProductCard = ({ product, onClick }: ProductCardProps) => {
       <CardContent className="p-4">
         <div className="mb-2">
           <h3 className="font-medium">{product.name}</h3>
-          <p className="text-sm text-muted-foreground">
-            MVR {product.price.toFixed(2)}
-          </p>
+          {product.price && (
+            <p className="text-sm text-muted-foreground">
+              MVR {product.price.toFixed(2)}
+            </p>
+          )}
         </div>
 
         {product.product_type === 'basic' ? (
           <div className="text-sm text-muted-foreground">
-            Stock: {product.current_stock} {product.unit_of_measurement || 'units'}
+            <div>Stock: {product.current_stock} {product.measurement_unit?.symbol || 'units'}</div>
+            <div className="text-xs">
+              ({product.content_per_unit} {product.content_unit?.symbol} per {product.measurement_unit?.symbol})
+            </div>
+            <div className="text-xs">
+              Total: {(product.current_stock || 0) * (product.content_per_unit || 0)} {product.content_unit?.symbol}
+            </div>
           </div>
         ) : recipe && (
           <div className="text-sm text-muted-foreground">
-            <div className="font-medium text-xs uppercase mt-2 mb-1">Recipe:</div>
+            <div className="flex justify-between items-center">
+              <div className="font-medium text-xs uppercase mt-2 mb-1">Recipe:</div>
+              {availableQuantity !== null && (
+                <div className="text-xs">
+                  Available: {availableQuantity} {product.measurement_unit?.symbol || 'units'}
+                </div>
+              )}
+            </div>
             <ul className="list-disc list-inside">
-              {recipe.recipe_ingredients.map((ingredient) => (
-                <li key={ingredient.id}>
-                  {ingredient.quantity} {ingredient.unit_of_measurement} {ingredient.ingredient.name}
-                </li>
-              ))}
+              {recipe.recipe_ingredients.map((ingredient) => {
+                const basicProduct = ingredient.ingredient;
+                const requiredUnits = Math.ceil(
+                  ingredient.content_quantity / (basicProduct.content_per_unit || 1)
+                );
+                
+                return (
+                  <li key={ingredient.id} className="flex flex-col">
+                    <span>
+                      {ingredient.content_quantity} {basicProduct.content_unit?.symbol} {basicProduct.name}
+                    </span>
+                    <span className="text-xs ml-5 text-muted-foreground">
+                      (uses {requiredUnits} {basicProduct.measurement_unit?.symbol})
+                    </span>
+                  </li>
+                );
+              })}
             </ul>
           </div>
         )}

@@ -8,6 +8,7 @@ import { Loader2 } from "lucide-react";
 import { ProductImageUpload } from "./form/ProductImageUpload";
 import { ProductBasicInfo } from "./form/ProductBasicInfo";
 import { RecipeBuilder } from "./form/RecipeBuilder";
+import { ProductCategories } from "./form/ProductCategories";
 
 interface ProductFormProps {
   sourceId: string;
@@ -15,7 +16,7 @@ interface ProductFormProps {
   product?: Product;
 }
 
-type RequiredProductFields = Pick<Product, 'source_id' | 'name' | 'product_type' | 'price'>;
+type RequiredProductFields = Pick<Product, 'source_id' | 'name' | 'product_type'>;
 type OptionalProductFields = Partial<Omit<Product, keyof RequiredProductFields>>;
 type ProductInput = RequiredProductFields & OptionalProductFields;
 
@@ -50,138 +51,102 @@ export const ProductForm = ({ sourceId, onSuccess, product }: ProductFormProps) 
       const formData = new FormData(e.currentTarget);
       let imageUrl = product?.image_url;
 
+      // Upload image if changed
       if (imageFile) {
-        const fileExt = imageFile.name.split('.').pop();
-        const filePath = `${sourceId}/${crypto.randomUUID()}.${fileExt}`;
-        
-        const { error: uploadError } = await supabase.storage
-          .from('products')
-          .upload(filePath, imageFile);
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from("products")
+          .upload(`${sourceId}/${Date.now()}-${imageFile.name}`, imageFile);
 
-        if (uploadError) throw uploadError;
+        if (uploadError) {
+          throw uploadError;
+        }
 
-        const { data: { publicUrl } } = supabase.storage
-          .from('products')
-          .getPublicUrl(filePath);
-
-        imageUrl = publicUrl;
+        if (uploadData) {
+          const {
+            data: { publicUrl },
+          } = supabase.storage.from("products").getPublicUrl(uploadData.path);
+          imageUrl = publicUrl;
+        }
       }
 
-      const baseProductData: RequiredProductFields = {
-        source_id: sourceId,
-        name: formData.get('name') as string,
-        product_type: productType,
-        price: parseFloat(formData.get('price') as string),
-      };
-
+      // Prepare product data
       const productData: ProductInput = {
-        ...baseProductData,
-        image_url: imageUrl,
-        description: formData.get('description') as string,
-        measurement_unit_id: formData.get('measurement_unit_id') as string,
+        source_id: sourceId,
+        name: formData.get("name") as string,
+        product_type: productType,
+        description: formData.get("description") as string || null,
+        measurement_unit_id: formData.get("measurement_unit_id") as string || null,
+        // Only include content fields for basic products
+        ...(productType === 'basic' ? {
+          content_unit_id: formData.get("content_unit_id") as string || null,
+          content_per_unit: (() => {
+            const value = formData.get("content_per_unit") as string;
+            return value ? parseFloat(value) : null;
+          })(),
+        } : {
+          content_unit_id: null,
+          content_per_unit: null
+        }),
+        // Set price to 0 if not provided or invalid
+        price: (() => {
+          const priceStr = formData.get("price") as string;
+          if (priceStr && priceStr.trim() !== '') {
+            const price = parseFloat(priceStr);
+            return !isNaN(price) ? price : 0;
+          }
+          return 0;
+        })()
       };
 
+      if (imageUrl) {
+        productData.image_url = imageUrl;
+      }
+
+      let result;
       if (product) {
-        const { error: productError } = await supabase
-          .from('products')
+        // Update existing product
+        const { data, error } = await supabase
+          .from("products")
           .update(productData)
-          .eq('id', product.id);
+          .eq("id", product.id)
+          .select()
+          .single();
 
-        if (productError) throw productError;
+        if (error) throw error;
+        result = data;
 
-        if (productType === 'composite') {
-          const { data: existingRecipe } = await supabase
-            .from('product_recipes')
-            .select('id')
-            .eq('product_id', product.id)
-            .single();
-
-          if (existingRecipe) {
-            // Update existing recipe
-            const { error: recipeError } = await supabase
-              .from('product_recipes')
-              .update({
-                name: productData.name,
-                description: productData.description,
-              })
-              .eq('id', existingRecipe.id);
-
-            if (recipeError) throw recipeError;
-
-            // Delete existing ingredients
-            await supabase
-              .from('recipe_ingredients')
-              .delete()
-              .eq('recipe_id', existingRecipe.id);
-
-            // Insert new ingredients
-            if (ingredients.length > 0) {
-              const { error: ingredientsError } = await supabase
-                .from('recipe_ingredients')
-                .insert(
-                  ingredients.map(ingredient => ({
-                    recipe_id: existingRecipe.id,
-                    ingredient_id: ingredient.id,
-                    quantity: ingredient.quantity,
-                    unit_of_measurement: ingredient.unit_of_measurement,
-                  }))
-                );
-
-              if (ingredientsError) throw ingredientsError;
-            }
-          }
-        }
+        toast({
+          title: "Product updated",
+          description: "Product has been updated successfully.",
+        });
       } else {
-        const { data: newProduct, error: productError } = await supabase
-          .from('products')
+        // Create new product
+        const { data, error } = await supabase
+          .from("products")
           .insert(productData)
           .select()
           .single();
 
-        if (productError) throw productError;
+        if (error) throw error;
+        result = data;
 
-        if (productType === 'composite' && ingredients.length > 0) {
-          const { data: recipe, error: recipeError } = await supabase
-            .from('product_recipes')
-            .insert({
-              product_id: newProduct.id,
-              name: productData.name,
-              description: productData.description,
-            })
-            .select()
-            .single();
-
-          if (recipeError) throw recipeError;
-
-          // Insert ingredients
-          const { error: ingredientsError } = await supabase
-            .from('recipe_ingredients')
-            .insert(
-              ingredients.map(ingredient => ({
-                recipe_id: recipe.id,
-                ingredient_id: ingredient.id,
-                quantity: ingredient.quantity,
-                unit_of_measurement: ingredient.unit_of_measurement,
-              }))
-            );
-
-          if (ingredientsError) throw ingredientsError;
-        }
+        toast({
+          title: "Product created",
+          description: "Product has been created successfully.",
+        });
       }
 
-      toast({
-        title: "Success",
-        description: `Product ${product ? 'updated' : 'added'} successfully`,
-      });
+      // Invalidate queries
+      await queryClient.invalidateQueries(["products"]);
+      await queryClient.invalidateQueries(["product", result.id]);
 
-      await queryClient.invalidateQueries({ queryKey: ['products', sourceId] });
       onSuccess?.();
-    } catch (error) {
-      console.error('Error handling product:', error);
+    } catch (error: any) {
+      console.error("Error saving product:", error);
       toast({
-        title: "Error",
-        description: `Failed to ${product ? 'update' : 'add'} product`,
         variant: "destructive",
+        title: "Error saving product",
+        description: error.message,
       });
     } finally {
       setIsSubmitting(false);
@@ -189,11 +154,12 @@ export const ProductForm = ({ sourceId, onSuccess, product }: ProductFormProps) 
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-8">
       <ProductImageUpload
         previewUrl={previewUrl}
         onImageChange={handleImageChange}
         isSubmitting={isSubmitting}
+        disabled={isSubmitting}
       />
 
       <ProductBasicInfo
@@ -202,24 +168,27 @@ export const ProductForm = ({ sourceId, onSuccess, product }: ProductFormProps) 
         onProductTypeChange={setProductType}
       />
 
-      {productType === 'composite' && (
+      <ProductCategories
+        defaultValues={product}
+        isSubmitting={isSubmitting}
+        sourceId={sourceId}
+      />
+
+      {productType === "composite" && (
         <RecipeBuilder
           sourceId={sourceId}
-          isSubmitting={isSubmitting}
-          onIngredientsChange={setIngredients}
+          defaultIngredients={ingredients}
+          onChange={setIngredients}
+          disabled={isSubmitting}
         />
       )}
 
-      <Button type="submit" disabled={isSubmitting} className="w-full">
-        {isSubmitting ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            {product ? "Updating..." : "Adding..."}
-          </>
-        ) : (
-          product ? "Update Product" : "Add Product"
-        )}
-      </Button>
+      <div className="flex justify-end">
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          {product ? "Update Product" : "Create Product"}
+        </Button>
+      </div>
     </form>
   );
 };

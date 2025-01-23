@@ -27,7 +27,13 @@ export const ProductDetail = () => {
         .from('products')
         .select(`
           *,
+          source_id,
           measurement_unit:measurement_unit_id (
+            id,
+            name,
+            symbol
+          ),
+          content_unit:content_unit_id (
             id,
             name,
             symbol
@@ -62,7 +68,7 @@ export const ProductDetail = () => {
   const updateProductMutation = useMutation({
     mutationFn: async (updatedProduct: Partial<Product>) => {
       // Remove nested objects and computed fields
-      const { measurement_unit, created_at, updated_at, ...updateData } = updatedProduct;
+      const { measurement_unit, content_unit, created_at, updated_at, ...updateData } = updatedProduct;
       
       console.log('Updating product with data:', updateData);
       
@@ -109,6 +115,42 @@ export const ProductDetail = () => {
     setIsEditing(false);
   };
 
+  const handleImageUpload = async (file: File) => {
+    try {
+      // Upload image to Supabase storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from("products")
+        .upload(`${product.source_id}/${Date.now()}-${file.name}`, file);
+
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      if (uploadData) {
+        // Get public URL for the uploaded image
+        const {
+          data: { publicUrl },
+        } = supabase.storage.from("products").getPublicUrl(uploadData.path);
+
+        // Update the editedProduct state with the new image URL
+        setEditedProduct(prev => ({ ...prev, image_url: publicUrl }));
+
+        // Show success message
+        toast({
+          title: "Success",
+          description: "Image uploaded successfully",
+        });
+      }
+    } catch (error: any) {
+      console.error('Error uploading image:', error);
+      toast({
+        variant: "destructive",
+        title: "Error uploading image",
+        description: error.message || "Failed to upload image",
+      });
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[200px]">
@@ -141,19 +183,15 @@ export const ProductDetail = () => {
       <div className="grid md:grid-cols-[300px,1fr] gap-6">
         <div className="space-y-4">
           <ProductImage 
-            imageUrl={product.image_url} 
+            imageUrl={editedProduct.image_url || product.image_url} 
             name={product.name}
             isEditing={isEditing}
-            onImageChange={(file) => {
-              // Handle image upload
-            }}
+            onImageChange={handleImageUpload}
           />
           <QuickStats 
-            currentStock={product.current_stock} 
-            price={product.price}
+            product={product}
             isEditing={isEditing}
-            editedStock={editedProduct.current_stock}
-            editedPrice={editedProduct.price}
+            editedProduct={editedProduct}
             onStockChange={(stock) => setEditedProduct(prev => ({ ...prev, current_stock: stock }))}
             onPriceChange={(price) => setEditedProduct(prev => ({ ...prev, price }))}
           />

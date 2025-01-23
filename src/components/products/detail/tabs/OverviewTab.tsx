@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { ProductCategories } from "../../form/ProductCategories";
 
 interface OverviewTabProps {
   product: Product;
@@ -34,29 +35,43 @@ export const OverviewTab = ({ product, isEditing, editedProduct, onProductChange
             <div>
               <dt className="text-sm text-muted-foreground">Category</dt>
               {isEditing ? (
-                <Input
-                  value={editedProduct?.category || ''}
-                  onChange={(e) => onProductChange?.({ ...editedProduct, category: e.target.value })}
-                  className="mt-1"
-                  placeholder="Category"
+                <ProductCategories
+                  defaultValues={{
+                    category: editedProduct?.category,
+                    subcategory: editedProduct?.subcategory
+                  }}
+                  isSubmitting={false}
+                  sourceId={product.source_id}
+                  onChange={(values) => {
+                    onProductChange?.({
+                      ...editedProduct,
+                      category: values.category,
+                      subcategory: values.subcategory
+                    });
+                  }}
                 />
               ) : (
-                <dd className="font-medium">{product.category || 'Uncategorized'}</dd>
+                <dd className="text-sm font-medium">
+                  {product.category || "Uncategorized"}
+                  {product.subcategory && ` > ${product.subcategory}`}
+                </dd>
               )}
             </div>
             <div>
               <dt className="text-sm text-muted-foreground">Type</dt>
               <dd className="font-medium capitalize">{product.product_type}</dd>
             </div>
+
+            {/* Container Unit */}
             <div>
-              <dt className="text-sm text-muted-foreground">Measurement Unit</dt>
+              <dt className="text-sm text-muted-foreground">Container Unit</dt>
               {isEditing ? (
                 <Select 
                   value={editedProduct?.measurement_unit_id || ''} 
                   onValueChange={(value) => onProductChange?.({ ...editedProduct, measurement_unit_id: value })}
                 >
                   <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select unit" />
+                    <SelectValue placeholder="Select container unit" />
                   </SelectTrigger>
                   <SelectContent>
                     {measurementUnits.map((unit) => (
@@ -74,7 +89,57 @@ export const OverviewTab = ({ product, isEditing, editedProduct, onProductChange
                   }
                 </dd>
               )}
+              <p className="text-xs text-muted-foreground mt-1">
+                {product.product_type === 'basic' 
+                  ? "How do you count this product in stock? (e.g., tins, boxes)" 
+                  : "What unit will this product be sold in? (e.g., servings, pieces)"}
+              </p>
             </div>
+
+            {/* Content Unit - Only for basic products */}
+            {product.product_type === 'basic' && (
+              <div>
+                <dt className="text-sm text-muted-foreground">Content Unit</dt>
+                {isEditing ? (
+                  <div className="space-y-2">
+                    <Select 
+                      value={editedProduct?.content_unit_id || ''} 
+                      onValueChange={(value) => onProductChange?.({ ...editedProduct, content_unit_id: value })}
+                    >
+                      <SelectTrigger className="mt-1">
+                        <SelectValue placeholder="Select content unit" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {measurementUnits.map((unit) => (
+                          <SelectItem key={unit.id} value={unit.id}>
+                            {unit.name} ({unit.symbol})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Input
+                      type="number"
+                      value={editedProduct?.content_per_unit || ''}
+                      onChange={(e) => onProductChange?.({ ...editedProduct, content_per_unit: parseFloat(e.target.value) })}
+                      placeholder="Amount per container"
+                      min="0.001"
+                      step="0.001"
+                    />
+                  </div>
+                ) : (
+                  <dd className="font-medium">
+                    {product.content_unit && product.content_per_unit ? 
+                      `${product.content_per_unit} ${product.content_unit.symbol} per ${product.measurement_unit?.symbol}` : 
+                      'Not specified'
+                    }
+                  </dd>
+                )}
+                <p className="text-xs text-muted-foreground mt-1">
+                  What unit is used to measure the content? (e.g., grams, milliliters)
+                </p>
+              </div>
+            )}
+
             <div>
               <dt className="text-sm text-muted-foreground">Min. Stock</dt>
               {isEditing ? (
