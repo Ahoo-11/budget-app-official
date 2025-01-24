@@ -22,6 +22,11 @@ export interface Product {
   content_per_unit?: number;
   min_stock?: number;
   current_stock?: number;
+  purchase_cost?: number;
+  storage_location?: string;
+  unit_of_measurement?: string;
+  image_url?: string;
+  minimum_stock_level?: number;
   created_at: string;
   updated_at: string;
 }

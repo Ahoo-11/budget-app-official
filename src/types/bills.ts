@@ -9,6 +9,8 @@ export interface BillProduct {
   name: string;
   price: number;
   quantity: number;
+  unit_price?: number;
+  product_id?: string;
   measurement_unit?: {
     id: string;
     name: string;
@@ -22,6 +24,7 @@ export interface BillProduct {
   image_url?: string | null;
   income_type_id?: string | null;
   measurement_unit_id?: string;
+  product_type?: 'basic' | 'composite';
 }
 
 export interface BillDBRow {
@@ -57,27 +60,6 @@ export interface BillItem {
   total: number;
 }
 
-export interface BillItemJson {
-  id: string;
-  type: "product" | "service" | "consignment";
-  name: string;
-  price: number;
-  quantity: number;
-  measurement_unit?: {
-    id: string;
-    name: string;
-    symbol: string;
-  };
-  source_id: string;
-  current_stock: number;
-  purchase_cost: number | null;
-  category?: string;
-  description?: string | null;
-  image_url?: string | null;
-  income_type_id?: string | null;
-  measurement_unit_id?: string;
-}
-
 export const serializeBillItems = (items: BillProduct[]): Json => {
   return items.map(item => ({
     id: item.id,
@@ -101,23 +83,23 @@ export const deserializeBillItems = (json: Json): BillProduct[] => {
   if (!Array.isArray(json)) return [];
 
   return json.map(item => ({
-    id: item.id as string,
-    type: item.type as "product" | "service" | "consignment",
-    name: item.name as string,
-    price: item.price as number,
-    quantity: item.quantity as number,
+    id: String(item.id || ''),
+    type: String(item.type || 'product') as "product" | "service" | "consignment",
+    name: String(item.name || ''),
+    price: Number(item.price || 0),
+    quantity: Number(item.quantity || 0),
     measurement_unit: item.measurement_unit as {
       id: string;
       name: string;
       symbol: string;
     } | undefined,
-    source_id: item.source_id as string,
-    current_stock: item.current_stock as number,
-    purchase_cost: item.purchase_cost as number | null,
-    category: item.category as string | undefined,
-    description: item.description as string | null | undefined,
-    image_url: item.image_url as string | null | undefined,
-    income_type_id: item.income_type_id as string | null | undefined,
-    measurement_unit_id: item.measurement_unit_id as string | undefined,
+    source_id: String(item.source_id || ''),
+    current_stock: Number(item.current_stock || 0),
+    purchase_cost: item.purchase_cost ? Number(item.purchase_cost) : null,
+    category: item.category ? String(item.category) : undefined,
+    description: item.description ? String(item.description) : null,
+    image_url: item.image_url ? String(item.image_url) : null,
+    income_type_id: item.income_type_id ? String(item.income_type_id) : null,
+    measurement_unit_id: item.measurement_unit_id ? String(item.measurement_unit_id) : undefined,
   }));
 };
