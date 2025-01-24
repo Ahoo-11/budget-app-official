@@ -27,7 +27,7 @@ interface Consignment {
   source_id: string;
   name: string;
   description?: string;
-  price: number;
+  selling_price: number;
   measurement_unit_id?: string;
   measurement_unit?: {
     id: string;
@@ -129,7 +129,7 @@ export const OrderContent = ({ sourceId, onProductSelect }: OrderContentProps) =
           source_id,
           name,
           description,
-          price,
+          selling_price,
           measurement_unit_id,
           measurement_unit:measurement_unit_id (
             id,
@@ -216,7 +216,7 @@ export const OrderContent = ({ sourceId, onProductSelect }: OrderContentProps) =
     id: consignment.id,
     type: "consignment",
     name: consignment.name,
-    price: consignment.price,
+    price: consignment.selling_price,
     quantity: 1,
     measurement_unit: consignment.measurement_unit,
     source_id: sourceId,

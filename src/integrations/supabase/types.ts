@@ -543,6 +543,8 @@ export type Database = {
       products: {
         Row: {
           category: string | null
+          content_per_unit: number | null
+          content_unit_id: string | null
           created_at: string
           current_stock: number | null
           description: string | null
@@ -551,7 +553,7 @@ export type Database = {
           measurement_unit_id: string | null
           minimum_stock_level: number | null
           name: string
-          price: number
+          price: number | null
           product_type: Database["public"]["Enums"]["product_type_enum"]
           purchase_cost: number | null
           source_id: string
@@ -563,6 +565,8 @@ export type Database = {
         }
         Insert: {
           category?: string | null
+          content_per_unit?: number | null
+          content_unit_id?: string | null
           created_at?: string
           current_stock?: number | null
           description?: string | null
@@ -571,7 +575,7 @@ export type Database = {
           measurement_unit_id?: string | null
           minimum_stock_level?: number | null
           name: string
-          price: number
+          price?: number | null
           product_type?: Database["public"]["Enums"]["product_type_enum"]
           purchase_cost?: number | null
           source_id: string
@@ -583,6 +587,8 @@ export type Database = {
         }
         Update: {
           category?: string | null
+          content_per_unit?: number | null
+          content_unit_id?: string | null
           created_at?: string
           current_stock?: number | null
           description?: string | null
@@ -591,7 +597,7 @@ export type Database = {
           measurement_unit_id?: string | null
           minimum_stock_level?: number | null
           name?: string
-          price?: number
+          price?: number | null
           product_type?: Database["public"]["Enums"]["product_type_enum"]
           purchase_cost?: number | null
           source_id?: string
@@ -602,6 +608,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "products_content_unit_id_fkey"
+            columns: ["content_unit_id"]
+            isOneToOne: false
+            referencedRelation: "measurement_units"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "products_measurement_unit_id_fkey"
             columns: ["measurement_unit_id"]
@@ -654,6 +667,7 @@ export type Database = {
       }
       recipe_ingredients: {
         Row: {
+          content_quantity: number
           created_at: string
           id: string
           ingredient_id: string
@@ -664,6 +678,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          content_quantity?: number
           created_at?: string
           id?: string
           ingredient_id: string
@@ -674,6 +689,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          content_quantity?: number
           created_at?: string
           id?: string
           ingredient_id?: string
@@ -1371,6 +1387,26 @@ export type Database = {
         }
         Returns: undefined
       }
+      calculate_available_content: {
+        Args: {
+          product_id: string
+        }
+        Returns: number
+      }
+      calculate_required_units: {
+        Args: {
+          required_content: number
+          content_per_unit: number
+        }
+        Returns: number
+      }
+      create_bill_items: {
+        Args: {
+          p_bill_id: string
+          p_items: Json[]
+        }
+        Returns: undefined
+      }
       create_profile: {
         Args: {
           user_id: string
@@ -1421,6 +1457,10 @@ export type Database = {
           user_id: string
         }
         Returns: boolean
+      }
+      make_price_optional: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
     }
     Enums: {
