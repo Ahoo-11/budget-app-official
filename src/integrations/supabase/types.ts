@@ -9,125 +9,6 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      audit_logs: {
-        Row: {
-          action: string
-          created_at: string
-          details: Json | null
-          entity_id: string
-          entity_type: string
-          id: string
-          user_id: string
-        }
-        Insert: {
-          action: string
-          created_at?: string
-          details?: Json | null
-          entity_id: string
-          entity_type: string
-          id?: string
-          user_id: string
-        }
-        Update: {
-          action?: string
-          created_at?: string
-          details?: Json | null
-          entity_id?: string
-          entity_type?: string
-          id?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      bills: {
-        Row: {
-          created_at: string
-          date: string
-          discount: number
-          gst: number
-          id: string
-          items: Json
-          paid_amount: number
-          payer_id: string | null
-          payment_method: Database["public"]["Enums"]["payment_method"]
-          session_id: string | null
-          source_id: string
-          status: string
-          subtotal: number
-          total: number
-          type_id: string | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          date?: string
-          discount?: number
-          gst?: number
-          id?: string
-          items?: Json
-          paid_amount?: number
-          payer_id?: string | null
-          payment_method?: Database["public"]["Enums"]["payment_method"]
-          session_id?: string | null
-          source_id: string
-          status: string
-          subtotal?: number
-          total?: number
-          type_id?: string | null
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          date?: string
-          discount?: number
-          gst?: number
-          id?: string
-          items?: Json
-          paid_amount?: number
-          payer_id?: string | null
-          payment_method?: Database["public"]["Enums"]["payment_method"]
-          session_id?: string | null
-          source_id?: string
-          status?: string
-          subtotal?: number
-          total?: number
-          type_id?: string | null
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "bills_income_type_id_fkey"
-            columns: ["type_id"]
-            isOneToOne: false
-            referencedRelation: "types"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "bills_payer_id_fkey"
-            columns: ["payer_id"]
-            isOneToOne: false
-            referencedRelation: "payers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "bills_session_id_fkey"
-            columns: ["session_id"]
-            isOneToOne: false
-            referencedRelation: "sessions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "bills_source_id_fkey"
-            columns: ["source_id"]
-            isOneToOne: false
-            referencedRelation: "sources"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       categories: {
         Row: {
           id: string
@@ -153,13 +34,6 @@ export type Database = {
             columns: ["parent_id"]
             isOneToOne: false
             referencedRelation: "categories"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "categories_source_id_fkey"
-            columns: ["source_id"]
-            isOneToOne: false
-            referencedRelation: "sources"
             referencedColumns: ["id"]
           },
         ]
@@ -274,20 +148,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "consignments_measurement_unit_id_fkey"
-            columns: ["measurement_unit_id"]
-            isOneToOne: false
-            referencedRelation: "measurement_units"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "consignments_source_id_fkey"
-            columns: ["source_id"]
-            isOneToOne: false
-            referencedRelation: "sources"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "consignments_supplier_id_fkey"
             columns: ["supplier_id"]
             isOneToOne: false
@@ -296,147 +156,27 @@ export type Database = {
           },
         ]
       }
-      income_entries: {
-        Row: {
-          amount: number
-          created_at: string
-          created_by: string | null
-          current_stock: number | null
-          date: string
-          id: string
-          is_recurring: boolean | null
-          measurement_unit_id: string | null
-          minimum_stock: number | null
-          name: string
-          payment_method: Database["public"]["Enums"]["payment_method"]
-          photo_url: string | null
-          remarks: string | null
-          session_id: string | null
-          source_id: string | null
-          subcategory_id: string | null
-          tags: string[] | null
-          type_id: string | null
-          unit_of_measure: string | null
-          updated_at: string
-          updated_by: string | null
-        }
-        Insert: {
-          amount: number
-          created_at?: string
-          created_by?: string | null
-          current_stock?: number | null
-          date: string
-          id?: string
-          is_recurring?: boolean | null
-          measurement_unit_id?: string | null
-          minimum_stock?: number | null
-          name: string
-          payment_method?: Database["public"]["Enums"]["payment_method"]
-          photo_url?: string | null
-          remarks?: string | null
-          session_id?: string | null
-          source_id?: string | null
-          subcategory_id?: string | null
-          tags?: string[] | null
-          type_id?: string | null
-          unit_of_measure?: string | null
-          updated_at?: string
-          updated_by?: string | null
-        }
-        Update: {
-          amount?: number
-          created_at?: string
-          created_by?: string | null
-          current_stock?: number | null
-          date?: string
-          id?: string
-          is_recurring?: boolean | null
-          measurement_unit_id?: string | null
-          minimum_stock?: number | null
-          name?: string
-          payment_method?: Database["public"]["Enums"]["payment_method"]
-          photo_url?: string | null
-          remarks?: string | null
-          session_id?: string | null
-          source_id?: string | null
-          subcategory_id?: string | null
-          tags?: string[] | null
-          type_id?: string | null
-          unit_of_measure?: string | null
-          updated_at?: string
-          updated_by?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "income_entries_income_type_id_fkey"
-            columns: ["type_id"]
-            isOneToOne: false
-            referencedRelation: "types"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "income_entries_measurement_unit_id_fkey"
-            columns: ["measurement_unit_id"]
-            isOneToOne: false
-            referencedRelation: "measurement_units"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "income_entries_session_id_fkey"
-            columns: ["session_id"]
-            isOneToOne: false
-            referencedRelation: "sessions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "income_entries_source_id_fkey"
-            columns: ["source_id"]
-            isOneToOne: false
-            referencedRelation: "sources"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "income_entries_subcategory_id_fkey"
-            columns: ["subcategory_id"]
-            isOneToOne: false
-            referencedRelation: "type_subcategories"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       measurement_units: {
         Row: {
-          base_unit: string | null
-          conversion_factor: number | null
-          created_at: string
+          created_at: string | null
           id: string
-          is_default: boolean | null
           name: string
           symbol: string
-          type: Database["public"]["Enums"]["measurement_unit_type"]
-          updated_at: string
+          updated_at: string | null
         }
         Insert: {
-          base_unit?: string | null
-          conversion_factor?: number | null
-          created_at?: string
+          created_at?: string | null
           id?: string
-          is_default?: boolean | null
           name: string
           symbol: string
-          type: Database["public"]["Enums"]["measurement_unit_type"]
-          updated_at?: string
+          updated_at?: string | null
         }
         Update: {
-          base_unit?: string | null
-          conversion_factor?: number | null
-          created_at?: string
+          created_at?: string | null
           id?: string
-          is_default?: boolean | null
           name?: string
           symbol?: string
-          type?: Database["public"]["Enums"]["measurement_unit_type"]
-          updated_at?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -495,15 +235,7 @@ export type Database = {
           unit_cost?: number
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "product_batches_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       product_recipes: {
         Row: {
@@ -530,22 +262,14 @@ export type Database = {
           product_id?: string
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "product_recipes_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       products: {
         Row: {
           category: string | null
-          content_per_unit: number | null
           content_unit_id: string | null
-          created_at: string
+          cost: number | null
+          created_at: string | null
           current_stock: number | null
           description: string | null
           id: string
@@ -554,20 +278,16 @@ export type Database = {
           minimum_stock_level: number | null
           name: string
           price: number | null
-          product_type: Database["public"]["Enums"]["product_type_enum"]
-          purchase_cost: number | null
-          source_id: string
-          storage_location: string | null
+          product_type: string
+          source_id: string | null
           subcategory: string | null
-          supplier_id: string | null
-          unit_of_measurement: string | null
-          updated_at: string
+          updated_at: string | null
         }
         Insert: {
           category?: string | null
-          content_per_unit?: number | null
           content_unit_id?: string | null
-          created_at?: string
+          cost?: number | null
+          created_at?: string | null
           current_stock?: number | null
           description?: string | null
           id?: string
@@ -576,20 +296,16 @@ export type Database = {
           minimum_stock_level?: number | null
           name: string
           price?: number | null
-          product_type?: Database["public"]["Enums"]["product_type_enum"]
-          purchase_cost?: number | null
-          source_id: string
-          storage_location?: string | null
+          product_type?: string
+          source_id?: string | null
           subcategory?: string | null
-          supplier_id?: string | null
-          unit_of_measurement?: string | null
-          updated_at?: string
+          updated_at?: string | null
         }
         Update: {
           category?: string | null
-          content_per_unit?: number | null
           content_unit_id?: string | null
-          created_at?: string
+          cost?: number | null
+          created_at?: string | null
           current_stock?: number | null
           description?: string | null
           id?: string
@@ -598,14 +314,10 @@ export type Database = {
           minimum_stock_level?: number | null
           name?: string
           price?: number | null
-          product_type?: Database["public"]["Enums"]["product_type_enum"]
-          purchase_cost?: number | null
-          source_id?: string
-          storage_location?: string | null
+          product_type?: string
+          source_id?: string | null
           subcategory?: string | null
-          supplier_id?: string | null
-          unit_of_measurement?: string | null
-          updated_at?: string
+          updated_at?: string | null
         }
         Relationships: [
           {
@@ -627,13 +339,6 @@ export type Database = {
             columns: ["source_id"]
             isOneToOne: false
             referencedRelation: "sources"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "products_supplier_id_fkey"
-            columns: ["supplier_id"]
-            isOneToOne: false
-            referencedRelation: "suppliers"
             referencedColumns: ["id"]
           },
         ]
@@ -668,36 +373,27 @@ export type Database = {
       recipe_ingredients: {
         Row: {
           content_quantity: number
-          created_at: string
+          created_at: string | null
           id: string
-          ingredient_id: string
-          measurement_unit_id: string | null
-          quantity: number
-          recipe_id: string
-          unit_of_measurement: string
-          updated_at: string
+          ingredient_id: string | null
+          product_id: string | null
+          updated_at: string | null
         }
         Insert: {
-          content_quantity?: number
-          created_at?: string
+          content_quantity: number
+          created_at?: string | null
           id?: string
-          ingredient_id: string
-          measurement_unit_id?: string | null
-          quantity: number
-          recipe_id: string
-          unit_of_measurement: string
-          updated_at?: string
+          ingredient_id?: string | null
+          product_id?: string | null
+          updated_at?: string | null
         }
         Update: {
           content_quantity?: number
-          created_at?: string
+          created_at?: string | null
           id?: string
-          ingredient_id?: string
-          measurement_unit_id?: string | null
-          quantity?: number
-          recipe_id?: string
-          unit_of_measurement?: string
-          updated_at?: string
+          ingredient_id?: string | null
+          product_id?: string | null
+          updated_at?: string | null
         }
         Relationships: [
           {
@@ -708,17 +404,10 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "recipe_ingredients_measurement_unit_id_fkey"
-            columns: ["measurement_unit_id"]
+            foreignKeyName: "recipe_ingredients_product_id_fkey"
+            columns: ["product_id"]
             isOneToOne: false
-            referencedRelation: "measurement_units"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "recipe_ingredients_recipe_id_fkey"
-            columns: ["recipe_id"]
-            isOneToOne: false
-            referencedRelation: "product_recipes"
+            referencedRelation: "products"
             referencedColumns: ["id"]
           },
         ]
@@ -757,22 +446,7 @@ export type Database = {
           source_id?: string
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "services_measurement_unit_id_fkey"
-            columns: ["measurement_unit_id"]
-            isOneToOne: false
-            referencedRelation: "measurement_units"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "services_source_id_fkey"
-            columns: ["source_id"]
-            isOneToOne: false
-            referencedRelation: "sources"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       sessions: {
         Row: {
@@ -826,159 +500,26 @@ export type Database = {
           updated_at?: string
           verified_cash_amount?: number | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "sessions_source_id_fkey"
-            columns: ["source_id"]
-            isOneToOne: false
-            referencedRelation: "sources"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      source_payer_settings: {
-        Row: {
-          created_at: string
-          credit_days: number
-          id: string
-          payer_id: string
-          source_id: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          credit_days?: number
-          id?: string
-          payer_id: string
-          source_id: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          credit_days?: number
-          id?: string
-          payer_id?: string
-          source_id?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "source_payer_settings_payer_id_fkey"
-            columns: ["payer_id"]
-            isOneToOne: false
-            referencedRelation: "payers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "source_payer_settings_source_id_fkey"
-            columns: ["source_id"]
-            isOneToOne: false
-            referencedRelation: "sources"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      source_permissions: {
-        Row: {
-          can_create: boolean
-          can_delete: boolean
-          can_edit: boolean
-          can_view: boolean
-          created_at: string
-          id: string
-          source_id: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          can_create?: boolean
-          can_delete?: boolean
-          can_edit?: boolean
-          can_view?: boolean
-          created_at?: string
-          id?: string
-          source_id: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          can_create?: boolean
-          can_delete?: boolean
-          can_edit?: boolean
-          can_view?: boolean
-          created_at?: string
-          id?: string
-          source_id?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "source_permissions_source_id_fkey"
-            columns: ["source_id"]
-            isOneToOne: false
-            referencedRelation: "sources"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      source_templates: {
-        Row: {
-          config: Json
-          created_at: string
-          source_id: string
-          template_id: string
-          updated_at: string
-        }
-        Insert: {
-          config?: Json
-          created_at?: string
-          source_id: string
-          template_id: string
-          updated_at?: string
-        }
-        Update: {
-          config?: Json
-          created_at?: string
-          source_id?: string
-          template_id?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "source_templates_source_id_fkey"
-            columns: ["source_id"]
-            isOneToOne: false
-            referencedRelation: "sources"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "source_templates_template_id_fkey"
-            columns: ["template_id"]
-            isOneToOne: false
-            referencedRelation: "templates"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       sources: {
         Row: {
-          created_at: string
+          created_at: string | null
           id: string
           name: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
-          created_at?: string
+          created_at?: string | null
           id?: string
           name: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
-          created_at?: string
+          created_at?: string | null
           id?: string
           name?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -1022,15 +563,7 @@ export type Database = {
           quantity?: number
           unit_cost?: number | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "stock_movements_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       supplier_settlement_terms: {
         Row: {
@@ -1232,13 +765,6 @@ export type Database = {
             referencedRelation: "sessions"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "transactions_source_id_fkey"
-            columns: ["source_id"]
-            isOneToOne: false
-            referencedRelation: "sources"
-            referencedColumns: ["id"]
-          },
         ]
       }
       type_settings: {
@@ -1272,13 +798,6 @@ export type Database = {
             columns: ["type_id"]
             isOneToOne: false
             referencedRelation: "types"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "income_type_settings_source_id_fkey"
-            columns: ["source_id"]
-            isOneToOne: false
-            referencedRelation: "sources"
             referencedColumns: ["id"]
           },
         ]
@@ -1388,6 +907,12 @@ export type Database = {
         Returns: undefined
       }
       calculate_available_content: {
+        Args: {
+          product_id: string
+        }
+        Returns: number
+      }
+      calculate_available_quantity: {
         Args: {
           product_id: string
         }
