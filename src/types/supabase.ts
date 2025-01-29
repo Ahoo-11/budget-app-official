@@ -59,6 +59,7 @@ export interface Database {
           income_type_id?: string | null
         }
       }
+      // Add other tables here...
     }
   }
 }

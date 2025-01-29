@@ -1,16 +1,13 @@
 -- Setup roles and policies
 BEGIN;
-
 -- Enable RLS
 ALTER TABLE transactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE source_permissions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sources ENABLE ROW LEVEL SECURITY;
-
 -- Drop existing policies
 DROP POLICY IF EXISTS controller_access ON transactions;
 DROP POLICY IF EXISTS admin_access ON transactions;
 DROP POLICY IF EXISTS viewer_access ON transactions;
-
 -- Controller policy (full access to everything)
 CREATE POLICY controller_access ON transactions
 FOR ALL TO authenticated
@@ -21,7 +18,6 @@ USING (
         AND role = 'controller'
     )
 );
-
 -- Admin policies
 CREATE POLICY admin_view_all ON transactions
 FOR SELECT TO authenticated
@@ -32,7 +28,6 @@ USING (
         AND role = 'admin'
     )
 );
-
 CREATE POLICY admin_modify_permitted ON transactions
 FOR INSERT TO authenticated
 WITH CHECK (
@@ -44,7 +39,6 @@ WITH CHECK (
         AND sp.source_id = transactions.source_id
     )
 );
-
 CREATE POLICY admin_update_permitted ON transactions
 FOR UPDATE TO authenticated
 USING (
@@ -56,7 +50,6 @@ USING (
         AND sp.source_id = transactions.source_id
     )
 );
-
 CREATE POLICY admin_delete_permitted ON transactions
 FOR DELETE TO authenticated
 USING (
@@ -68,7 +61,6 @@ USING (
         AND sp.source_id = transactions.source_id
     )
 );
-
 -- Source permissions policies
 CREATE POLICY controller_manage_sources ON sources
 FOR ALL TO authenticated
@@ -79,7 +71,6 @@ USING (
         AND role = 'controller'
     )
 );
-
 CREATE POLICY admin_view_sources ON sources
 FOR SELECT TO authenticated
 USING (
@@ -89,7 +80,6 @@ USING (
         AND role IN ('admin', 'super_admin')
     )
 );
-
 -- Source permissions management
 CREATE POLICY controller_manage_permissions ON source_permissions
 FOR ALL TO authenticated
@@ -100,7 +90,6 @@ USING (
         AND role = 'controller'
     )
 );
-
 CREATE POLICY admin_manage_viewer_permissions ON source_permissions
 FOR ALL TO authenticated
 USING (
@@ -115,5 +104,4 @@ USING (
         )
     )
 );
-
 COMMIT;

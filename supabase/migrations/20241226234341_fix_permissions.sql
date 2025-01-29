@@ -2,13 +2,11 @@
 ALTER TABLE transactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sources ENABLE ROW LEVEL SECURITY;
 ALTER TABLE source_permissions ENABLE ROW LEVEL SECURITY;
-
 -- Drop existing policies to recreate them
 DROP POLICY IF EXISTS "Users can view their permitted sources" ON sources;
 DROP POLICY IF EXISTS "Users can view transactions from their sources" ON transactions;
 DROP POLICY IF EXISTS "Controller can view all" ON sources;
 DROP POLICY IF EXISTS "Controller can view all transactions" ON transactions;
-
 -- Create a function to check if user is controller
 CREATE OR REPLACE FUNCTION is_controller(user_id uuid)
 RETURNS BOOLEAN AS $$
@@ -21,14 +19,12 @@ BEGIN
     );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
-
 -- Create policies for sources table
 CREATE POLICY "Controller can view all sources"
     ON sources
     FOR ALL
     TO authenticated
     USING (is_controller(auth.uid()));
-
 CREATE POLICY "Users can view their permitted sources"
     ON sources
     FOR SELECT
@@ -42,14 +38,12 @@ CREATE POLICY "Users can view their permitted sources"
         )
         OR is_controller(auth.uid())
     );
-
 -- Create policies for transactions table
 CREATE POLICY "Controller can view all transactions"
     ON transactions
     FOR ALL
     TO authenticated
     USING (is_controller(auth.uid()));
-
 CREATE POLICY "Users can view transactions from their sources"
     ON transactions
     FOR SELECT
@@ -63,14 +57,12 @@ CREATE POLICY "Users can view transactions from their sources"
         )
         OR is_controller(auth.uid())
     );
-
 -- Create policy for source_permissions table
 CREATE POLICY "Only controller can manage source permissions"
     ON source_permissions
     FOR ALL
     TO authenticated
     USING (is_controller(auth.uid()));
-
 -- Function to assign source to user
 CREATE OR REPLACE FUNCTION assign_source_to_user(
     target_user_email text,
@@ -110,7 +102,6 @@ BEGIN
     ON CONFLICT (user_id, source_id) DO NOTHING;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
-
 -- Set up controller role for ahoo11official@gmail.com
 DO $$ 
 DECLARE

@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ProductCategories } from "../../form/ProductCategories";
+import { RecipeIngredients } from "../RecipeIngredients";
 
 interface OverviewTabProps {
   product: Product;
@@ -137,6 +138,23 @@ export const OverviewTab = ({ product, isEditing, editedProduct, onProductChange
                 <p className="text-xs text-muted-foreground mt-1">
                   What unit is used to measure the content? (e.g., grams, milliliters)
                 </p>
+              </div>
+            )}
+
+            {/* Recipe Ingredients - Only for composite products */}
+            {product.product_type === 'composite' && (
+              <div className="col-span-2">
+                <dt className="text-sm text-muted-foreground">Recipe Ingredients</dt>
+                <RecipeIngredients
+                  product={product}
+                  isEditing={isEditing}
+                  onIngredientsChange={(ingredients) => {
+                    onProductChange?.({
+                      ...editedProduct,
+                      recipe_ingredients: ingredients
+                    });
+                  }}
+                />
               </div>
             )}
 

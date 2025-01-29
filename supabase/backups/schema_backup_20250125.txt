@@ -1,0 +1,24 @@
+-- Schema backup results will go here
+-- Copy and paste the results from each query here
+-- Add headers for each section like:
+
+-- TABLES AND COLUMNS
+[paste results here]
+
+-- TABLE DEFINITIONS
+[paste results here]
+
+-- RLS POLICIES
+[paste results here]
+
+-- FUNCTIONS
+[paste results here]
+
+-- INDEXES
+[paste results here]
+
+-- TRIGGERS
+[paste results here]
+
+-- PERMISSIONS
+[paste results here]

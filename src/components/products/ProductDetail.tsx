@@ -28,15 +28,44 @@ export const ProductDetail = () => {
         .select(`
           *,
           source_id,
-          measurement_unit:measurement_unit_id (
+          measurement_unit:measurement_units!measurement_unit_id(
             id,
             name,
             symbol
           ),
-          content_unit:content_unit_id (
+          content_unit:measurement_units!content_unit_id(
             id,
             name,
             symbol
+          ),
+          recipe_ingredients(
+            id,
+            content_quantity,
+            purchase_unit:measurement_units!purchase_unit_id(
+              id,
+              name,
+              symbol
+            ),
+            sales_unit:measurement_units!sales_unit_id(
+              id,
+              name,
+              symbol
+            ),
+            ingredient:products!recipe_ingredients_ingredient_id_fkey(
+              id,
+              name,
+              current_stock,
+              measurement_unit:measurement_units!measurement_unit_id(
+                id,
+                name,
+                symbol
+              ),
+              content_unit:measurement_units!content_unit_id(
+                id,
+                name,
+                symbol
+              )
+            )
           )
         `)
         .eq('id', productId)
@@ -68,22 +97,46 @@ export const ProductDetail = () => {
   const updateProductMutation = useMutation({
     mutationFn: async (updatedProduct: Partial<Product>) => {
       // Remove nested objects and computed fields
-      const { measurement_unit, content_unit, created_at, updated_at, ...updateData } = updatedProduct;
-      
-      console.log('Updating product with data:', updateData);
-      
-      const { error } = await supabase
+      const { measurement_unit, content_unit, recipe_ingredients, created_at, updated_at, ...updateData } = updatedProduct;
+
+      // Update product details
+      const { error: productError } = await supabase
         .from('products')
         .update(updateData)
-        .eq('id', productId);
+        .eq('id', product.id);
+      
+      if (productError) throw productError;
 
-      if (error) {
-        console.error('Error updating product:', error);
-        throw error;
+      // If recipe ingredients were changed and it's a composite product
+      if (recipe_ingredients && product.product_type === 'composite') {
+        // Delete existing ingredients
+        const { error: deleteError } = await supabase
+          .from('recipe_ingredients')
+          .delete()
+          .eq('product_id', product.id);
+        
+        if (deleteError) throw deleteError;
+        
+        // Insert new ingredients if any
+        if (recipe_ingredients.length > 0) {
+          const { error: insertError } = await supabase
+            .from('recipe_ingredients')
+            .insert(
+              recipe_ingredients.map(ing => ({
+                product_id: product.id,
+                ingredient_id: ing.id,
+                content_quantity: ing.content_quantity
+              }))
+            );
+          
+          if (insertError) throw insertError;
+        }
       }
+
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries(['product', productId]);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['product', productId] });
       toast({
         title: "Success",
         description: "Product updated successfully",
