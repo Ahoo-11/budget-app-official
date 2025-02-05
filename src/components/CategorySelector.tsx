@@ -1,5 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/types/database-types";
+
+type Category = Database["budget_app"]["Tables"]["categories"]["Row"];
 
 interface CategorySelectorProps {
   selectedCategory: string;
@@ -12,32 +15,38 @@ export const CategorySelector = ({
   setSelectedCategory,
   sourceId 
 }: CategorySelectorProps) => {
-  const { data: categories = [] } = useQuery({
+  const { data: categories = [], isLoading } = useQuery({
     queryKey: ['categories', sourceId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('categories')
-        .select('*')
+        .select('id, name, created_at')
         .eq('source_id', sourceId)
         .order('name');
       
-      if (error) throw error;
-      return data;
-    }
+      if (error) {
+        console.error('Error fetching categories:', error);
+        throw error;
+      }
+      
+      return (data || []) as Category[];
+    },
+    enabled: !!sourceId
   });
 
-  const renderOptions = (parentId: string | null = null, level: number = 0) => {
-    const subcategories = categories.filter(cat => cat.parent_id === parentId);
-    
-    return subcategories.map(category => (
-      <>
-        <option key={category.id} value={category.id}>
-          {"  ".repeat(level) + category.name}
-        </option>
-        {renderOptions(category.id, level + 1)}
-      </>
-    ));
-  };
+  if (isLoading) {
+    return (
+      <div>
+        <label className="block text-sm font-medium mb-2">Category</label>
+        <select
+          disabled
+          className="w-full p-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-success/20 bg-gray-100"
+        >
+          <option>Loading categories...</option>
+        </select>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -49,7 +58,11 @@ export const CategorySelector = ({
         required
       >
         <option value="">Select a category</option>
-        {renderOptions()}
+        {categories.map((category) => (
+          <option key={category.id} value={category.id}>
+            {category.name}
+          </option>
+        ))}
       </select>
     </div>
   );

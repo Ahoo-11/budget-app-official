@@ -13,6 +13,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import type { Database } from "@/types/database-types";
+
+type Source = Database["budget_app"]["Tables"]["sources"]["Row"];
 
 interface PayerSelectorProps {
   selectedPayer: string;
@@ -27,25 +30,55 @@ export const PayerSelector = ({ selectedPayer, setSelectedPayer }: PayerSelector
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: payers = [] } = useQuery({
-    queryKey: ['payers'],
+  // Get user's role first
+  const { data: userRole } = useQuery({
+    queryKey: ['userRole', session?.user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('payers')
-        .select('*')
-        .order('name');
+      if (!session?.user?.id) return null;
       
-      if (error) throw error;
-      return data;
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', session.user.id)
+        .single();
+      
+      if (error) {
+        console.error('Error fetching user role:', error);
+        throw error;
+      }
+      return data?.role;
     },
     enabled: !!session?.user?.id
   });
 
-  const addPayer = useMutation({
-    mutationFn: async (name: string) => {
+  const { data: sources = [], isLoading } = useQuery({
+    queryKey: ['sources'],
+    queryFn: async () => {
       const { data, error } = await supabase
-        .from('payers')
-        .insert([{ name }])
+        .from('sources')
+        .select('id, name, user_id, created_at')
+        .order('name');
+      
+      if (error) {
+        console.error('Error fetching sources:', error);
+        throw error;
+      }
+      return (data || []) as Source[];
+    },
+    enabled: !!session?.user?.id
+  });
+
+  const addSource = useMutation({
+    mutationFn: async (name: string) => {
+      if (!session?.user?.id) throw new Error("Must be logged in to add a source");
+      if (userRole !== 'controller') throw new Error("Must be a controller to add sources");
+
+      const { data, error } = await supabase
+        .from('sources')
+        .insert({
+          name,
+          user_id: session.user.id
+        })
         .select()
         .single();
       
@@ -53,45 +86,64 @@ export const PayerSelector = ({ selectedPayer, setSelectedPayer }: PayerSelector
       return data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['payers'] });
+      queryClient.invalidateQueries({ queryKey: ['sources'] });
       setNewPayerName("");
       setIsDialogOpen(false);
       setSelectedPayer(data.id);
       setSearchQuery(data.name);
       toast({
         title: "Success",
-        description: "Payer added successfully",
+        description: "Source added successfully",
       });
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       toast({
         title: "Error",
-        description: "Failed to add payer: " + error.message,
+        description: error.message,
         variant: "destructive"
       });
     }
   });
 
-  const filteredPayers = payers.filter(payer => 
-    payer.name.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredSources = sources.filter(source => 
+    source.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const selectedPayerName = payers.find(p => p.id === selectedPayer)?.name || '';
+  const selectedSourceName = sources.find(s => s.id === selectedPayer)?.name || '';
 
-  const handleAddPayer = (e: React.FormEvent) => {
+  const handleAddSource = (e: React.FormEvent) => {
     e.preventDefault();
     if (newPayerName.trim()) {
-      addPayer.mutate(newPayerName.trim());
+      addSource.mutate(newPayerName.trim());
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <label className="block text-sm font-medium mb-2">Source</label>
+        <div className="flex gap-2">
+          <Input
+            disabled
+            type="text"
+            placeholder="Loading sources..."
+            className="flex-1 bg-gray-100"
+          />
+          <Button disabled variant="outline">
+            <Plus className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
-      <label className="block text-sm font-medium mb-2">Payer</label>
+      <label className="block text-sm font-medium mb-2">Source</label>
       <div className="flex gap-2">
         <Input
           type="text"
-          placeholder="Search payers..."
+          placeholder="Search sources..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="flex-1"
@@ -99,57 +151,59 @@ export const PayerSelector = ({ selectedPayer, setSelectedPayer }: PayerSelector
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button
-              type="button"
               variant="outline"
+              disabled={userRole !== 'controller'}
+              title={userRole !== 'controller' ? "Only controllers can add sources" : "Add new source"}
             >
               <Plus className="h-4 w-4" />
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Add New Payer</DialogTitle>
+              <DialogTitle>Add New Source</DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleAddPayer} className="space-y-4">
+            <form onSubmit={handleAddSource} className="space-y-4">
               <Input
-                placeholder="Payer name"
+                placeholder="Source name"
                 value={newPayerName}
                 onChange={(e) => setNewPayerName(e.target.value)}
+                required
               />
-              <Button type="submit" className="w-full">
-                Add Payer
+              <Button type="submit" disabled={!newPayerName.trim()}>
+                Add Source
               </Button>
             </form>
           </DialogContent>
         </Dialog>
       </div>
-
-      {searchQuery && filteredPayers.length > 0 ? (
-        <div className="border rounded-md divide-y">
-          {filteredPayers.map((payer) => (
-            <button
-              key={payer.id}
-              onClick={() => {
-                setSelectedPayer(payer.id);
-                setSearchQuery(payer.name);
-              }}
-              className={`w-full px-4 py-2 text-left hover:bg-accent ${
-                selectedPayer === payer.id ? 'bg-accent' : ''
-              }`}
-            >
-              {payer.name}
-            </button>
+      
+      {filteredSources.length > 0 ? (
+        <ul className="mt-2 border rounded-lg divide-y">
+          {filteredSources.map((source) => (
+            <li key={source.id}>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedPayer(source.id);
+                  setSearchQuery(source.name);
+                }}
+                className={`w-full px-4 py-2 text-left hover:bg-gray-50 ${
+                  selectedPayer === source.id ? 'bg-gray-50' : ''
+                }`}
+              >
+                {source.name}
+              </button>
+            </li>
           ))}
-        </div>
+        </ul>
       ) : searchQuery ? (
-        <div className="text-sm text-muted-foreground">
-          No payers found. Click the + button to add a new payer.
-        </div>
+        <p className="text-sm text-gray-500">No sources found</p>
       ) : null}
-
-      {selectedPayer && !searchQuery && (
-        <div className="text-sm">
-          Selected: {selectedPayerName}
-        </div>
+      
+      {selectedPayer && selectedSourceName && (
+        <p className="text-sm text-gray-600">
+          Selected: {selectedSourceName}
+        </p>
       )}
     </div>
   );

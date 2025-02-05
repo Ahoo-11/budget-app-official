@@ -26,9 +26,9 @@ export function AppSidebar() {
       if (!session?.user?.id) return null;
       
       const { data, error } = await supabase
-        .from('profiles')
-        .select('status')
-        .eq('id', session.user.id)
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', session.user.id)
         .single();
       
       if (error) {
@@ -40,7 +40,7 @@ export function AppSidebar() {
         });
         throw error;
       }
-      return data?.status;
+      return data?.role;
     },
     enabled: !!session?.user?.id
   });
@@ -68,11 +68,11 @@ export function AppSidebar() {
   };
 
   const handleAddSource = async () => {
-    if (!newSourceName.trim() || !session?.user?.id || userStatus !== 'approved') {
+    if (!newSourceName.trim() || !session?.user?.id || userStatus !== 'controller') {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Please enter a source name and make sure you're logged in and approved.",
+        description: "Please enter a source name and make sure you're logged in and have controller access.",
       });
       return;
     }
@@ -80,10 +80,10 @@ export function AppSidebar() {
     try {
       const { error } = await supabase
         .from('sources')
-        .insert([{ 
+        .insert({ 
           name: newSourceName.trim(),
           user_id: session.user.id
-        }]);
+        });
 
       if (error) throw error;
 
@@ -105,49 +105,35 @@ export function AppSidebar() {
 
   return (
     <>
-      <div className="md:hidden fixed top-4 left-4 z-50">
-        <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-          <SheetTrigger asChild>
-            <Button variant="outline" size="icon">
-              <Menu className="h-4 w-4" />
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left" className="w-[240px] p-4">
-            <SidebarNavigation
-              sources={sources}
-              userStatus={userStatus}
-              onAddSource={() => setIsAddSourceOpen(true)}
-              onLogout={handleLogout}
-              onCloseMobileMenu={() => setIsMobileMenuOpen(false)}
-            />
-          </SheetContent>
-        </Sheet>
-      </div>
+      <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+        <SheetTrigger asChild className="lg:hidden">
+          <Button variant="ghost" size="icon" className="md:hidden">
+            <Menu className="h-6 w-6" />
+          </Button>
+        </SheetTrigger>
+        <SheetContent side="left" className="w-[300px] sm:w-[400px]">
+          <nav className="flex flex-col gap-4">
+            <SidebarNavigation sources={sources} onAddSource={() => setIsAddSourceOpen(true)} />
+          </nav>
+        </SheetContent>
+      </Sheet>
 
-      <div className="border-r bg-background fixed top-0 left-0 h-screen w-[200px] p-4 hidden md:block overflow-hidden">
-        <SidebarNavigation
-          sources={sources}
-          userStatus={userStatus}
-          onAddSource={() => setIsAddSourceOpen(true)}
-          onLogout={handleLogout}
-          onCloseMobileMenu={() => setIsMobileMenuOpen(false)}
-        />
-      </div>
+      <aside className="hidden lg:flex h-screen w-[300px] flex-col gap-4 border-r px-4 py-8">
+        <SidebarNavigation sources={sources} onAddSource={() => setIsAddSourceOpen(true)} />
+      </aside>
 
       <Dialog open={isAddSourceOpen} onOpenChange={setIsAddSourceOpen}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>Add New Source</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="flex flex-col gap-4">
             <Input
-              placeholder="Enter source name"
+              placeholder="Source name"
               value={newSourceName}
               onChange={(e) => setNewSourceName(e.target.value)}
             />
-            <Button onClick={handleAddSource} className="w-full">
-              Add Source
-            </Button>
+            <Button onClick={handleAddSource}>Add Source</Button>
           </div>
         </DialogContent>
       </Dialog>
