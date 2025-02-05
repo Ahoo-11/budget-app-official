@@ -19,8 +19,6 @@ export function DisplayNameManager() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      console.log("Current user:", user); // Debug log
-
       const { data, error } = await supabase
         .from('profiles')
         .select('display_name')
@@ -28,11 +26,10 @@ export function DisplayNameManager() {
         .single();
 
       if (error) {
-        console.error("Error fetching profile:", error); // Debug log
+        console.error("Error fetching profile:", error);
         throw error;
       }
-      
-      console.log("Profile data:", data); // Debug log
+
       return data;
     }
   });
@@ -58,7 +55,7 @@ export function DisplayNameManager() {
       setIsEditing(false);
     },
     onError: (error) => {
-      console.error("Error updating display name:", error); // Debug log
+      console.error("Error updating display name:", error);
       toast({
         title: "Error",
         description: "Failed to update display name",

@@ -18,9 +18,6 @@ export const supabase = createClient<Database>(
       headers: {
         'X-Client-Info': 'supabase-js-web'
       }
-    },
-    db: {
-      schema: 'budget'
     }
   }
 );

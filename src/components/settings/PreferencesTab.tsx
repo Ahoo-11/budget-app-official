@@ -27,8 +27,8 @@ export function PreferencesTab() {
 
       return {
         email: user.email,
-        role: roleData?.role,
-        status: profile?.status
+        role: roleData?.role ?? 'No role assigned',
+        status: profile?.status ?? 'Unknown'
       };
     }
   });
