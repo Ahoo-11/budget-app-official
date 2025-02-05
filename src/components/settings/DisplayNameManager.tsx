@@ -19,6 +19,7 @@ export function DisplayNameManager() {
       if (!user) throw new Error("Not authenticated");
 
       const { data, error } = await supabase
+        .schema('budget')
         .from('profiles')
         .select('display_name')
         .eq('id', user.id)
@@ -35,6 +36,7 @@ export function DisplayNameManager() {
       if (!user) throw new Error("Not authenticated");
 
       const { error } = await supabase
+        .schema('budget')
         .from('profiles')
         .update({ display_name: newName })
         .eq('id', user.id);

@@ -16,6 +16,7 @@ export function useSources(userStatus: string | null) {
       try {
         const { data: userRole, error: roleError } = await supabase
           .from('user_roles')
+          .schema('budget')
           .select('role')
           .eq('user_id', session.user.id)
           .single();
@@ -25,12 +26,16 @@ export function useSources(userStatus: string | null) {
           throw roleError;
         }
 
-        let query = supabase.from('sources').select('*');
+        let query = supabase
+          .from('sources')
+          .schema('budget')
+          .select('*');
 
         // Only fetch sources the user has permission to access
         if (!userRole || !['controller', 'super_admin'].includes(userRole.role)) {
           const { data: permissions, error: permError } = await supabase
             .from('source_permissions')
+            .schema('budget')
             .select('source_id')
             .eq('user_id', session.user.id);
 
