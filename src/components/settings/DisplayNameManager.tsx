@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,14 +19,20 @@ export function DisplayNameManager() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
+      console.log("Current user:", user); // Debug log
+
       const { data, error } = await supabase
-        .schema('budget')
         .from('profiles')
         .select('display_name')
         .eq('id', user.id)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching profile:", error); // Debug log
+        throw error;
+      }
+      
+      console.log("Profile data:", data); // Debug log
       return data;
     }
   });
@@ -36,7 +43,6 @@ export function DisplayNameManager() {
       if (!user) throw new Error("Not authenticated");
 
       const { error } = await supabase
-        .schema('budget')
         .from('profiles')
         .update({ display_name: newName })
         .eq('id', user.id);
@@ -52,6 +58,7 @@ export function DisplayNameManager() {
       setIsEditing(false);
     },
     onError: (error) => {
+      console.error("Error updating display name:", error); // Debug log
       toast({
         title: "Error",
         description: "Failed to update display name",
