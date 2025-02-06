@@ -13,7 +13,7 @@ export function DisplayNameManager() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: profile, isLoading } = useQuery({
+  const { data: profile, isLoading, error } = useQuery({
     queryKey: ['profile'],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -23,7 +23,7 @@ export function DisplayNameManager() {
         .from('profiles')
         .select('display_name')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();  // Changed from single() to maybeSingle()
 
       if (error) {
         console.error("Error fetching profile:", error);
@@ -41,7 +41,10 @@ export function DisplayNameManager() {
 
       const { error } = await supabase
         .from('profiles')
-        .update({ display_name: newName })
+        .update({ 
+          display_name: newName,
+          updated_at: new Date().toISOString()
+        })
         .eq('id', user.id);
 
       if (error) throw error;
@@ -58,7 +61,7 @@ export function DisplayNameManager() {
       console.error("Error updating display name:", error);
       toast({
         title: "Error",
-        description: "Failed to update display name",
+        description: "Failed to update display name. Please try again.",
         variant: "destructive",
       });
     },
@@ -82,6 +85,14 @@ export function DisplayNameManager() {
 
   if (isLoading) {
     return <div>Loading...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="text-destructive">
+        Error loading profile. Please refresh the page.
+      </div>
+    );
   }
 
   return (
