@@ -1,7 +1,11 @@
 import { useSession } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Source } from "@/types/source";
+import type { Tables } from "@/integrations/supabase/client";
+
+type Source = Tables['sources']['Row'];
+type UserRole = Tables['user_roles']['Row'];
+type SourcePermission = Tables['source_permissions']['Row'];
 
 interface SourceSelectorProps {
   selectedSource: string;
@@ -19,11 +23,14 @@ export const SourceSelector = ({ selectedSource, setSelectedSource, source_id }:
       if (!user) throw new Error("Not authenticated");
 
       // First check user's role
-      const { data: userRole } = await supabase
+      const { data: userRoleData, error: roleError } = await supabase
         .from('user_roles')
         .select('role')
         .eq('user_id', user.id)
         .single();
+
+      if (roleError) throw roleError;
+      const userRole = userRoleData as UserRole;
 
       // If controller, return all sources
       if (userRole?.role === 'controller') {
@@ -33,17 +40,19 @@ export const SourceSelector = ({ selectedSource, setSelectedSource, source_id }:
           .order('name');
         
         if (error) throw error;
-        return data;
+        return data as Source[];
       }
 
       // For other roles, check permissions
-      const { data: permissions } = await supabase
+      const { data: permissions, error: permError } = await supabase
         .from('source_permissions')
         .select('source_id')
         .eq('user_id', user.id);
 
+      if (permError) throw permError;
+
       if (permissions && permissions.length > 0) {
-        const sourceIds = permissions.map(p => p.source_id);
+        const sourceIds = (permissions as SourcePermission[]).map(p => p.source_id);
         const { data, error } = await supabase
           .from('sources')
           .select('*')
@@ -51,7 +60,7 @@ export const SourceSelector = ({ selectedSource, setSelectedSource, source_id }:
           .order('name');
         
         if (error) throw error;
-        return data;
+        return data as Source[];
       }
 
       return [];

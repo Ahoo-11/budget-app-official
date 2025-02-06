@@ -1,68 +1,62 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { Tables } from "@/integrations/supabase/client";
 import { BillProduct } from "@/types/bills";
-import { Product } from "@/types/product";
-import { Service } from "@/types/service";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProductGrid } from "./ProductGrid";
 import { ServiceGrid } from "./ServiceGrid";
 import { ConsignmentGrid } from "./ConsignmentGrid";
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useTypes } from "@/hooks/useTypes";
 import { Type } from "@/types/types";
+
+type SourceData = Pick<Tables['sources']['Row'], 'id' | 'name'>;
+type SourceType = Tables['source_types']['Row'];
+type Product = Tables['products']['Row'] & {
+  measurement_unit?: Tables['measurement_units']['Row']
+};
+
+type Service = Tables['services']['Row'] & {
+  measurement_unit?: Tables['measurement_units']['Row']
+};
+
+type Consignment = Tables['consignments']['Row'] & {
+  measurement_unit?: Tables['measurement_units']['Row']
+};
 
 interface OrderContentProps {
   sourceId: string;
   onProductSelect: (product: BillProduct) => void;
 }
 
-interface SourceData {
-  id: string;
-  name: string;
-}
-
-// Define consignment interface based on the database structure
-interface Consignment {
-  id: string;
-  source_id: string;
-  name: string;
-  description?: string;
-  selling_price: number;
-  measurement_unit_id?: string;
-  measurement_unit?: {
-    id: string;
-    name: string;
-    symbol: string;
-  };
-  image_url?: string;
-}
-
 export const OrderContent = ({ sourceId, onProductSelect }: OrderContentProps) => {
-  const { types, isTypeEnabled, isLoadingTypes } = useTypes(sourceId);
-  const [selectedTab, setSelectedTab] = useState<string>("");
-
-  // Get type IDs
+  const [selectedTab, setSelectedTab] = useState<string | null>(null);
+  
+  // Get enabled types first since other queries depend on it
+  const { types: enabledTypes, isTypeEnabled } = useTypes(sourceId);
+  
+  // Helper functions for type IDs
   const getTypeIdByName = (name: string): string | undefined => {
-    return types.find(type => type.name.toLowerCase() === name.toLowerCase())?.id;
+    return enabledTypes.find(type => type.name.toLowerCase() === name.toLowerCase())?.id;
   };
 
   const productTypeId = getTypeIdByName('products');
   const serviceTypeId = getTypeIdByName('services');
   const consignmentTypeId = getTypeIdByName('consignments');
 
-  // Debug log for types and enabled status
-  useEffect(() => {
-    console.log('Types loaded:', types);
-    console.log('Selected tab:', selectedTab);
-    console.log('Product type ID:', productTypeId);
-    console.log('Service type ID:', serviceTypeId);
-    console.log('Consignment type ID:', consignmentTypeId);
-    if (productTypeId) console.log('Products enabled:', isTypeEnabled(productTypeId));
-    if (serviceTypeId) console.log('Services enabled:', isTypeEnabled(serviceTypeId));
-    if (consignmentTypeId) console.log('Consignments enabled:', isTypeEnabled(consignmentTypeId));
-  }, [types, selectedTab, isTypeEnabled, productTypeId, serviceTypeId, consignmentTypeId]);
-  
-  const { data: sourceData } = useQuery<SourceData>({
+  // Data fetching hooks
+  const { data: types = [], isLoading: isLoadingTypes } = useQuery<SourceType[]>({
+    queryKey: ["source_types"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("source_types")
+        .select("*");
+      if (error) throw error;
+      return data as SourceType[];
+    },
+  });
+
+  const { data: sourceData, error: sourceError } = useQuery<SourceData>({
     queryKey: ["source", sourceId],
     enabled: !!sourceId,
     queryFn: async () => {
@@ -73,17 +67,14 @@ export const OrderContent = ({ sourceId, onProductSelect }: OrderContentProps) =
         .single();
 
       if (error) throw error;
-      return data;
+      return data as SourceData;
     },
   });
 
-  const { data: products, isLoading: isLoadingProducts } = useQuery<Product[]>({
+  const { data: products = [], isLoading: isLoadingProducts } = useQuery<Product[]>({
     queryKey: ["products", sourceId],
     enabled: !!sourceId && !!productTypeId && isTypeEnabled(productTypeId),
     queryFn: async () => {
-      console.log('Fetching products for source:', sourceId);
-      console.log('Products type enabled:', productTypeId && isTypeEnabled(productTypeId));
-      
       const { data, error } = await supabase
         .from("products")
         .select(`
@@ -99,29 +90,45 @@ export const OrderContent = ({ sourceId, onProductSelect }: OrderContentProps) =
             id,
             name,
             symbol
-          ),
-          current_stock,
-          created_at,
-          updated_at
+          )
         `)
         .eq("source_id", sourceId);
 
-      if (error) {
-        console.error('Error fetching products:', error);
-        throw error;
-      }
-      console.log('Products fetched:', data);
-      return data || [];
+      if (error) throw error;
+      return data as Product[];
     },
   });
 
-  const { data: consignments, isLoading: isLoadingConsignments } = useQuery<Consignment[]>({
+  const { data: services = [], isLoading: isLoadingServices } = useQuery<Service[]>({
+    queryKey: ["services", sourceId],
+    enabled: !!sourceId && !!serviceTypeId && isTypeEnabled(serviceTypeId),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("services")
+        .select(`
+          id,
+          source_id,
+          name,
+          description,
+          price,
+          measurement_unit_id,
+          measurement_unit:measurement_unit_id (
+            id,
+            name,
+            symbol
+          )
+        `)
+        .eq("source_id", sourceId);
+
+      if (error) throw error;
+      return data as Service[];
+    },
+  });
+
+  const { data: consignments = [], isLoading: isLoadingConsignments } = useQuery<Consignment[]>({
     queryKey: ["consignments", sourceId],
     enabled: !!sourceId && !!consignmentTypeId && isTypeEnabled(consignmentTypeId),
     queryFn: async () => {
-      console.log('Fetching consignments for source:', sourceId);
-      console.log('Consignments type enabled:', consignmentTypeId && isTypeEnabled(consignmentTypeId));
-      
       const { data, error } = await supabase
         .from("consignments")
         .select(`
@@ -135,49 +142,62 @@ export const OrderContent = ({ sourceId, onProductSelect }: OrderContentProps) =
             id,
             name,
             symbol
-          ),
-          image_url
+          )
         `)
         .eq("source_id", sourceId);
 
-      if (error) {
-        console.error('Error fetching consignments:', error);
-        throw error;
-      }
-      console.log('Consignments fetched:', data);
-      return data || [];
+      if (error) throw error;
+      return data as Consignment[];
     },
   });
 
-  // Set initial selected tab
+  // Effects
   useEffect(() => {
-    if (types.length > 0 && !selectedTab) {
-      const enabledTypes = types.filter(type => isTypeEnabled(type.id));
-      if (enabledTypes.length > 0) {
-        setSelectedTab(enabledTypes[0].id);
+    if (enabledTypes.length > 0 && !selectedTab) {
+      const availableTypes = enabledTypes.filter(type => isTypeEnabled(type.id));
+      if (availableTypes.length > 0) {
+        setSelectedTab(availableTypes[0].id);
       }
     }
-  }, [types, isTypeEnabled, selectedTab]);
+  }, [enabledTypes, isTypeEnabled, selectedTab]);
 
-  if (isLoadingTypes || !sourceData) {
+  useEffect(() => {
+    console.log('Selected tab:', selectedTab);
+    console.log('Product type ID:', productTypeId);
+    console.log('Service type ID:', serviceTypeId);
+    console.log('Consignment type ID:', consignmentTypeId);
+    if (productTypeId) console.log('Products enabled:', isTypeEnabled(productTypeId));
+    if (serviceTypeId) console.log('Services enabled:', isTypeEnabled(serviceTypeId));
+    if (consignmentTypeId) console.log('Consignments enabled:', isTypeEnabled(consignmentTypeId));
+  }, [selectedTab, productTypeId, serviceTypeId, consignmentTypeId, isTypeEnabled]);
+
+  // Loading and error states
+  if (isLoadingTypes) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <p className="text-muted-foreground">Loading...</p>
+      <div className="flex items-center justify-center min-h-[200px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-white"></div>
       </div>
     );
   }
 
-  const enabledTypes = types.filter(type => isTypeEnabled(type.id));
-  console.log('Enabled types:', enabledTypes);
-  
-  if (enabledTypes.length === 0) {
+  if (sourceError) {
+    console.error('Error fetching source:', sourceError);
     return (
-      <div className="flex items-center justify-center h-full">
-        <p className="text-muted-foreground">No types enabled for this source. Enable them in source settings.</p>
+      <div className="p-4 text-red-500">
+        Oops! Something went wrong while loading the source. Please try again.
       </div>
     );
   }
 
+  if (!sourceData) {
+    return (
+      <div className="p-4 text-gray-500">
+        Loading source data...
+      </div>
+    );
+  }
+
+  // Helper functions for transforming data
   const transformProductToBillProduct = (product: Product): BillProduct => ({
     id: product.id,
     type: "product",
@@ -251,6 +271,7 @@ export const OrderContent = ({ sourceId, onProductSelect }: OrderContentProps) =
           {type.id === serviceTypeId && (
             <ServiceGrid 
               sourceId={sourceId} 
+              services={services || []}
               onSelect={(service) => onProductSelect(transformServiceToBillProduct(service))} 
             />
           )}

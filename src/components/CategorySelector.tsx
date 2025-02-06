@@ -1,8 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import type { Database } from "@/types/database-types";
+import type { Tables } from "@/integrations/supabase/client";
 
-type Category = Database["budget_app"]["Tables"]["categories"]["Row"];
+type Category = Tables['categories']['Row'];
 
 interface CategorySelectorProps {
   selectedCategory: string;
@@ -29,7 +29,7 @@ export const CategorySelector = ({
         throw error;
       }
       
-      return (data || []) as Category[];
+      return data as Category[];
     },
     enabled: !!sourceId
   });

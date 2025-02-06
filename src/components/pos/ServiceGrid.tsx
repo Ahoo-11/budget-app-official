@@ -1,6 +1,6 @@
-import { Service } from "@/types/service";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { Tables } from "@/integrations/supabase/client";
 import { useState } from "react";
 import { ServiceForm } from "@/components/services/ServiceForm";
 import { useNavigate } from "react-router-dom";
@@ -11,6 +11,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+
+type Service = Tables['services']['Row'] & {
+  measurement_unit?: Tables['measurement_units']['Row']
+};
 
 interface ServiceGridProps {
   sourceId: string;
@@ -44,10 +48,7 @@ export const ServiceGrid = ({
         .eq("source_id", sourceId)
         .order("name");
       
-      if (error) {
-        console.error('Error fetching services:', error);
-        throw error;
-      }
+      if (error) throw error;
       return data as Service[];
     },
     enabled: !propServices && !!sourceId,
@@ -69,10 +70,12 @@ export const ServiceGrid = ({
     );
   }
 
+  const displayedServices = propServices || services;
+
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3">
-        {services.map((service) => (
+        {displayedServices.map((service) => (
           <ServiceCard
             key={service.id}
             service={service}
@@ -100,4 +103,4 @@ export const ServiceGrid = ({
       </Dialog>
     </div>
   );
-}
+};

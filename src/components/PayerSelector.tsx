@@ -13,9 +13,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import type { Database } from "@/types/database-types";
+import type { Tables } from "@/integrations/supabase/client";
 
-type Source = Database["budget_app"]["Tables"]["sources"]["Row"];
+type Source = Tables['sources']['Row'];
+type UserRole = Tables['user_roles']['Row'];
 
 interface PayerSelectorProps {
   selectedPayer: string;
@@ -31,7 +32,7 @@ export const PayerSelector = ({ selectedPayer, setSelectedPayer }: PayerSelector
   const queryClient = useQueryClient();
 
   // Get user's role first
-  const { data: userRole } = useQuery({
+  const { data: userRoleData } = useQuery({
     queryKey: ['userRole', session?.user?.id],
     queryFn: async () => {
       if (!session?.user?.id) return null;
@@ -46,10 +47,12 @@ export const PayerSelector = ({ selectedPayer, setSelectedPayer }: PayerSelector
         console.error('Error fetching user role:', error);
         throw error;
       }
-      return data?.role;
+      return data as UserRole;
     },
     enabled: !!session?.user?.id
   });
+
+  const userRole = userRoleData?.role;
 
   const { data: sources = [], isLoading } = useQuery({
     queryKey: ['sources'],
@@ -63,7 +66,7 @@ export const PayerSelector = ({ selectedPayer, setSelectedPayer }: PayerSelector
         console.error('Error fetching sources:', error);
         throw error;
       }
-      return (data || []) as Source[];
+      return data as Source[];
     },
     enabled: !!session?.user?.id
   });
@@ -78,12 +81,12 @@ export const PayerSelector = ({ selectedPayer, setSelectedPayer }: PayerSelector
         .insert({
           name,
           user_id: session.user.id
-        })
+        } as Tables['sources']['Insert'])
         .select()
         .single();
       
       if (error) throw error;
-      return data;
+      return data as Source;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['sources'] });

@@ -1,7 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { Tables } from "@/integrations/supabase/client";
 import { Bill, BillDBRow, deserializeBillItems, serializeBillItems } from "@/types/bills";
 import { useState } from "react";
+
+type BillWithPayer = Tables['bills']['Row'] & {
+  payers: Pick<Tables['payers']['Row'], 'name'> | null;
+};
 
 export const useBillUpdates = (billId: string) => {
   const [date, setDate] = useState<Date>(new Date());
@@ -18,7 +23,7 @@ export const useBillUpdates = (billId: string) => {
 
       if (error) throw error;
       
-      const dbRow = data as BillDBRow & { payers: { name: string } | null };
+      const dbRow = data as BillWithPayer;
       
       return {
         ...dbRow,
@@ -30,13 +35,13 @@ export const useBillUpdates = (billId: string) => {
     enabled: !!billId,
   });
 
-  const updateBill = async (updatedBill: Partial<Bill>) => {
+  const updateBill = async (updatedBill: Partial<Tables['bills']['Update']>) => {
     const { error } = await supabase
       .from('bills')
       .update({
         ...updatedBill,
         items: updatedBill.items ? serializeBillItems(updatedBill.items) : undefined
-      })
+      } as Tables['bills']['Update'])
       .eq('id', billId);
 
     if (error) throw error;
