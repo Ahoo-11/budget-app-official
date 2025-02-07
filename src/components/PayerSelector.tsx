@@ -38,6 +38,7 @@ export const PayerSelector = ({ selectedPayer, setSelectedPayer }: PayerSelector
       if (!session?.user?.id) return null;
       
       const { data, error } = await supabase
+        .schema('budget')
         .from('user_roles')
         .select('role')
         .eq('user_id', session.user.id)
@@ -58,6 +59,7 @@ export const PayerSelector = ({ selectedPayer, setSelectedPayer }: PayerSelector
     queryKey: ['sources'],
     queryFn: async () => {
       const { data, error } = await supabase
+        .schema('budget')
         .from('sources')
         .select('id, name, user_id, created_at')
         .order('name');
@@ -77,6 +79,7 @@ export const PayerSelector = ({ selectedPayer, setSelectedPayer }: PayerSelector
       if (userRole !== 'controller') throw new Error("Must be a controller to add sources");
 
       const { data, error } = await supabase
+        .schema('budget')
         .from('sources')
         .insert({
           name,
