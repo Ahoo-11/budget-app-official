@@ -32,7 +32,7 @@ export function UserRolesTable({ users, onRoleUpdate }: UserRolesTableProps) {
     queryKey: ['userEmails'],
     queryFn: async () => {
       const { data: profiles, error } = await supabase
-        .from('profiles')
+        .from('budgetapp_profiles')
         .select('id, email, status');
 
       if (error) {
@@ -54,7 +54,7 @@ export function UserRolesTable({ users, onRoleUpdate }: UserRolesTableProps) {
     queryKey: ['sources'],
     queryFn: async () => {
       const { data: sources, error } = await supabase
-        .from('sources')
+        .from('budgetapp_sources')
         .select('id, name');
 
       if (error) {
@@ -70,7 +70,7 @@ export function UserRolesTable({ users, onRoleUpdate }: UserRolesTableProps) {
     queryKey: ['sourcePermissions'],
     queryFn: async () => {
       const { data: perms, error } = await supabase
-        .from('source_permissions')
+        .from('budgetapp_source_permissions')
         .select('user_id, source_id');
 
       if (error) {

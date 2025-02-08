@@ -31,7 +31,7 @@ export const SessionManager = ({ sourceId }: { sourceId: string }) => {
       console.log('Fetching active session for source:', sourceId);
       try {
         const { data, error } = await supabase
-          .from('sessions')
+          .from('budgetapp_sessions')
           .select('*')
           .eq('source_id', sourceId)
           .eq('status', 'active')
@@ -132,7 +132,7 @@ export const SessionManager = ({ sourceId }: { sourceId: string }) => {
       };
 
       const { data: createdSession, error: createError } = await supabase
-        .from('sessions')
+        .from('budgetapp_sessions')
         .insert(newSession)
         .select()
         .single();
@@ -165,7 +165,7 @@ export const SessionManager = ({ sourceId }: { sourceId: string }) => {
     try {
       console.log('Closing session:', activeSession.id);
       const { error } = await supabase
-        .from('sessions')
+        .from('budgetapp_sessions')
         .update({ 
           status: 'closed', 
           end_time: new Date().toISOString() 

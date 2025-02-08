@@ -18,8 +18,8 @@ export function useBillQueries(sourceId: string | null) {
       }
 
       let query = supabase
-        .from('bills')
-        .select('*, payers(name)')
+        .from('budgetapp_bills')
+        .select('*, budgetapp_payers(name)')
         .order('created_at', { ascending: false });
       
       if (sourceId && sourceId !== 'all') {

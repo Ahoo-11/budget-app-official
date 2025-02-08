@@ -8,8 +8,7 @@ export default function Index() {
     queryKey: ['sources'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .schema('budget')
-        .from('sources')
+        .from('budgetapp_sources')
         .select('*')
         .limit(1);
       

@@ -1,149 +1,226 @@
-import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Service } from "@/types/service";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { TransactionStatus } from "@/types/transaction";
-import { BasicTransactionInfo } from "./transaction/form/BasicTransactionInfo";
-import { DateSelector } from "./transaction/form/DateSelector";
-import { StatusSelector } from "./transaction/form/StatusSelector";
-import { DocumentUpload } from "./transaction/form/DocumentUpload";
+import { useToast } from "./ui/use-toast";
+import { Button } from "./ui/button";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { CategorySelector } from "./CategorySelector";
+import { SourceSelector } from "./SourceSelector";
+import { PayerSelector } from "./PayerSelector";
+
+const transactionSchema = z.object({
+  amount: z.string().min(1, "Amount is required"),
+  description: z.string().min(1, "Description is required"),
+  category_id: z.string().min(1, "Category is required"),
+  source_id: z.string().min(1, "Source is required"),
+  payer_id: z.string().min(1, "Payer is required"),
+  notes: z.string().optional(),
+});
+
+type TransactionFormValues = z.infer<typeof transactionSchema>;
 
 interface TransactionFormProps {
-  description: string;
-  setDescription: (description: string) => void;
-  amount: string;
-  setAmount: (amount: string) => void;
-  date: Date;
-  setDate: (date: Date) => void;
-  status: TransactionStatus;
-  setStatus: (status: TransactionStatus) => void;
-  isSubmitting: boolean;
-  isEditing?: boolean;
-  sourceId?: string;
-  documentUrl?: string;
-  onDocumentUpload?: (file: File) => Promise<void>;
+  onSuccess?: () => void;
+  initialData?: TransactionFormValues;
 }
 
-export const TransactionForm = ({
-  description,
-  setDescription,
-  amount,
-  setAmount,
-  date,
-  setDate,
-  status,
-  setStatus,
-  isSubmitting,
-  isEditing = false,
-  sourceId,
-  documentUrl,
-  onDocumentUpload,
-}: TransactionFormProps) => {
-  const { data: services = [] } = useQuery({
-    queryKey: ['services', sourceId],
-    queryFn: async () => {
-      if (!sourceId) return [];
-      const { data, error } = await supabase
-        .from('services')
-        .select('*')
-        .eq('source_id', sourceId)
-        .order('name');
-      
-      if (error) throw error;
-      return data as Service[];
+export function TransactionForm({ onSuccess, initialData }: TransactionFormProps) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const form = useForm<TransactionFormValues>({
+    resolver: zodResolver(transactionSchema),
+    defaultValues: initialData || {
+      amount: "",
+      description: "",
+      category_id: "",
+      source_id: "",
+      payer_id: "",
+      notes: "",
     },
-    enabled: !!sourceId
   });
 
-  const handleServiceSelect = (service: Service) => {
-    setDescription(service.name);
-    // Service price already includes GST, so we can set it directly
-    setAmount(service.price.toString());
+  const { data: currentUserRole } = useQuery({
+    queryKey: ['currentUserRole'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+
+      const { data: roleData, error: roleError } = await supabase
+        .schema('budget')
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .single();
+
+      if (roleError) {
+        console.error('Error fetching role:', roleError);
+        return null;
+      }
+
+      return roleData?.role ?? null;
+    }
+  });
+
+  const onSubmit = async (data: TransactionFormValues) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const { error } = await supabase
+        .schema('budget')
+        .from('transactions')
+        .insert({
+          amount: parseFloat(data.amount),
+          description: data.description,
+          category_id: data.category_id,
+          source_id: data.source_id,
+          payer_id: data.payer_id,
+          notes: data.notes,
+          created_by: user.id,
+        });
+
+      if (error) throw error;
+
+      await queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      
+      toast({
+        title: "Success",
+        description: "Transaction added successfully.",
+      });
+
+      form.reset();
+      onSuccess?.();
+    } catch (error) {
+      console.error('Error adding transaction:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to add transaction. Please try again.",
+      });
+    }
   };
 
+  if (!currentUserRole) {
+    return (
+      <div className="text-center py-4">
+        Loading...
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6">
-      <BasicTransactionInfo
-        description={description}
-        setDescription={setDescription}
-        amount={amount}
-        setAmount={setAmount}
-        isSubmitting={isSubmitting}
-      />
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="amount"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Amount</FormLabel>
+              <FormControl>
+                <Input type="number" step="0.01" placeholder="0.00" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-      {sourceId && (
-        <Tabs defaultValue="manual" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="manual">Manual Entry</TabsTrigger>
-            <TabsTrigger value="services">Select Service</TabsTrigger>
-          </TabsList>
-          <TabsContent value="manual">
-            <div className="space-y-4">
-              {/* Manual entry fields are already in BasicTransactionInfo */}
-            </div>
-          </TabsContent>
-          <TabsContent value="services">
-            <div className="space-y-4">
-              {services.length > 0 ? (
-                <div className="grid gap-2">
-                  {services.map((service) => (
-                    <button
-                      key={service.id}
-                      type="button"
-                      onClick={() => handleServiceSelect(service)}
-                      className="w-full p-4 text-left border rounded-lg hover:bg-accent transition-colors"
-                    >
-                      <div className="font-medium">{service.name}</div>
-                      <div className="text-sm text-muted-foreground">
-                        ${service.price.toFixed(2)}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-4 text-muted-foreground">
-                  No services found
-                </div>
-              )}
-            </div>
-          </TabsContent>
-        </Tabs>
-      )}
+        <FormField
+          control={form.control}
+          name="description"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Description</FormLabel>
+              <FormControl>
+                <Input placeholder="Transaction description" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-      <StatusSelector
-        status={status}
-        setStatus={setStatus}
-        isSubmitting={isSubmitting}
-      />
+        <FormField
+          control={form.control}
+          name="source_id"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Source</FormLabel>
+              <FormControl>
+                <SourceSelector
+                  selectedSource={field.value}
+                  setSelectedSource={field.onChange}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-      <DateSelector
-        date={date}
-        setDate={setDate}
-        isSubmitting={isSubmitting}
-      />
+        <FormField
+          control={form.control}
+          name="category_id"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Category</FormLabel>
+              <FormControl>
+                <CategorySelector
+                  value={field.value}
+                  onValueChange={field.onChange}
+                  sourceId={form.watch("source_id")}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-      <DocumentUpload
-        documentUrl={documentUrl}
-        onDocumentUpload={onDocumentUpload}
-        isSubmitting={isSubmitting}
-      />
+        <FormField
+          control={form.control}
+          name="payer_id"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Payer</FormLabel>
+              <FormControl>
+                <PayerSelector
+                  selectedPayer={field.value}
+                  setSelectedPayer={field.onChange}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-      <Button
-        type="submit"
-        disabled={isSubmitting}
-        className="w-full bg-success text-white p-3 rounded-xl hover:bg-success/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-      >
-        {isSubmitting ? (
-          <>
-            <Loader2 className="w-4 h-4 animate-spin" />
-            {isEditing ? "Updating..." : "Adding..."}
-          </>
-        ) : (
-          isEditing ? "Update Transaction" : "Add Transaction"
-        )}
-      </Button>
-    </div>
+        <FormField
+          control={form.control}
+          name="notes"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Notes</FormLabel>
+              <FormControl>
+                <Textarea placeholder="Additional notes..." {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <Button type="submit" className="w-full">
+          Add Transaction
+        </Button>
+      </form>
+    </Form>
   );
-};
+}

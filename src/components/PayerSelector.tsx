@@ -14,6 +14,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import type { Tables } from "@/integrations/supabase/client";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type Source = Tables['sources']['Row'];
 type UserRole = Tables['user_roles']['Row'];
@@ -184,24 +185,18 @@ export const PayerSelector = ({ selectedPayer, setSelectedPayer }: PayerSelector
       </div>
       
       {filteredSources.length > 0 ? (
-        <ul className="mt-2 border rounded-lg divide-y">
-          {filteredSources.map((source) => (
-            <li key={source.id}>
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedPayer(source.id);
-                  setSearchQuery(source.name);
-                }}
-                className={`w-full px-4 py-2 text-left hover:bg-gray-50 ${
-                  selectedPayer === source.id ? 'bg-gray-50' : ''
-                }`}
-              >
+        <Select value={selectedPayer} onValueChange={setSelectedPayer}>
+          <SelectTrigger>
+            <SelectValue placeholder="Select source" />
+          </SelectTrigger>
+          <SelectContent>
+            {filteredSources.map((source) => (
+              <SelectItem key={source.id} value={source.id}>
                 {source.name}
-              </button>
-            </li>
-          ))}
-        </ul>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       ) : searchQuery ? (
         <p className="text-sm text-gray-500">No sources found</p>
       ) : null}

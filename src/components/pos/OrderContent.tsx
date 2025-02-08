@@ -9,6 +9,7 @@ import { ConsignmentGrid } from "./ConsignmentGrid";
 import { useState, useEffect } from "react";
 import { useTypes } from "@/hooks/useTypes";
 import { Type } from "@/types/types";
+import { useToast } from "../ui/use-toast";
 
 type SourceData = Pick<Tables['sources']['Row'], 'id' | 'name'>;
 type SourceType = Tables['source_types']['Row'];
@@ -30,6 +31,8 @@ interface OrderContentProps {
 }
 
 export const OrderContent = ({ sourceId, onProductSelect }: OrderContentProps) => {
+  const { toast } = useToast();
+
   const [selectedTab, setSelectedTab] = useState<string | null>(null);
   
   // Get enabled types first since other queries depend on it
@@ -49,6 +52,7 @@ export const OrderContent = ({ sourceId, onProductSelect }: OrderContentProps) =
     queryKey: ["source_types"],
     queryFn: async () => {
       const { data, error } = await supabase
+        .schema('budget')
         .from("source_types")
         .select("*");
       if (error) throw error;
@@ -61,12 +65,22 @@ export const OrderContent = ({ sourceId, onProductSelect }: OrderContentProps) =
     enabled: !!sourceId,
     queryFn: async () => {
       const { data, error } = await supabase
+        .schema('budget')
         .from("sources")
         .select("id, name")
         .eq("id", sourceId)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching source:', error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to load source details.",
+        });
+        throw error;
+      }
+
       return data as SourceData;
     },
   });
@@ -76,6 +90,7 @@ export const OrderContent = ({ sourceId, onProductSelect }: OrderContentProps) =
     enabled: !!sourceId && !!productTypeId && isTypeEnabled(productTypeId),
     queryFn: async () => {
       const { data, error } = await supabase
+        .schema('budget')
         .from("products")
         .select(`
           id,
@@ -86,16 +101,25 @@ export const OrderContent = ({ sourceId, onProductSelect }: OrderContentProps) =
           price,
           product_type,
           measurement_unit_id,
-          measurement_unit:measurement_unit_id (
-            id,
-            name,
-            symbol
-          )
+          measurement_unit:measurement_units(id, name, symbol)
         `)
         .eq("source_id", sourceId);
 
-      if (error) throw error;
-      return data as Product[];
+      if (error) {
+        console.error('Error fetching products:', error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to load products.",
+        });
+        throw error;
+      }
+
+      // Transform the data to match our Product type
+      return data.map(item => ({
+        ...item,
+        measurement_unit: item.measurement_unit[0] // Take first item since it's returned as array
+      }));
     },
   });
 
@@ -104,6 +128,7 @@ export const OrderContent = ({ sourceId, onProductSelect }: OrderContentProps) =
     enabled: !!sourceId && !!serviceTypeId && isTypeEnabled(serviceTypeId),
     queryFn: async () => {
       const { data, error } = await supabase
+        .schema('budget')
         .from("services")
         .select(`
           id,
@@ -112,11 +137,7 @@ export const OrderContent = ({ sourceId, onProductSelect }: OrderContentProps) =
           description,
           price,
           measurement_unit_id,
-          measurement_unit:measurement_unit_id (
-            id,
-            name,
-            symbol
-          )
+          measurement_unit:measurement_units(id, name, symbol)
         `)
         .eq("source_id", sourceId);
 
@@ -130,6 +151,7 @@ export const OrderContent = ({ sourceId, onProductSelect }: OrderContentProps) =
     enabled: !!sourceId && !!consignmentTypeId && isTypeEnabled(consignmentTypeId),
     queryFn: async () => {
       const { data, error } = await supabase
+        .schema('budget')
         .from("consignments")
         .select(`
           id,
@@ -138,11 +160,7 @@ export const OrderContent = ({ sourceId, onProductSelect }: OrderContentProps) =
           description,
           selling_price,
           measurement_unit_id,
-          measurement_unit:measurement_unit_id (
-            id,
-            name,
-            symbol
-          )
+          measurement_unit:measurement_units(id, name, symbol)
         `)
         .eq("source_id", sourceId);
 

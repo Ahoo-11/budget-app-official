@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,7 +19,7 @@ export function DisplayNameManager() {
       if (!user) throw new Error("Not authenticated");
 
       const { data, error } = await supabase
-        .from('profiles')
+        .from('budgetapp_profiles')
         .select('display_name')
         .eq('id', user.id)
         .maybeSingle();  // Changed from single() to maybeSingle()
@@ -40,7 +39,7 @@ export function DisplayNameManager() {
       if (!user) throw new Error("Not authenticated");
 
       const { error } = await supabase
-        .from('profiles')
+        .from('budgetapp_profiles')
         .update({ 
           display_name: newName,
           updated_at: new Date().toISOString()

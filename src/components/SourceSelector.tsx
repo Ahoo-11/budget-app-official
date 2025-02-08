@@ -1,91 +1,120 @@
-import { useSession } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import type { Tables } from "@/integrations/supabase/client";
-
-type Source = Tables['sources']['Row'];
-type UserRole = Tables['user_roles']['Row'];
-type SourcePermission = Tables['source_permissions']['Row'];
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "./ui/use-toast";
 
 interface SourceSelectorProps {
   selectedSource: string;
-  setSelectedSource: (source: string) => void;
+  setSelectedSource: (value: string) => void;
   source_id?: string;
 }
 
-export const SourceSelector = ({ selectedSource, setSelectedSource, source_id }: SourceSelectorProps) => {
-  const session = useSession();
+export function SourceSelector({ selectedSource, setSelectedSource, source_id }: SourceSelectorProps) {
+  const { toast } = useToast();
 
-  const { data: sources = [] } = useQuery({
-    queryKey: ['sources'],
+  // Get current user's role
+  const { data: currentUserRole } = useQuery({
+    queryKey: ['currentUserRole'],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+      if (!user) return null;
 
-      // First check user's role
-      const { data: userRoleData, error: roleError } = await supabase
+      const { data: roleData, error: roleError } = await supabase
+        .schema('budget')
         .from('user_roles')
         .select('role')
         .eq('user_id', user.id)
         .single();
 
-      if (roleError) throw roleError;
-      const userRole = userRoleData as UserRole;
+      if (roleError) {
+        console.error('Error fetching role:', roleError);
+        return null;
+      }
 
-      // If controller, return all sources
-      if (userRole?.role === 'controller') {
-        const { data, error } = await supabase
+      return roleData?.role ?? null;
+    }
+  });
+
+  // Fetch sources based on user's role and permissions
+  const { data: sources = [] } = useQuery({
+    queryKey: ['sources', currentUserRole],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [];
+
+      // If user is admin or manager, they can see all sources
+      if (currentUserRole === 'admin' || currentUserRole === 'manager') {
+        const { data: allSources, error: sourcesError } = await supabase
+          .schema('budget')
           .from('sources')
           .select('*')
           .order('name');
-        
-        if (error) throw error;
-        return data as Source[];
+
+        if (sourcesError) {
+          console.error('Error fetching sources:', sourcesError);
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to load sources. Please try again.",
+          });
+          return [];
+        }
+
+        return allSources || [];
       }
 
-      // For other roles, check permissions
-      const { data: permissions, error: permError } = await supabase
+      // For other users, only show sources they have permission for
+      const { data: sourcePermissions, error: permError } = await supabase
+        .schema('budget')
         .from('source_permissions')
         .select('source_id')
         .eq('user_id', user.id);
 
-      if (permError) throw permError;
-
-      if (permissions && permissions.length > 0) {
-        const sourceIds = (permissions as SourcePermission[]).map(p => p.source_id);
-        const { data, error } = await supabase
-          .from('sources')
-          .select('*')
-          .in('id', sourceIds)
-          .order('name');
-        
-        if (error) throw error;
-        return data as Source[];
+      if (permError) {
+        console.error('Error fetching permissions:', permError);
+        return [];
       }
 
-      return [];
+      if (!sourcePermissions?.length) return [];
+
+      const sourceIds = sourcePermissions.map(p => p.source_id);
+      const { data: allowedSources, error: sourcesError } = await supabase
+        .schema('budget')
+        .from('sources')
+        .select('*')
+        .in('id', sourceIds)
+        .order('name');
+
+      if (sourcesError) {
+        console.error('Error fetching sources:', sourcesError);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to load sources. Please try again.",
+        });
+        return [];
+      }
+
+      return allowedSources || [];
     },
-    enabled: !!session?.user?.id
+    enabled: currentUserRole !== undefined
   });
 
   if (source_id) return null;
 
   return (
-    <div>
-      <label className="block text-sm font-medium mb-2">Source</label>
-      <select
-        value={selectedSource}
-        onChange={(e) => setSelectedSource(e.target.value)}
-        className="w-full p-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-success/20"
-        required
-      >
-        <option value="">Select a source</option>
+    <Select value={selectedSource} onValueChange={setSelectedSource}>
+      <SelectTrigger>
+        <SelectValue placeholder="Select source" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="all">All Sources</SelectItem>
         {sources.map((source) => (
-          <option key={source.id} value={source.id}>
+          <SelectItem key={source.id} value={source.id}>
             {source.name}
-          </option>
+          </SelectItem>
         ))}
-      </select>
-    </div>
+      </SelectContent>
+    </Select>
   );
-};
+}

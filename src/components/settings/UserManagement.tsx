@@ -49,8 +49,8 @@ export function UserManagement() {
       }
 
       const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id');
+        .from('budgetapp_profiles')
+        .select('*');
 
       if (profilesError) throw profilesError;
 

@@ -1,69 +1,54 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import type { Tables } from "@/integrations/supabase/client";
-
-type Category = Tables['categories']['Row'];
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "./ui/use-toast";
 
 interface CategorySelectorProps {
-  selectedCategory: string;
-  setSelectedCategory: (category: string) => void;
+  value: string | undefined;
+  onValueChange: (value: string) => void;
   sourceId: string;
 }
 
-export const CategorySelector = ({ 
-  selectedCategory, 
-  setSelectedCategory,
-  sourceId 
-}: CategorySelectorProps) => {
-  const { data: categories = [], isLoading } = useQuery({
+export function CategorySelector({ value, onValueChange, sourceId }: CategorySelectorProps) {
+  const { toast } = useToast();
+
+  const { data: categories = [] } = useQuery({
     queryKey: ['categories', sourceId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: categoriesData, error } = await supabase
+        .schema('budget')
         .from('categories')
-        .select('id, name, created_at')
+        .select('id, name')
         .eq('source_id', sourceId)
         .order('name');
-      
+
       if (error) {
         console.error('Error fetching categories:', error);
-        throw error;
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to load categories. Please try again.",
+        });
+        return [];
       }
-      
-      return data as Category[];
+
+      return categoriesData || [];
     },
     enabled: !!sourceId
   });
 
-  if (isLoading) {
-    return (
-      <div>
-        <label className="block text-sm font-medium mb-2">Category</label>
-        <select
-          disabled
-          className="w-full p-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-success/20 bg-gray-100"
-        >
-          <option>Loading categories...</option>
-        </select>
-      </div>
-    );
-  }
-
   return (
-    <div>
-      <label className="block text-sm font-medium mb-2">Category</label>
-      <select
-        value={selectedCategory}
-        onChange={(e) => setSelectedCategory(e.target.value)}
-        className="w-full p-3 rounded-xl border focus:outline-none focus:ring-2 focus:ring-success/20"
-        required
-      >
-        <option value="">Select a category</option>
+    <Select value={value} onValueChange={onValueChange}>
+      <SelectTrigger>
+        <SelectValue placeholder="Select category" />
+      </SelectTrigger>
+      <SelectContent>
         {categories.map((category) => (
-          <option key={category.id} value={category.id}>
+          <SelectItem key={category.id} value={category.id}>
             {category.name}
-          </option>
+          </SelectItem>
         ))}
-      </select>
-    </div>
+      </SelectContent>
+    </Select>
   );
-};
+}

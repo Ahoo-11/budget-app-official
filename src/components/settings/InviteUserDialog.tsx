@@ -28,7 +28,7 @@ export function InviteUserDialog({ onInviteSent }: { onInviteSent: () => void })
       if (!user) return null;
 
       const { data, error } = await supabase
-        .from('user_roles')
+        .from('budgetapp_user_roles')
         .select('role')
         .eq('user_id', user.id)
         .single();
@@ -42,7 +42,7 @@ export function InviteUserDialog({ onInviteSent }: { onInviteSent: () => void })
     queryKey: ['sources'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('sources')
+        .from('budgetapp_sources')
         .select('*')
         .order('name');
       
@@ -55,7 +55,7 @@ export function InviteUserDialog({ onInviteSent }: { onInviteSent: () => void })
     queryKey: ['existingUsers'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('profiles')
+        .from('budgetapp_profiles')
         .select('id, email');
       
       if (error) throw error;
@@ -79,7 +79,7 @@ export function InviteUserDialog({ onInviteSent }: { onInviteSent: () => void })
 
       // Update user role using upsert with proper conflict handling
       const { error: roleError } = await supabase
-        .from('user_roles')
+        .from('budgetapp_user_roles')
         .upsert(
           { user_id: userId, role },
           { 
@@ -92,7 +92,7 @@ export function InviteUserDialog({ onInviteSent }: { onInviteSent: () => void })
 
       // Update source permissions
       const { error: permError } = await supabase
-        .from('source_permissions')
+        .from('budgetapp_source_permissions')
         .upsert(
           {
             user_id: userId,

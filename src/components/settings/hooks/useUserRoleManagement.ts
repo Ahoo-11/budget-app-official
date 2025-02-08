@@ -21,7 +21,7 @@ export function useUserRoleManagement({
     setUpdating(true);
     try {
       const { error } = await supabase
-        .from('user_roles')
+        .from('budgetapp_user_roles')
         .update({ role: newRole })
         .eq('user_id', userId);
 
@@ -49,7 +49,7 @@ export function useUserRoleManagement({
     setUpdating(true);
     try {
       const { error } = await supabase
-        .from('profiles')
+        .from('budgetapp_profiles')
         .update({ status: 'approved' })
         .eq('id', userId);
 
@@ -77,7 +77,7 @@ export function useUserRoleManagement({
     setUpdating(true);
     try {
       const { error } = await supabase
-        .from('profiles')
+        .from('budgetapp_profiles')
         .update({ status: 'rejected' })
         .eq('id', userId);
 

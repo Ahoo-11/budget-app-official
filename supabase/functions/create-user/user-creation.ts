@@ -44,16 +44,16 @@ export async function createUserProfile(userId: string, email: string) {
   const supabaseAdmin = getSupabaseAdmin()
   console.log('Creating profile for user:', userId)
   
-  const { error } = await supabaseAdmin
-    .from('profiles')
+  const { error: profileError } = await supabaseAdmin
+    .from('budgetapp_profiles')
     .insert({
       id: userId,
       email: email
     })
 
-  if (error) {
-    console.error('Error creating profile:', error)
-    throw new Error(error.message)
+  if (profileError) {
+    console.error('Error creating profile:', profileError)
+    throw new Error(profileError.message)
   }
 }
 
