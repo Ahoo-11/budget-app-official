@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -20,8 +21,7 @@ export function SourceSelector({ selectedSource, setSelectedSource, source_id }:
       if (!user) return null;
 
       const { data: roleData, error: roleError } = await supabase
-        .schema('budget')
-        .from('user_roles')
+        .from('budgetapp_user_roles')
         .select('role')
         .eq('user_id', user.id)
         .single();
@@ -45,8 +45,7 @@ export function SourceSelector({ selectedSource, setSelectedSource, source_id }:
       // If user is admin or manager, they can see all sources
       if (currentUserRole === 'admin' || currentUserRole === 'manager') {
         const { data: allSources, error: sourcesError } = await supabase
-          .schema('budget')
-          .from('sources')
+          .from('budgetapp_sources')
           .select('*')
           .order('name');
 
@@ -65,8 +64,7 @@ export function SourceSelector({ selectedSource, setSelectedSource, source_id }:
 
       // For other users, only show sources they have permission for
       const { data: sourcePermissions, error: permError } = await supabase
-        .schema('budget')
-        .from('source_permissions')
+        .from('budgetapp_source_permissions')
         .select('source_id')
         .eq('user_id', user.id);
 
@@ -79,8 +77,7 @@ export function SourceSelector({ selectedSource, setSelectedSource, source_id }:
 
       const sourceIds = sourcePermissions.map(p => p.source_id);
       const { data: allowedSources, error: sourcesError } = await supabase
-        .schema('budget')
-        .from('sources')
+        .from('budgetapp_sources')
         .select('*')
         .in('id', sourceIds)
         .order('name');
