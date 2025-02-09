@@ -1,3 +1,4 @@
+
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from '@/types/database-types';
 
@@ -16,12 +17,15 @@ export const supabase = createClient<Database>(
   }
 );
 
+// Re-export createClient and Database type
+export { createClient } from '@supabase/supabase-js';
+export type { Database } from '@/types/database-types';
+
 // Add type helper for better type inference
-export type Schema = Database['budget'];
-export type Tables = Schema['Tables'];
-export type Enums = Schema['Enums'];
+export type Tables = Database['public']['Tables'];
+export type Enums = Database['public']['Enums'];
 
 // Type helpers for specific tables
-export type BillRow = Tables['bills']['Row'];
-export type BillInsert = Tables['bills']['Insert'];
-export type BillUpdate = Tables['bills']['Update'];
+export type BillRow = Tables['budgetapp_bills']['Row'];
+export type BillInsert = Tables['budgetapp_bills']['Insert'];
+export type BillUpdate = Tables['budgetapp_bills']['Update'];
