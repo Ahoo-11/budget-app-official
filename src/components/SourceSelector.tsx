@@ -24,7 +24,7 @@ export function SourceSelector({ selectedSource, setSelectedSource, source_id }:
         .from('budgetapp_user_roles')
         .select('role')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
       if (roleError) {
         console.error('Error fetching role:', roleError);

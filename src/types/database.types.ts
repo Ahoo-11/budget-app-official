@@ -9,6 +9,78 @@ export type Json =
 export interface Database {
   public: {
     Tables: {
+      budgetapp_user_roles: {
+        Row: {
+          id: string
+          user_id: string
+          role: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          role: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          role?: string
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      budgetapp_sources: {
+        Row: {
+          id: string
+          name: string
+          user_id: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          user_id: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          user_id?: string
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      budgetapp_categories: {
+        Row: {
+          id: string
+          source_id: string
+          name: string
+          type: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          source_id: string
+          name: string
+          type: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          source_id?: string
+          name?: string
+          type?: string
+          created_at?: string
+          updated_at?: string
+        }
+      }
       budgetapp_bills: {
         Row: {
           id: string
@@ -61,32 +133,6 @@ export interface Database {
           payment_method?: string
           date?: string
           session_id?: string | null
-          created_at?: string
-          updated_at?: string
-        }
-      }
-      budgetapp_categories: {
-        Row: {
-          id: string
-          source_id: string
-          name: string
-          type: string
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          source_id: string
-          name: string
-          type: string
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          source_id?: string
-          name?: string
-          type?: string
           created_at?: string
           updated_at?: string
         }
@@ -277,52 +323,30 @@ export interface Database {
           updated_at?: string
         }
       }
-      budgetapp_sources: {
-        Row: {
-          id: string
-          name: string
-          user_id: string
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          name: string
-          user_id: string
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          name?: string
-          user_id?: string
-          created_at?: string
-          updated_at?: string
-        }
-      }
-      budgetapp_user_roles: {
+      budgetapp_source_permissions: {
         Row: {
           id: string
           user_id: string
-          role: string
+          source_id: string
           created_at: string
           updated_at: string
         }
         Insert: {
           id?: string
           user_id: string
-          role: string
+          source_id: string
           created_at?: string
           updated_at?: string
         }
         Update: {
           id?: string
           user_id?: string
-          role?: string
+          source_id?: string
           created_at?: string
           updated_at?: string
         }
       }
+      
     }
     Views: {
       [_ in never]: never
@@ -335,3 +359,16 @@ export interface Database {
     }
   }
 }
+
+// Re-export createClient and Database type
+export { createClient } from '@supabase/supabase-js'
+export type { Database } from '@/types/database-types'
+
+// Add type helper for better type inference
+export type Tables = Database['public']['Tables']
+export type Enums = Database['public']['Enums']
+
+// Type helpers for specific tables
+export type UserRoleRow = Tables['budgetapp_user_roles']['Row']
+export type SourceRow = Tables['budgetapp_sources']['Row']
+export type CategoryRow = Tables['budgetapp_categories']['Row']
