@@ -44,23 +44,28 @@ export const ConsignmentGrid = ({
     queryKey: ["consignments", sourceId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("consignments")
-        .select(`
-          *,
-          measurement_unit:measurement_unit_id (
-            id,
-            name,
-            symbol
-          )
-        `)
+        .from("budgetapp_consignments")
+        .select("*")
         .eq("source_id", sourceId)
-        .order("name");
+        .order("date", { ascending: false });
       
       if (error) {
         console.error('Error fetching consignments:', error);
         throw error;
       }
-      return data as Consignment[];
+      if (!data) {
+        return [];
+      }
+      return data.map((consignment: any) => ({
+        id: consignment.id,
+        source_id: consignment.source_id,
+        name: consignment.name,
+        description: consignment.description,
+        price: consignment.price,
+        measurement_unit_id: consignment.measurement_unit_id,
+        measurement_unit: consignment.measurement_unit,
+        image_url: consignment.image_url,
+      }));
     },
     enabled: !propConsignments,
   });

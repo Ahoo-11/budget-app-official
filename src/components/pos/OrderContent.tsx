@@ -53,7 +53,7 @@ export const OrderContent = ({ sourceId, onProductSelect }: OrderContentProps) =
     queryFn: async () => {
       const { data, error } = await supabase
         .schema('budget')
-        .from("source_types")
+        .from("budgetapp_source_types")
         .select("*");
       if (error) throw error;
       return data as SourceType[];
@@ -66,7 +66,7 @@ export const OrderContent = ({ sourceId, onProductSelect }: OrderContentProps) =
     queryFn: async () => {
       const { data, error } = await supabase
         .schema('budget')
-        .from("sources")
+        .from("budgetapp_sources")
         .select("id, name")
         .eq("id", sourceId)
         .single();
@@ -91,7 +91,7 @@ export const OrderContent = ({ sourceId, onProductSelect }: OrderContentProps) =
     queryFn: async () => {
       const { data, error } = await supabase
         .schema('budget')
-        .from("products")
+        .from("budgetapp_products")
         .select(`
           id,
           source_id,
@@ -129,7 +129,7 @@ export const OrderContent = ({ sourceId, onProductSelect }: OrderContentProps) =
     queryFn: async () => {
       const { data, error } = await supabase
         .schema('budget')
-        .from("services")
+        .from("budgetapp_services")
         .select(`
           id,
           source_id,
@@ -152,7 +152,7 @@ export const OrderContent = ({ sourceId, onProductSelect }: OrderContentProps) =
     queryFn: async () => {
       const { data, error } = await supabase
         .schema('budget')
-        .from("consignments")
+        .from("budgetapp_consignments")
         .select(`
           id,
           source_id,

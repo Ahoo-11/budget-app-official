@@ -22,7 +22,7 @@ export const ExpenseInterface = ({ sourceId }: ExpenseInterfaceProps) => {
     queryKey: ['products', sourceId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('products')
+        .from('budgetapp_products')
         .select('*')
         .eq('source_id', sourceId)
         .order('name');

@@ -34,13 +34,13 @@ export function AppSidebar() {
 
       console.log('Current user:', user.email);
 
-      const { data: roleData, error: roleError } = await supabase
+      const { data: userRole, error: roleError } = await supabase
         .from('budgetapp_user_roles')
         .select('role')
         .eq('user_id', user.id)
         .single();
 
-      console.log('Role data:', roleData);
+      console.log('Role data:', userRole);
       console.log('Role error:', roleError);
 
       if (roleError) {
@@ -48,9 +48,9 @@ export function AppSidebar() {
         return null;
       }
 
-      const userRole = roleData?.role as UserRole ?? null;
-      console.log('Final user role:', userRole);
-      return userRole;
+      const userRoleValue = userRole?.role as UserRole ?? null;
+      console.log('Final user role:', userRoleValue);
+      return userRoleValue;
     }
   });
 
@@ -93,12 +93,13 @@ export function AppSidebar() {
     }
 
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('budgetapp_sources')
-        .insert({ 
+        .insert({
           name: newSourceName.trim(),
-          created_by: session.user.id
-        });
+          user_id: session.user.id
+        })
+        .select();
 
       if (error) throw error;
 

@@ -21,13 +21,21 @@ export const SupplierSelector = ({
   const { data: suppliers = [], isError } = useQuery({
     queryKey: ['suppliers'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('suppliers')
+      const userId = supabase.auth.user().id;
+      const { data: suppliers } = await supabase
+        .from('budgetapp_payers')
         .select('*')
+        .eq('user_id', userId)
         .order('name');
       
-      if (error) throw error;
-      return data;
+      if (!suppliers) {
+        throw new Error('Failed to fetch suppliers');
+      }
+
+      return suppliers.map((supplier) => ({
+        id: supplier.id,
+        name: supplier.name,
+      }));
     }
   });
 

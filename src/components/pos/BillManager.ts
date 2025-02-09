@@ -8,7 +8,7 @@ export const useBillManager = (sourceId: string) => {
 
   const getActiveSession = async () => {
     const { data: activeSession, error } = await supabase
-      .from('sessions')
+      .from('budgetapp_sessions')
       .select('id')
       .eq('source_id', sourceId)
       .eq('status', 'active')
@@ -34,16 +34,33 @@ export const useBillManager = (sourceId: string) => {
         return null;
       }
 
+      const userId = (await supabase.auth.getUser()).data.user?.id;
+      const billItems = serializeBillItems(items);
+      const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+      const discount = 0;
+      const gst = 0;
+      const total = subtotal - discount + gst;
+      const paidAmount = 0;
+      const status = "pending";
+      const paymentMethod = "";
+      const date = new Date().toISOString();
+      const sessionId = activeSession.id;
+
       const { data: bill, error } = await supabase
-        .from("bills")
+        .from('budgetapp_bills')
         .insert({
           source_id: sourceId,
-          items: serializeBillItems(items),
-          status: "pending",
-          total: items.reduce((sum, item) => sum + item.price * item.quantity, 0),
-          user_id: (await supabase.auth.getUser()).data.user?.id,
-          date: new Date().toISOString(),
-          session_id: activeSession.id
+          user_id: userId,
+          items: billItems,
+          subtotal: subtotal,
+          discount: discount,
+          gst: gst,
+          total: total,
+          paid_amount: paidAmount,
+          status: status,
+          payment_method: paymentMethod,
+          date: date,
+          session_id: sessionId
         })
         .select()
         .single();

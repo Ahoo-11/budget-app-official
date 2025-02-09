@@ -45,17 +45,20 @@ export const OrderCart = ({
     handleDateChange,
   } = useBillUpdates();
 
-  const { data: activeSession } = useQuery({
+  const { data: activeSession, error } = useQuery({
     queryKey: ['active-session', sourceId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('sessions')
+        .from('budgetapp_sessions')
         .select('*')
         .eq('source_id', sourceId)
         .eq('status', 'active')
-        .maybeSingle();
+        .single();
 
       if (error) throw error;
+      if (!data) {
+        throw new Error('No active session found');
+      }
       return data;
     },
   });

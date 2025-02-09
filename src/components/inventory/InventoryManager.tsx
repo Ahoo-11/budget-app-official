@@ -24,17 +24,23 @@ export const InventoryManager = ({ sourceId }: InventoryManagerProps) => {
   const { data: inventory = [] } = useQuery({
     queryKey: ['inventory', sourceId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('products')
+      const { data: products } = await supabase
+        .from('budgetapp_products')
         .select('*')
         .eq('source_id', sourceId)
         .eq('category', 'inventory')
         .order('name');
       
-      if (error) throw error;
-      return (data as Product[]).map(item => ({
-        ...item,
-        product_type: item.product_type as 'basic' | 'composite'
+      if (!products) {
+        return []
+      }
+
+      return products.map(product => ({
+        id: product.id,
+        name: product.name,
+        productType: product.product_type,
+        currentStock: product.current_stock,
+        unitPrice: product.unit_price
       }));
     }
   });

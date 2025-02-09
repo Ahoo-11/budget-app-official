@@ -35,7 +35,7 @@ export const useCartManager = ({
       if (!user) throw new Error("User not authenticated");
 
       const { data: activeSession } = await supabase
-        .from('sessions')
+        .from('budgetapp_sessions')
         .select('id')
         .eq('source_id', sourceId)
         .eq('status', 'active')
@@ -47,7 +47,7 @@ export const useCartManager = ({
       }
 
       const { data: bill, error: billError } = await supabase
-        .from('bills')
+        .from('budgetapp_bills')
         .insert({
           source_id: sourceId,
           user_id: user.id,
@@ -79,16 +79,17 @@ export const useCartManager = ({
 
       if (stockMovements.length > 0) {
         const { error: stockError } = await supabase
-          .from('stock_movements')
+          .from('budgetapp_stock_movements')
           .insert(stockMovements);
 
         if (stockError) throw stockError;
 
         for (const product of selectedProducts.filter(item => item.type === 'product')) {
+          const newStock = product.current_stock - product.quantity;
           const { error: updateError } = await supabase
-            .from('products')
+            .from('budgetapp_products')
             .update({
-              current_stock: product.current_stock - product.quantity
+              current_stock: newStock
             })
             .eq('id', product.id);
 

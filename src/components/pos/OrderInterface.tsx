@@ -10,18 +10,10 @@ import { supabase } from "@/integrations/supabase/client";
 interface Product {
   id: string;
   name: string;
-  price: number;
-  type: "product";
+  productType: string;
+  unitPrice: number;
+  currentStock: number;
   source_id: string;
-  current_stock: number;
-  purchase_cost: number | null;
-  category?: string;
-  description?: string;
-  measurement_unit?: {
-    id: string;
-    name: string;
-    symbol: string;
-  };
 }
 
 export const OrderInterface = () => {
@@ -33,21 +25,23 @@ export const OrderInterface = () => {
     enabled: !!sourceId,
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("products")
-        .select(`
-          *,
-          measurement_unit:measurement_unit_id (
-            id,
-            name,
-            symbol
-          )
-        `)
-        .eq("source_id", sourceId);
+        .from("budgetapp_products")
+        .select("*")
+        .eq("source_id", sourceId)
+        .order("name");
+
+      if (!data) {
+        return [];
+      }
 
       if (error) throw error;
       return data.map(product => ({
-        ...product,
-        type: "product" as const
+        id: product.id,
+        name: product.name,
+        productType: product.product_type,
+        unitPrice: product.unit_price,
+        currentStock: product.current_stock,
+        source_id: product.source_id,
       }));
     },
   });
@@ -72,14 +66,14 @@ export const OrderInterface = () => {
         id: product.id,
         type: "product",
         name: product.name,
-        price: product.price,
+        price: product.unitPrice,
         quantity: 1,
         source_id: product.source_id,
-        current_stock: product.current_stock,
-        purchase_cost: product.purchase_cost,
-        category: product.category,
-        description: product.description,
-        measurement_unit: product.measurement_unit,
+        current_stock: product.currentStock,
+        purchase_cost: null,
+        category: undefined,
+        description: undefined,
+        measurement_unit: undefined,
       };
 
       return [...prev, billProduct];

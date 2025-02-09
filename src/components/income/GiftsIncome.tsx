@@ -20,19 +20,24 @@ export function GiftsIncome({ sourceId }: { sourceId: string }) {
       const giftsType = types.find(t => t.name === "Gifts and Grants");
       if (!giftsType || !isTypeEnabled(giftsType.id)) return [];
 
-      const { data, error } = await supabase
-        .from("income_entries")
-        .select(`
-          *,
-          type_subcategories (
-            name
-          )
-        `)
-        .eq("source_id", sourceId)
-        .eq("type_id", giftsType.id);
+      const typeId = giftsType.id;
 
-      if (error) throw error;
-      return data;
+      const { data: incomeEntries } = await supabase
+        .from('budgetapp_income_entries')
+        .select('*')
+        .eq('source_id', sourceId)
+        .eq('type_id', typeId)
+
+      if (!incomeEntries) {
+        return []
+      }
+
+      return incomeEntries.map(entry => ({
+        id: entry.id,
+        amount: entry.amount,
+        description: entry.description,
+        date: entry.date
+      }))
     },
     enabled: types.length > 0,
   });
@@ -62,7 +67,7 @@ export function GiftsIncome({ sourceId }: { sourceId: string }) {
       <ul>
         {entries.map(entry => (
           <li key={entry.id}>
-            {entry.amount} - {entry.type_subcategories?.name}
+            {entry.amount} - {entry.description}
           </li>
         ))}
       </ul>

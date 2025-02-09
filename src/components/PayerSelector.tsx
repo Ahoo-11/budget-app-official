@@ -61,7 +61,7 @@ export const PayerSelector = ({ selectedPayer, setSelectedPayer }: PayerSelector
     queryFn: async () => {
       const { data, error } = await supabase
         .schema('budget')
-        .from('sources')
+        .from('budgetapp_sources')
         .select('id, name, user_id, created_at')
         .order('name');
       
@@ -81,7 +81,7 @@ export const PayerSelector = ({ selectedPayer, setSelectedPayer }: PayerSelector
 
       const { data, error } = await supabase
         .schema('budget')
-        .from('sources')
+        .from('budgetapp_sources')
         .insert({
           name,
           user_id: session.user.id

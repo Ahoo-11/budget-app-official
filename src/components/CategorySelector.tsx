@@ -16,9 +16,8 @@ export function CategorySelector({ value, onValueChange, sourceId }: CategorySel
     queryKey: ['categories', sourceId],
     queryFn: async () => {
       const { data: categoriesData, error } = await supabase
-        .schema('budget')
-        .from('categories')
-        .select('id, name')
+        .from('budgetapp_categories')
+        .select('*')
         .eq('source_id', sourceId)
         .order('name');
 

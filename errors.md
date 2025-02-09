@@ -1,6 +1,6 @@
 Build error
 
-today at 7:44 PM
+last Friday at 7:44 PM
 
 
 src/App.tsx(112,29): error TS2322: Type 'SupabaseClient<Database, "public" extends keyof Database ? "public" : string & keyof Database, Database[SchemaName] extends GenericSchema ? Database[SchemaName] : any>' is not assignable to type 'SupabaseClient<any, "public", any>'.

@@ -14,7 +14,7 @@ import ServicesPage from "./pages/ServicesPage";
 import { AccountSettings } from "./components/AccountSettings";
 import AuthPage from "./pages/Auth";
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { createClient, Database } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
 import { SessionContextProvider } from "@supabase/auth-helpers-react";
 import { useToast } from "./components/ui/use-toast";
@@ -27,6 +27,11 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+const supabase = createClient<Database>(
+  process.env.REACT_APP_SUPABASE_URL!,
+  process.env.REACT_APP_SUPABASE_ANON_KEY!
+)
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);

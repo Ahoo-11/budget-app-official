@@ -28,7 +28,7 @@ export const QuickItemForm = ({ sourceId, onSuccess }: QuickItemFormProps) => {
 
     try {
       const { data, error } = await supabase
-        .from('products')
+        .from('budgetapp_products')
         .insert({
           source_id: sourceId,
           name,
@@ -43,6 +43,10 @@ export const QuickItemForm = ({ sourceId, onSuccess }: QuickItemFormProps) => {
         .single();
 
       if (error) throw error;
+
+      if (!data) {
+        throw new Error('Product not found')
+      }
 
       toast({
         title: "Success",
