@@ -9,15 +9,12 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      bills: {
+      budgetapp_bills: {
         Row: {
           created_at: string | null
           created_by: string | null
           due_date: string | null
-          id: string | null
+          id: string
           paid_amount: number | null
           source_id: string | null
           status: string | null
@@ -29,7 +26,7 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           due_date?: string | null
-          id?: string | null
+          id?: string
           paid_amount?: number | null
           source_id?: string | null
           status?: string | null
@@ -41,7 +38,7 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           due_date?: string | null
-          id?: string | null
+          id?: string
           paid_amount?: number | null
           source_id?: string | null
           status?: string | null
@@ -54,83 +51,206 @@ export type Database = {
             foreignKeyName: "budgetapp_bills_source_id_fkey"
             columns: ["source_id"]
             isOneToOne: false
-            referencedRelation: "sources"
+            referencedRelation: "budgetapp_sources"
             referencedColumns: ["id"]
           },
         ]
       }
-      categories: {
+      budgetapp_budgets: {
         Row: {
           created_at: string | null
-          id: string | null
-          name: string | null
-          parent_id: string | null
+          description: string | null
+          id: string
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      budgetapp_categories: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
           source_id: string | null
           updated_at: string | null
         }
         Insert: {
           created_at?: string | null
-          id?: string | null
-          name?: string | null
-          parent_id?: string | null
+          id?: string
+          name: string
           source_id?: string | null
           updated_at?: string | null
         }
         Update: {
           created_at?: string | null
-          id?: string | null
-          name?: string | null
-          parent_id?: string | null
+          id?: string
+          name?: string
           source_id?: string | null
           updated_at?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "budgetapp_categories_parent_id_fkey"
-            columns: ["parent_id"]
-            isOneToOne: false
-            referencedRelation: "categories"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "budgetapp_categories_source_id_fkey"
             columns: ["source_id"]
             isOneToOne: false
-            referencedRelation: "sources"
+            referencedRelation: "budgetapp_sources"
             referencedColumns: ["id"]
           },
         ]
       }
-      payers: {
+      budgetapp_expenses: {
         Row: {
           created_at: string | null
-          id: string | null
-          name: string | null
+          created_by: string | null
+          date: string | null
+          id: string
+          invoice_no: string | null
+          source_id: string | null
+          status: string | null
+          supplier_id: string | null
+          total_amount: number | null
           updated_at: string | null
-          user_id: string | null
         }
         Insert: {
           created_at?: string | null
-          id?: string | null
-          name?: string | null
+          created_by?: string | null
+          date?: string | null
+          id?: string
+          invoice_no?: string | null
+          source_id?: string | null
+          status?: string | null
+          supplier_id?: string | null
+          total_amount?: number | null
           updated_at?: string | null
-          user_id?: string | null
         }
         Update: {
           created_at?: string | null
-          id?: string | null
-          name?: string | null
+          created_by?: string | null
+          date?: string | null
+          id?: string
+          invoice_no?: string | null
+          source_id?: string | null
+          status?: string | null
+          supplier_id?: string | null
+          total_amount?: number | null
           updated_at?: string | null
-          user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "budgetapp_expenses_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "budgetapp_sources"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budgetapp_expenses_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "budgetapp_suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
-      profiles: {
+      budgetapp_payers: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+          source_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+          source_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+          source_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budgetapp_payers_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "budgetapp_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      budgetapp_products: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          current_stock: number | null
+          description: string | null
+          id: string
+          last_purchase_date: string | null
+          last_purchase_price: number | null
+          name: string
+          source_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          current_stock?: number | null
+          description?: string | null
+          id?: string
+          last_purchase_date?: string | null
+          last_purchase_price?: number | null
+          name: string
+          source_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          current_stock?: number | null
+          description?: string | null
+          id?: string
+          last_purchase_date?: string | null
+          last_purchase_price?: number | null
+          name?: string
+          source_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budgetapp_products_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "budgetapp_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      budgetapp_profiles: {
         Row: {
           created_at: string | null
           display_name: string | null
           email: string | null
-          id: string | null
+          id: string
           status: string | null
           updated_at: string | null
         }
@@ -138,7 +258,7 @@ export type Database = {
           created_at?: string | null
           display_name?: string | null
           email?: string | null
-          id?: string | null
+          id: string
           status?: string | null
           updated_at?: string | null
         }
@@ -146,30 +266,65 @@ export type Database = {
           created_at?: string | null
           display_name?: string | null
           email?: string | null
-          id?: string | null
+          id?: string
           status?: string | null
           updated_at?: string | null
         }
         Relationships: []
       }
-      source_permissions: {
+      budgetapp_sessions: {
         Row: {
           created_at: string | null
-          id: string | null
+          id: string
+          source_id: string
+          start_time: string | null
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          source_id: string
+          start_time?: string | null
+          status: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          source_id?: string
+          start_time?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budgetapp_sessions_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "budgetapp_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      budgetapp_source_permissions: {
+        Row: {
+          created_at: string | null
+          id: string
           source_id: string | null
           updated_at: string | null
           user_id: string | null
         }
         Insert: {
           created_at?: string | null
-          id?: string | null
+          id?: string
           source_id?: string | null
           updated_at?: string | null
           user_id?: string | null
         }
         Update: {
           created_at?: string | null
-          id?: string | null
+          id?: string
           source_id?: string | null
           updated_at?: string | null
           user_id?: string | null
@@ -179,44 +334,126 @@ export type Database = {
             foreignKeyName: "budgetapp_source_permissions_source_id_fkey"
             columns: ["source_id"]
             isOneToOne: false
-            referencedRelation: "sources"
+            referencedRelation: "budgetapp_sources"
             referencedColumns: ["id"]
           },
         ]
       }
-      sources: {
+      budgetapp_sources: {
         Row: {
           created_at: string | null
-          id: string | null
-          name: string | null
+          created_by: string | null
+          id: string
+          name: string
           updated_at: string | null
-          user_id: string | null
         }
         Insert: {
           created_at?: string | null
-          id?: string | null
-          name?: string | null
+          created_by?: string | null
+          id?: string
+          name: string
           updated_at?: string | null
-          user_id?: string | null
         }
         Update: {
           created_at?: string | null
-          id?: string | null
-          name?: string | null
+          created_by?: string | null
+          id?: string
+          name?: string
           updated_at?: string | null
-          user_id?: string | null
         }
         Relationships: []
       }
-      transactions: {
+      budgetapp_stock_movements: {
+        Row: {
+          created_at: string | null
+          id: string
+          movement_date: string | null
+          movement_type: string
+          product_id: string | null
+          quantity: number
+          source_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          movement_date?: string | null
+          movement_type: string
+          product_id?: string | null
+          quantity: number
+          source_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          movement_date?: string | null
+          movement_type?: string
+          product_id?: string | null
+          quantity?: number
+          source_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budgetapp_stock_movements_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "budgetapp_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "budgetapp_stock_movements_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "budgetapp_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      budgetapp_suppliers: {
+        Row: {
+          contact: string | null
+          created_at: string | null
+          id: string
+          name: string
+          source_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          contact?: string | null
+          created_at?: string | null
+          id?: string
+          name: string
+          source_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          contact?: string | null
+          created_at?: string | null
+          id?: string
+          name?: string
+          source_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budgetapp_suppliers_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "budgetapp_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      budgetapp_transactions: {
         Row: {
           amount: number | null
           category: string | null
           created_at: string | null
           date: string | null
           description: string | null
-          id: string | null
-          payer_id: string | null
+          id: string
           source_id: string | null
           type: string | null
           updated_at: string | null
@@ -228,8 +465,7 @@ export type Database = {
           created_at?: string | null
           date?: string | null
           description?: string | null
-          id?: string | null
-          payer_id?: string | null
+          id?: string
           source_id?: string | null
           type?: string | null
           updated_at?: string | null
@@ -241,8 +477,7 @@ export type Database = {
           created_at?: string | null
           date?: string | null
           description?: string | null
-          id?: string | null
-          payer_id?: string | null
+          id?: string
           source_id?: string | null
           type?: string | null
           updated_at?: string | null
@@ -250,39 +485,32 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "budgetapp_transactions_payer_id_fkey"
-            columns: ["payer_id"]
-            isOneToOne: false
-            referencedRelation: "payers"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "budgetapp_transactions_source_id_fkey"
             columns: ["source_id"]
             isOneToOne: false
-            referencedRelation: "sources"
+            referencedRelation: "budgetapp_sources"
             referencedColumns: ["id"]
           },
         ]
       }
-      user_roles: {
+      budgetapp_user_roles: {
         Row: {
           created_at: string | null
-          id: string | null
+          id: string
           role: string | null
           updated_at: string | null
           user_id: string | null
         }
         Insert: {
           created_at?: string | null
-          id?: string | null
+          id?: string
           role?: string | null
           updated_at?: string | null
           user_id?: string | null
         }
         Update: {
           created_at?: string | null
-          id?: string | null
+          id?: string
           role?: string | null
           updated_at?: string | null
           user_id?: string | null
@@ -290,8 +518,23 @@ export type Database = {
         Relationships: []
       }
     }
-    Functions: {
+    Views: {
       [_ in never]: never
+    }
+    Functions: {
+      get_user_role: {
+        Args: {
+          user_id: string
+        }
+        Returns: string
+      }
+      has_source_access: {
+        Args: {
+          user_id: string
+          source_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
