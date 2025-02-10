@@ -16,6 +16,7 @@ export type Database = {
           due_date: string | null
           id: string
           paid_amount: number | null
+          payer_id: string | null
           source_id: string | null
           status: string | null
           title: string | null
@@ -28,6 +29,7 @@ export type Database = {
           due_date?: string | null
           id?: string
           paid_amount?: number | null
+          payer_id?: string | null
           source_id?: string | null
           status?: string | null
           title?: string | null
@@ -40,6 +42,7 @@ export type Database = {
           due_date?: string | null
           id?: string
           paid_amount?: number | null
+          payer_id?: string | null
           source_id?: string | null
           status?: string | null
           title?: string | null
@@ -48,10 +51,24 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "budgetapp_bills_payer_id_fkey"
+            columns: ["payer_id"]
+            isOneToOne: false
+            referencedRelation: "budgetapp_payers"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "budgetapp_bills_source_id_fkey"
             columns: ["source_id"]
             isOneToOne: false
             referencedRelation: "budgetapp_sources"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_bills_payer"
+            columns: ["payer_id"]
+            isOneToOne: false
+            referencedRelation: "budgetapp_payers"
             referencedColumns: ["id"]
           },
         ]

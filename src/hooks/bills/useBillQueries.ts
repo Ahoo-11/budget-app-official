@@ -1,3 +1,4 @@
+
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Bill, BillItemJson } from "@/types/bills";
@@ -19,7 +20,13 @@ export function useBillQueries(sourceId: string | null) {
 
       let query = supabase
         .from('budgetapp_bills')
-        .select('*, budgetapp_payers(name)')
+        .select(`
+          *,
+          payer:budgetapp_payers(
+            id,
+            name
+          )
+        `)
         .order('created_at', { ascending: false });
       
       if (sourceId && sourceId !== 'all') {
@@ -42,7 +49,7 @@ export function useBillQueries(sourceId: string | null) {
       
       return (data || []).map(bill => ({
         ...bill,
-        payer_name: bill.payers?.name,
+        payer_name: bill.payer?.name,
         items: Array.isArray(bill.items) 
           ? (bill.items as any[]).map(item => ({
               id: item.id || '',
