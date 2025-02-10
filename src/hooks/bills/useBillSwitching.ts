@@ -3,6 +3,16 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { BillProduct, BillStatus } from "@/types/bills";
 import { useSession } from "@supabase/auth-helpers-react";
+import type { Database } from "@/types/supabase";
+import { PostgrestError } from "@supabase/supabase-js";
+
+type Tables = Database['public']['Tables'];
+type BillRow = Tables['budgetapp_bills']['Row'] & {
+  items?: BillProduct[];
+};
+type BillInsert = Omit<Tables['budgetapp_bills']['Insert'], 'status'> & {
+  status: BillStatus;
+};
 
 export function useBillSwitching(
   sourceId: string | null,
@@ -15,14 +25,32 @@ export function useBillSwitching(
 
   const initializeActiveBill = useCallback(async () => {
     try {
-      if (!sourceId || sourceId === 'all' || !session?.user?.id) {
-        console.log('Missing required data for bill initialization');
+      if (!sourceId) {
+        console.log('Waiting for source selection...');
+        return;
+      }
+      
+      if (!session?.user?.id) {
+        console.log('Please log in to view bills');
+        return;
+      }
+
+      // Check if user has access to this source
+      const { data: sourceAccess, error: accessError } = await supabase
+        .from('budgetapp_sources')
+        .select('id')
+        .eq('id', sourceId)
+        .eq('user_id', session.user.id)
+        .single();
+
+      if (accessError || !sourceAccess) {
+        console.log('No access to this source');
         return;
       }
 
       // Find any existing active bill for this source
       const { data: existingBills, error: fetchError } = await supabase
-        .from('bills')
+        .from('budgetapp_bills')
         .select('*')
         .eq('source_id', sourceId)
         .eq('status', 'active')
@@ -32,19 +60,19 @@ export function useBillSwitching(
       if (fetchError) throw fetchError;
 
       if (existingBills && existingBills.length > 0) {
-        const activeBill = existingBills[0];
+        const activeBill = existingBills[0] as BillRow;
         setActiveBillId(activeBill.id);
-        const items = activeBill.items as unknown as BillProduct[];
-        setSelectedProducts(items);
+        setSelectedProducts(activeBill.items || []);
         console.log('Found existing active bill:', activeBill.id);
       } else {
         await createNewBill();
       }
-    } catch (error: any) {
-      console.error('Error initializing active bill:', error);
+    } catch (error: unknown) {
+      const err = error as Error;
+      console.error('Error initializing active bill:', err);
       toast({
         title: "Error initializing bill",
-        description: error.message,
+        description: err.message,
         variant: "destructive",
       });
     }
@@ -53,27 +81,23 @@ export function useBillSwitching(
   const createNewBill = async () => {
     if (!sourceId || !session?.user?.id) return null;
 
-    const newBill = {
+    const newBill: BillInsert = {
       source_id: sourceId,
-      user_id: session.user.id,
-      items: [],
-      subtotal: 0,
-      gst: 0,
-      total: 0,
-      status: 'active' as BillStatus,
-      paid_amount: 0,
-      date: new Date().toISOString(),
+      description: 'New Bill',
+      bill_date: new Date().toISOString(),
+      status: 'active',
+      total: 0
     };
 
     const { data: createdBill, error } = await supabase
-      .from('bills')
-      .insert([newBill])
+      .from('budgetapp_bills')
+      .insert(newBill)
       .select()
       .single();
 
     if (error) throw error;
 
-    return createdBill;
+    return createdBill as BillRow;
   };
 
   const handleNewBill = useCallback(async () => {
@@ -97,11 +121,12 @@ export function useBillSwitching(
           description: "Successfully created a new bill",
         });
       }
-    } catch (error: any) {
-      console.error('Error creating new bill:', error);
+    } catch (error: unknown) {
+      const err = error as Error;
+      console.error('Error creating new bill:', err);
       toast({
         title: "Error creating bill",
-        description: error.message,
+        description: err.message,
         variant: "destructive",
       });
     }
@@ -119,7 +144,7 @@ export function useBillSwitching(
       }
 
       const { data: bill, error } = await supabase
-        .from('bills')
+        .from('budgetapp_bills')
         .select('*')
         .eq('id', billId)
         .eq('status', 'active')
@@ -128,19 +153,20 @@ export function useBillSwitching(
       if (error) throw error;
 
       if (bill) {
-        setActiveBillId(bill.id);
-        const items = bill.items as unknown as BillProduct[];
-        setSelectedProducts(items);
+        const billWithItems = bill as BillRow;
+        setActiveBillId(billWithItems.id);
+        setSelectedProducts(billWithItems.items || []);
         toast({
           title: "Switched bill",
-          description: `Now viewing bill #${bill.id.slice(0, 8)}`,
+          description: `Now viewing bill #${billWithItems.id.slice(0, 8)}`,
         });
       }
-    } catch (error: any) {
-      console.error('Error switching bill:', error);
+    } catch (error: unknown) {
+      const err = error as Error;
+      console.error('Error switching bill:', err);
       toast({
         title: "Error switching bill",
-        description: error.message,
+        description: err.message,
         variant: "destructive",
       });
     }

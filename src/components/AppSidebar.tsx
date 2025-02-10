@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Menu, Plus } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Menu, Settings, Plus } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -9,9 +9,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "./ui/use-toast";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
-import { Database } from "@/types/database.types";
+import type { Database } from "@/types/supabase";
 
-type UserRole = 'controller' | 'admin' | 'viewer';
+type UserRole = Database['public']['Enums']['budgetapp_user_role'];
 type Tables = Database['public']['Tables'];
 
 interface SidebarNavigationProps {
@@ -34,27 +34,22 @@ export function AppSidebar() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return null;
 
-      console.log('Current user:', user.email);
-
       const { data: userRole, error: roleError } = await supabase
         .from('budgetapp_user_roles')
         .select('role')
         .eq('user_id', user.id)
         .single();
 
-      console.log('Role data:', userRole);
-      console.log('Role error:', roleError);
-
       if (roleError) {
         console.error('Error fetching role:', roleError);
         return null;
       }
 
-      return userRole?.role as UserRole ?? null;
+      return userRole?.role ?? 'viewer';
     },
   });
 
-  const { data: sources = [] } = useQuery({
+  const { data: sources = [] } = useQuery<Tables['budgetapp_sources']['Row'][]>({
     queryKey: ['sources'],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -62,8 +57,7 @@ export function AppSidebar() {
 
       const { data: sources, error } = await supabase
         .from('budgetapp_sources')
-        .select('*')
-        .eq('user_id', user.id);
+        .select('*');
 
       if (error) {
         console.error('Error fetching sources:', error);
@@ -72,6 +66,8 @@ export function AppSidebar() {
 
       return sources;
     },
+    refetchOnWindowFocus: true,
+    refetchInterval: 5000
   });
 
   const handleAddSource = async () => {
@@ -94,14 +90,17 @@ export function AppSidebar() {
       return;
     }
 
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('budgetapp_sources')
       .insert({
         name: newSourceName,
-        user_id: user.id,
-      });
+        user_id: user.id
+      })
+      .select()
+      .single();
 
     if (error) {
+      console.error('Error adding source:', error);
       toast({
         title: "Error",
         description: "Failed to add source",
@@ -131,43 +130,87 @@ export function AppSidebar() {
     navigate("/login");
   };
 
+  const sidebarContent = (
+    <div className="space-y-4 py-4">
+      <div className="px-3 py-2">
+        <h2 className="mb-2 px-4 text-lg font-semibold">Navigation</h2>
+        <div className="space-y-1">
+          <Link
+            to="/"
+            className="flex items-center rounded-lg px-3 py-2 text-gray-900 transition-all hover:bg-gray-100 dark:text-gray-100 dark:hover:bg-gray-800"
+          >
+            Dashboard
+          </Link>
+          
+          {sources.map((source) => (
+            <Link
+              key={source.id}
+              to={`/source/${source.id}`}
+              className="flex items-center rounded-lg px-3 py-2 text-gray-900 transition-all hover:bg-gray-100 dark:text-gray-100 dark:hover:bg-gray-800"
+            >
+              {source.name}
+            </Link>
+          ))}
+          
+          <Button
+            onClick={() => setIsAddSourceOpen(true)}
+            className="w-full justify-start"
+            variant="ghost"
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Add Source
+          </Button>
+
+          <Link
+            to="/settings"
+            className="flex items-center rounded-lg px-3 py-2 text-gray-900 transition-all hover:bg-gray-100 dark:text-gray-100 dark:hover:bg-gray-800"
+          >
+            <Settings className="mr-2 h-4 w-4" />
+            Settings
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <>
+      {/* Mobile Sidebar */}
       <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-        <SheetTrigger asChild>
-          <Button variant="outline" size="icon" className="lg:hidden">
+        <SheetTrigger asChild className="lg:hidden">
+          <Button variant="ghost" size="icon" className="lg:hidden">
             <Menu className="h-6 w-6" />
           </Button>
         </SheetTrigger>
-        <SheetContent side="left" className="w-64">
-          <SidebarNavigation
-            userRole={currentUserRole}
-            onLogout={handleLogout}
-            onCloseMobileMenu={() => setIsMobileMenuOpen(false)}
-          />
+        
+        <SheetContent side="left" className="w-[200px] p-0">
+          {sidebarContent}
         </SheetContent>
       </Sheet>
 
-      <nav className="hidden lg:block">
-        <SidebarNavigation
-          userRole={currentUserRole}
-          onLogout={handleLogout}
-          onCloseMobileMenu={() => setIsMobileMenuOpen(false)}
-        />
-      </nav>
+      {/* Desktop Sidebar */}
+      <div className="hidden lg:block fixed left-0 top-0 w-[200px] h-screen border-r">
+        {sidebarContent}
+      </div>
 
+      {/* Add Source Dialog */}
       <Dialog open={isAddSourceOpen} onOpenChange={setIsAddSourceOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Add New Source</DialogTitle>
+            <DialogDescription>
+              Enter a name for your new source
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <Input
-              placeholder="Source name"
+              placeholder="Source Name"
               value={newSourceName}
               onChange={(e) => setNewSourceName(e.target.value)}
             />
-            <Button onClick={handleAddSource}>Add Source</Button>
+            <Button onClick={handleAddSource} className="w-full">
+              Add Source
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

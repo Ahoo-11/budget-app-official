@@ -1,9 +1,27 @@
-
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Bill, BillItemJson } from "@/types/bills";
+import { Bill, BillProduct } from "@/types/bills";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useToast } from "@/hooks/use-toast";
+import type { Database } from "@/types/supabase";
+import { PostgrestResponse } from "@supabase/supabase-js";
+
+type Tables = Database['public']['Tables'];
+type BillRow = Tables['budgetapp_bills']['Row'];
+
+interface BillWithPayer {
+  id: string;
+  amount: number;
+  description: string | null;
+  bill_date: string;
+  source_id: string | null;
+  created_at: string;
+  updated_at: string;
+  payer: {
+    id: string;
+    name: string;
+  } | null;
+}
 
 export function useBillQueries(sourceId: string | null) {
   const session = useSession();
@@ -22,7 +40,7 @@ export function useBillQueries(sourceId: string | null) {
         .from('budgetapp_bills')
         .select(`
           *,
-          payer:budgetapp_payers(
+          payer:budgetapp_payers!budgetapp_bills_payer_id_fkey (
             id,
             name
           )
@@ -47,27 +65,23 @@ export function useBillQueries(sourceId: string | null) {
       
       console.log('📦 Fetched bills data:', data);
       
-      return (data || []).map(bill => ({
-        ...bill,
-        payer_name: bill.payer?.name,
-        items: Array.isArray(bill.items) 
-          ? (bill.items as any[]).map(item => ({
-              id: item.id || '',
-              name: item.name || '',
-              price: Number(item.price) || 0,
-              quantity: Number(item.quantity) || 0,
-              type: item.type || '',
-              source_id: item.source_id || '',
-              category: item.category || '',
-              image_url: item.image_url || null,
-              description: item.description || null,
-              current_stock: Number(item.current_stock) || 0,
-              purchase_cost: Number(item.purchase_cost) || null,
-              income_type_id: item.income_type_id || null
-            } as BillItemJson))
-          : [],
-        status: bill.status as Bill['status']
-      })) as Bill[];
+      return (data as unknown as BillWithPayer[]).map((bill) => ({
+        id: bill.id,
+        source_id: bill.source_id || '',
+        user_id: session.user.id,
+        date: bill.bill_date,
+        created_at: bill.created_at,
+        items: [],  // Items will be loaded separately
+        discount: 0,
+        subtotal: bill.amount,
+        gst: 0,
+        total: bill.amount,
+        status: 'active',
+        payer_id: bill.payer?.id,
+        paid_amount: 0,
+        payment_method: 'cash',
+        payer_name: bill.payer?.name
+      } satisfies Bill));
     } catch (error) {
       console.error('❌ Error in fetchBills:', error);
       return [];
@@ -77,7 +91,7 @@ export function useBillQueries(sourceId: string | null) {
   const { data: bills = [], isLoading, error } = useQuery({
     queryKey: ['bills', sourceId],
     queryFn: fetchBills,
-    enabled: !!session?.user?.id,
+    enabled: !!session?.user?.id && !!sourceId && sourceId !== 'all',
     staleTime: 0,
     refetchOnMount: true,
     refetchOnWindowFocus: true,

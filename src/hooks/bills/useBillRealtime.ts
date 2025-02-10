@@ -3,14 +3,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { QueryClient } from "@tanstack/react-query";
 import { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
-import { BillDBRow } from "@/types/bills";
+import { BillDBRow, BillProduct } from "@/types/bills";
+import { Session } from '@supabase/supabase-js';
 
 export function useBillRealtime(
   sourceId: string | null,
   queryClient: QueryClient,
   activeBillId: string | null,
-  setSelectedProducts: (products: any[]) => void,
-  session: any
+  setSelectedProducts: (products: BillProduct[]) => void,
+  session: Session | null
 ) {
   const { toast } = useToast();
 
@@ -42,24 +43,37 @@ export function useBillRealtime(
   useEffect(() => {
     if (!session?.user?.id) return;
 
-    const channel = supabase
-      .channel('bills-channel')
-      .on<BillDBRow>(
-        'postgres_changes',
-        { 
-          event: '*',
-          schema: 'public',
-          table: 'bills',
-          filter: sourceId && sourceId !== 'all' 
-            ? `source_id=eq.${sourceId} and user_id=eq.${session.user.id}`
-            : `user_id=eq.${session.user.id}`
-        },
-        handleRealtimeUpdate
-      )
-      .subscribe();
+    const setupRealtimeSubscription = async () => {
+      const channel = supabase
+        .channel('bills-channel')
+        .on<BillDBRow>(
+          'postgres_changes',
+          { 
+            event: '*',
+            schema: 'public',
+            table: 'budgetapp_bills',
+            filter: sourceId && sourceId !== 'all' 
+              ? `source_id=eq.${sourceId} and created_by=eq.${session.user.id}`
+              : `created_by=eq.${session.user.id}`
+          },
+          handleRealtimeUpdate
+        )
+        .subscribe((status) => {
+          if (status === 'SUBSCRIBED') {
+            console.log('✅ Successfully subscribed to bills channel');
+          }
+          if (status === 'CHANNEL_ERROR') {
+            console.log('❌ Failed to subscribe to bills channel');
+            // Try to reconnect after a delay
+            setTimeout(setupRealtimeSubscription, 5000);
+          }
+        });
 
-    return () => {
-      supabase.removeChannel(channel);
+      return () => {
+        supabase.removeChannel(channel);
+      };
     };
+
+    setupRealtimeSubscription();
   }, [sourceId, handleRealtimeUpdate, session?.user?.id]);
 }

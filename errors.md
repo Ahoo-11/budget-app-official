@@ -1,61 +1,50 @@
-Build error
-
-today at 10:08 PM
-
-
-src/components/AppSidebar.tsx(38,15): error TS2769: No overload matches this call.
+src/components/AppSidebar.tsx(40,15): error TS2769: No overload matches this call.
   Overload 1 of 2, '(relation: never): PostgrestQueryBuilder<{ Tables: {}; Views: {}; Functions: {}; Enums: {}; CompositeTypes: {}; }, never, never, never>', gave the following error.
     Argument of type 'string' is not assignable to parameter of type 'never'.
   Overload 2 of 2, '(relation: never): PostgrestQueryBuilder<{ Tables: {}; Views: {}; Functions: {}; Enums: {}; CompositeTypes: {}; }, never, never, never>', gave the following error.
     Argument of type 'string' is not assignable to parameter of type 'never'.
-src/components/AppSidebar.tsx(51,29): error TS18047: 'userRole' is possibly 'null'.
-src/components/AppSidebar.tsx(61,15): error TS2769: No overload matches this call.
+src/components/AppSidebar.tsx(53,14): error TS18047: 'userRole' is possibly 'null'.
+src/components/AppSidebar.tsx(64,15): error TS2769: No overload matches this call.
   Overload 1 of 2, '(relation: never): PostgrestQueryBuilder<{ Tables: {}; Views: {}; Functions: {}; Enums: {}; CompositeTypes: {}; }, never, never, never>', gave the following error.
     Argument of type 'string' is not assignable to parameter of type 'never'.
   Overload 2 of 2, '(relation: never): PostgrestQueryBuilder<{ Tables: {}; Views: {}; Functions: {}; Enums: {}; CompositeTypes: {}; }, never, never, never>', gave the following error.
     Argument of type 'string' is not assignable to parameter of type 'never'.
-src/components/AppSidebar.tsx(97,15): error TS2769: No overload matches this call.
+src/components/AppSidebar.tsx(98,13): error TS2769: No overload matches this call.
   Overload 1 of 2, '(relation: never): PostgrestQueryBuilder<{ Tables: {}; Views: {}; Functions: {}; Enums: {}; CompositeTypes: {}; }, never, never, never>', gave the following error.
     Argument of type 'string' is not assignable to parameter of type 'never'.
   Overload 2 of 2, '(relation: never): PostgrestQueryBuilder<{ Tables: {}; Views: {}; Functions: {}; Enums: {}; CompositeTypes: {}; }, never, never, never>', gave the following error.
     Argument of type 'string' is not assignable to parameter of type 'never'.
-src/components/AppSidebar.tsx(98,10): error TS2769: No overload matches this call.
+src/components/AppSidebar.tsx(99,8): error TS2769: No overload matches this call.
   Overload 1 of 2, '(values: never, options?: { count?: "exact" | "planned" | "estimated"; }): PostgrestFilterBuilder<{ Tables: {}; Views: {}; Functions: {}; Enums: {}; CompositeTypes: {}; }, never, null, never, never>', gave the following error.
     Argument of type '{ name: string; user_id: string; }' is not assignable to parameter of type 'never'.
   Overload 2 of 2, '(values: never[], options?: { count?: "exact" | "planned" | "estimated"; defaultToNull?: boolean; }): PostgrestFilterBuilder<{ Tables: {}; Views: {}; Functions: {}; Enums: {}; CompositeTypes: {}; }, never, null, never, never>', gave the following error.
     Object literal may only specify known properties, and 'name' does not exist in type 'never[]'.
-src/components/AppSidebar.tsx(160,39): error TS2339: Property 'id' does not exist on type 'never'.
-src/components/AppSidebar.tsx(160,65): error TS2339: Property 'id' does not exist on type 'never'.
-src/components/AppSidebar.tsx(162,33): error TS2339: Property 'name' does not exist on type 'never'.
-src/components/AppSidebar.tsx(219,39): error TS2339: Property 'id' does not exist on type 'never'.
-src/components/AppSidebar.tsx(219,65): error TS2339: Property 'id' does not exist on type 'never'.
-src/components/AppSidebar.tsx(221,33): error TS2339: Property 'name' does not exist on type 'never'.
-src/components/CategorySelector.tsx(20,15): error TS2769: No overload matches this call.
+src/components/CategorySelector.tsx(24,15): error TS2769: No overload matches this call.
   Overload 1 of 2, '(relation: never): PostgrestQueryBuilder<{ Tables: {}; Views: {}; Functions: {}; Enums: {}; CompositeTypes: {}; }, never, never, never>', gave the following error.
     Argument of type 'string' is not assignable to parameter of type 'never'.
   Overload 2 of 2, '(relation: never): PostgrestQueryBuilder<{ Tables: {}; Views: {}; Functions: {}; Enums: {}; CompositeTypes: {}; }, never, never, never>', gave the following error.
     Argument of type 'string' is not assignable to parameter of type 'never'.
-src/components/PayerSelector.tsx(19,22): error TS2339: Property 'sources' does not exist on type '{}'.
-src/components/PayerSelector.tsx(20,24): error TS2339: Property 'user_roles' does not exist on type '{}'.
-src/components/PayerSelector.tsx(42,17): error TS2345: Argument of type '"budget"' is not assignable to parameter of type '"graphql_public" | "public"'.
-src/components/PayerSelector.tsx(43,15): error TS2769: No overload matches this call.
-  Overload 1 of 2, '(relation: never): PostgrestQueryBuilder<{ Tables: {}; Views: {}; Functions: { graphql: { Args: { operationName?: string; query?: string; variables?: Json; extensions?: Json; }; Returns: Json; }; }; Enums: {}; CompositeTypes: {}; } | { ...; }, never, never, never>', gave the following error.
+src/components/PayerSelector.tsx(44,15): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(relation: never): PostgrestQueryBuilder<{ Tables: {}; Views: {}; Functions: {}; Enums: {}; CompositeTypes: {}; }, never, never, never>', gave the following error.
     Argument of type 'string' is not assignable to parameter of type 'never'.
-  Overload 2 of 2, '(relation: never): PostgrestQueryBuilder<{ Tables: {}; Views: {}; Functions: { graphql: { Args: { operationName?: string; query?: string; variables?: Json; extensions?: Json; }; Returns: Json; }; }; Enums: {}; CompositeTypes: {}; } | { ...; }, never, never, never>', gave the following error.
+  Overload 2 of 2, '(relation: never): PostgrestQueryBuilder<{ Tables: {}; Views: {}; Functions: {}; Enums: {}; CompositeTypes: {}; }, never, never, never>', gave the following error.
     Argument of type 'string' is not assignable to parameter of type 'never'.
-src/components/PayerSelector.tsx(63,17): error TS2345: Argument of type '"budget"' is not assignable to parameter of type '"graphql_public" | "public"'.
-src/components/PayerSelector.tsx(64,15): error TS2769: No overload matches this call.
-  Overload 1 of 2, '(relation: never): PostgrestQueryBuilder<{ Tables: {}; Views: {}; Functions: { graphql: { Args: { operationName?: string; query?: string; variables?: Json; extensions?: Json; }; Returns: Json; }; }; Enums: {}; CompositeTypes: {}; } | { ...; }, never, never, never>', gave the following error.
+src/components/PayerSelector.tsx(65,15): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(relation: never): PostgrestQueryBuilder<{ Tables: {}; Views: {}; Functions: {}; Enums: {}; CompositeTypes: {}; }, never, never, never>', gave the following error.
     Argument of type 'string' is not assignable to parameter of type 'never'.
-  Overload 2 of 2, '(relation: never): PostgrestQueryBuilder<{ Tables: {}; Views: {}; Functions: { graphql: { Args: { operationName?: string; query?: string; variables?: Json; extensions?: Json; }; Returns: Json; }; }; Enums: {}; CompositeTypes: {}; } | { ...; }, never, never, never>', gave the following error.
+  Overload 2 of 2, '(relation: never): PostgrestQueryBuilder<{ Tables: {}; Views: {}; Functions: {}; Enums: {}; CompositeTypes: {}; }, never, never, never>', gave the following error.
     Argument of type 'string' is not assignable to parameter of type 'never'.
-src/components/PayerSelector.tsx(83,17): error TS2345: Argument of type '"budget"' is not assignable to parameter of type '"graphql_public" | "public"'.
-src/components/PayerSelector.tsx(84,15): error TS2769: No overload matches this call.
-  Overload 1 of 2, '(relation: never): PostgrestQueryBuilder<{ Tables: {}; Views: {}; Functions: { graphql: { Args: { operationName?: string; query?: string; variables?: Json; extensions?: Json; }; Returns: Json; }; }; Enums: {}; CompositeTypes: {}; } | { ...; }, never, never, never>', gave the following error.
+src/components/PayerSelector.tsx(85,15): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(relation: never): PostgrestQueryBuilder<{ Tables: {}; Views: {}; Functions: {}; Enums: {}; CompositeTypes: {}; }, never, never, never>', gave the following error.
     Argument of type 'string' is not assignable to parameter of type 'never'.
-  Overload 2 of 2, '(relation: never): PostgrestQueryBuilder<{ Tables: {}; Views: {}; Functions: { graphql: { Args: { operationName?: string; query?: string; variables?: Json; extensions?: Json; }; Returns: Json; }; }; Enums: {}; CompositeTypes: {}; } | { ...; }, never, never, never>', gave the following error.
+  Overload 2 of 2, '(relation: never): PostgrestQueryBuilder<{ Tables: {}; Views: {}; Functions: {}; Enums: {}; CompositeTypes: {}; }, never, never, never>', gave the following error.
     Argument of type 'string' is not assignable to parameter of type 'never'.
-src/components/PayerSelector.tsx(88,21): error TS2339: Property 'sources' does not exist on type '{}'.
+src/components/PayerSelector.tsx(86,10): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(values: never, options?: { count?: "exact" | "planned" | "estimated"; }): PostgrestFilterBuilder<{ Tables: {}; Views: {}; Functions: {}; Enums: {}; CompositeTypes: {}; }, never, null, never, never>', gave the following error.
+    Argument of type '{ name: string; created_by: string; }[]' is not assignable to parameter of type 'never'.
+  Overload 2 of 2, '(values: never[], options?: { count?: "exact" | "planned" | "estimated"; defaultToNull?: boolean; }): PostgrestFilterBuilder<{ Tables: {}; Views: {}; Functions: {}; Enums: {}; CompositeTypes: {}; }, never, null, never, never>', gave the following error.
+    Type '{ name: string; created_by: string; }' is not assignable to type 'never'.
+src/components/PayerSelector.tsx(157,10): error TS18047: 'userRoleData' is possibly 'null'.
 src/components/SourceActions.tsx(50,13): error TS2769: No overload matches this call.
   Overload 1 of 2, '(relation: never): PostgrestQueryBuilder<{ Tables: {}; Views: {}; Functions: {}; Enums: {}; CompositeTypes: {}; }, never, never, never>', gave the following error.
     Argument of type 'string' is not assignable to parameter of type 'never'.
@@ -89,23 +78,23 @@ src/components/SourceSelector.tsx(80,15): error TS2769: No overload matches this
     Argument of type 'string' is not assignable to parameter of type 'never'.
   Overload 2 of 2, '(relation: never): PostgrestQueryBuilder<{ Tables: {}; Views: {}; Functions: {}; Enums: {}; CompositeTypes: {}; }, never, never, never>', gave the following error.
     Argument of type 'string' is not assignable to parameter of type 'never'.
-src/components/TransactionForm.tsx(61,17): error TS2345: Argument of type '"budget"' is not assignable to parameter of type '"graphql_public" | "public"'.
+src/components/TransactionForm.tsx(61,17): error TS2345: Argument of type '"budget"' is not assignable to parameter of type '"public" | "graphql_public"'.
 src/components/TransactionForm.tsx(62,15): error TS2769: No overload matches this call.
-  Overload 1 of 2, '(relation: never): PostgrestQueryBuilder<{ Tables: {}; Views: {}; Functions: { graphql: { Args: { operationName?: string; query?: string; variables?: Json; extensions?: Json; }; Returns: Json; }; }; Enums: {}; CompositeTypes: {}; } | { ...; }, never, never, never>', gave the following error.
+  Overload 1 of 2, '(relation: never): PostgrestQueryBuilder<{ Tables: {}; Views: {}; Functions: {}; Enums: {}; CompositeTypes: {}; } | { Tables: {}; Views: {}; Functions: { graphql: { Args: { operationName?: string; query?: string; variables?: Json; extensions?: Json; }; Returns: Json; }; }; Enums: {}; CompositeTypes: {}; }, never, never, never>', gave the following error.
     Argument of type 'string' is not assignable to parameter of type 'never'.
-  Overload 2 of 2, '(relation: never): PostgrestQueryBuilder<{ Tables: {}; Views: {}; Functions: { graphql: { Args: { operationName?: string; query?: string; variables?: Json; extensions?: Json; }; Returns: Json; }; }; Enums: {}; CompositeTypes: {}; } | { ...; }, never, never, never>', gave the following error.
+  Overload 2 of 2, '(relation: never): PostgrestQueryBuilder<{ Tables: {}; Views: {}; Functions: {}; Enums: {}; CompositeTypes: {}; } | { Tables: {}; Views: {}; Functions: { graphql: { Args: { operationName?: string; query?: string; variables?: Json; extensions?: Json; }; Returns: Json; }; }; Enums: {}; CompositeTypes: {}; }, never, never, never>', gave the following error.
     Argument of type 'string' is not assignable to parameter of type 'never'.
 src/components/TransactionForm.tsx(72,14): error TS18047: 'roleData' is possibly 'null'.
-src/components/TransactionForm.tsx(82,17): error TS2345: Argument of type '"budget"' is not assignable to parameter of type '"graphql_public" | "public"'.
+src/components/TransactionForm.tsx(82,17): error TS2345: Argument of type '"budget"' is not assignable to parameter of type '"public" | "graphql_public"'.
 src/components/TransactionForm.tsx(83,15): error TS2769: No overload matches this call.
-  Overload 1 of 2, '(relation: never): PostgrestQueryBuilder<{ Tables: {}; Views: {}; Functions: { graphql: { Args: { operationName?: string; query?: string; variables?: Json; extensions?: Json; }; Returns: Json; }; }; Enums: {}; CompositeTypes: {}; } | { ...; }, never, never, never>', gave the following error.
+  Overload 1 of 2, '(relation: never): PostgrestQueryBuilder<{ Tables: {}; Views: {}; Functions: {}; Enums: {}; CompositeTypes: {}; } | { Tables: {}; Views: {}; Functions: { graphql: { Args: { operationName?: string; query?: string; variables?: Json; extensions?: Json; }; Returns: Json; }; }; Enums: {}; CompositeTypes: {}; }, never, never, never>', gave the following error.
     Argument of type 'string' is not assignable to parameter of type 'never'.
-  Overload 2 of 2, '(relation: never): PostgrestQueryBuilder<{ Tables: {}; Views: {}; Functions: { graphql: { Args: { operationName?: string; query?: string; variables?: Json; extensions?: Json; }; Returns: Json; }; }; Enums: {}; CompositeTypes: {}; } | { ...; }, never, never, never>', gave the following error.
+  Overload 2 of 2, '(relation: never): PostgrestQueryBuilder<{ Tables: {}; Views: {}; Functions: {}; Enums: {}; CompositeTypes: {}; } | { Tables: {}; Views: {}; Functions: { graphql: { Args: { operationName?: string; query?: string; variables?: Json; extensions?: Json; }; Returns: Json; }; }; Enums: {}; CompositeTypes: {}; }, never, never, never>', gave the following error.
     Argument of type 'string' is not assignable to parameter of type 'never'.
 src/components/TransactionForm.tsx(84,10): error TS2769: No overload matches this call.
-  Overload 1 of 2, '(values: never, options?: { count?: "exact" | "planned" | "estimated"; }): PostgrestFilterBuilder<{ Tables: {}; Views: {}; Functions: { graphql: { Args: { operationName?: string; query?: string; variables?: Json; extensions?: Json; }; Returns: Json; }; }; Enums: {}; CompositeTypes: {}; } | { ...; }, never, null, never, never>', gave the following error.
+  Overload 1 of 2, '(values: never, options?: { count?: "exact" | "planned" | "estimated"; }): PostgrestFilterBuilder<{ Tables: {}; Views: {}; Functions: {}; Enums: {}; CompositeTypes: {}; } | { Tables: {}; Views: {}; Functions: { graphql: { ...; }; }; Enums: {}; CompositeTypes: {}; }, never, null, never, never>', gave the following error.
     Argument of type '{ amount: number; description: string; category_id: string; source_id: string; payer_id: string; notes: string; created_by: string; }' is not assignable to parameter of type 'never'.
-  Overload 2 of 2, '(values: never[], options?: { count?: "exact" | "planned" | "estimated"; defaultToNull?: boolean; }): PostgrestFilterBuilder<{ Tables: {}; Views: {}; Functions: { graphql: { Args: { operationName?: string; query?: string; variables?: Json; extensions?: Json; }; Returns: Json; }; }; Enums: {}; CompositeTypes: {}; } | { ...; }, never, null, never, never>', gave the following error.
+  Overload 2 of 2, '(values: never[], options?: { count?: "exact" | "planned" | "estimated"; defaultToNull?: boolean; }): PostgrestFilterBuilder<{ Tables: {}; Views: {}; Functions: {}; Enums: {}; CompositeTypes: {}; } | { Tables: {}; Views: {}; Functions: { ...; }; Enums: {}; CompositeTypes: {}; }, never, null, never, never>', gave the following error.
     Object literal may only specify known properties, and 'amount' does not exist in type 'never[]'.
 src/components/UserManagement.tsx(35,17): error TS2345: Argument of type '"budget"' is not assignable to parameter of type '"graphql_public" | "public"'.
 src/components/UserManagement.tsx(36,15): error TS2769: No overload matches this call.
@@ -1038,7 +1027,7 @@ src/components/types/detail/ConsignmentDetail.tsx(142,27): error TS2339: Propert
 src/components/types/detail/ConsignmentDetail.tsx(154,35): error TS2339: Property 'image_url' does not exist on type 'never'.
 src/components/types/detail/ConsignmentDetail.tsx(155,31): error TS2339: Property 'name' does not exist on type 'never'.
 src/hooks/bills/useBillQueries.ts(4,16): error TS2724: '"@/types/bills"' has no exported member named 'BillItemJson'. Did you mean 'BillItem'?
-src/hooks/bills/useBillQueries.ts(22,15): error TS2769: No overload matches this call.
+src/hooks/bills/useBillQueries.ts(23,15): error TS2769: No overload matches this call.
   Overload 1 of 2, '(relation: never): PostgrestQueryBuilder<{ Tables: {}; Views: {}; Functions: {}; Enums: {}; CompositeTypes: {}; }, never, never, never>', gave the following error.
     Argument of type 'string' is not assignable to parameter of type 'never'.
   Overload 2 of 2, '(relation: never): PostgrestQueryBuilder<{ Tables: {}; Views: {}; Functions: {}; Enums: {}; CompositeTypes: {}; }, never, never, never>', gave the following error.
@@ -1231,7 +1220,6 @@ src/hooks/useTypes.ts(108,12): error TS2769: No overload matches this call.
 src/integrations/supabase/client.ts(29,30): error TS2339: Property 'budgetapp_bills' does not exist on type '{}'.
 src/integrations/supabase/client.ts(30,33): error TS2339: Property 'budgetapp_bills' does not exist on type '{}'.
 src/integrations/supabase/client.ts(31,33): error TS2339: Property 'budgetapp_bills' does not exist on type '{}'.
-src/lib/bills.ts(1,23): error TS2724: '"@/types/bills"' has no exported member named 'BillItemJson'. Did you mean 'BillItem'?
 src/pages/Index.tsx(11,15): error TS2769: No overload matches this call.
   Overload 1 of 2, '(relation: never): PostgrestQueryBuilder<{ Tables: {}; Views: {}; Functions: {}; Enums: {}; CompositeTypes: {}; }, never, never, never>', gave the following error.
     Argument of type 'string' is not assignable to parameter of type 'never'.
@@ -1326,7 +1314,6 @@ src/types/bills.ts(103,31): error TS2339: Property 'measurement_unit_id' does no
   Property 'measurement_unit_id' does not exist on type 'string'.
 src/types/bills.ts(103,65): error TS2339: Property 'measurement_unit_id' does not exist on type 'Json'.
   Property 'measurement_unit_id' does not exist on type 'string'.
-src/types/database.types.ts(365,15): error TS2484: Export declaration conflicts with exported declaration of 'Database'.
 src/utils/creditUtils.ts(13,13): error TS2769: No overload matches this call.
   Overload 1 of 2, '(relation: never): PostgrestQueryBuilder<{ Tables: {}; Views: {}; Functions: {}; Enums: {}; CompositeTypes: {}; }, never, never, never>', gave the following error.
     Argument of type 'string' is not assignable to parameter of type 'never'.

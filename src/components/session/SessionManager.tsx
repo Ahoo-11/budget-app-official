@@ -6,19 +6,12 @@ import { useToast } from "@/hooks/use-toast";
 import { LockIcon, BanknoteIcon, ArrowDownIcon, ArrowUpIcon, Loader2Icon } from "lucide-react";
 import { format, isValid } from "date-fns";
 import { useEffect } from "react";
+import { Database } from "@/types/supabase";
 
-interface SessionData {
-  id: string;
-  source_id: string;
-  status: 'active' | 'closing' | 'closed';
-  start_time: string;
-}
+type BudgetAppBill = Database['public']['Tables']['budgetapp_bills']['Row'];
 
-interface Bill {
-  id: string;
-  total: number;
+interface Bill extends BudgetAppBill {
   payment_method: 'cash' | 'transfer';
-  status: string;
 }
 
 export const SessionManager = ({ sourceId }: { sourceId: string }) => {
@@ -30,6 +23,10 @@ export const SessionManager = ({ sourceId }: { sourceId: string }) => {
     queryFn: async () => {
       console.log('Fetching active session for source:', sourceId);
       try {
+        if (!sourceId) {
+          return null;
+        }
+        
         const { data, error } = await supabase
           .from('budgetapp_sessions')
           .select('*')
@@ -37,19 +34,16 @@ export const SessionManager = ({ sourceId }: { sourceId: string }) => {
           .eq('status', 'active')
           .maybeSingle();
 
-        if (error) {
-          console.error('Error fetching session:', error);
-          throw error;
-        }
+        if (error) throw error;
 
         console.log('Active session data:', data);
-        return data as SessionData | null;
+        return data;
       } catch (error) {
         console.error('Session fetch error:', error);
         throw error;
       }
     },
-    enabled: !!sourceId,
+    enabled: Boolean(sourceId),
     refetchInterval: 30000,
     retry: 1,
   });
@@ -62,7 +56,7 @@ export const SessionManager = ({ sourceId }: { sourceId: string }) => {
       
       try {
         const { data, error } = await supabase
-          .from('bills')
+          .from('budgetapp_bills')
           .select('*')
           .eq('session_id', activeSession.id)
           .neq('status', 'cancelled');
@@ -73,7 +67,7 @@ export const SessionManager = ({ sourceId }: { sourceId: string }) => {
         }
 
         console.log('Session bills:', data);
-        return data as Bill[];
+        return (data as unknown as Bill[]) || [];
       } catch (error) {
         console.error('Bills fetch error:', error);
         throw error;
@@ -94,7 +88,7 @@ export const SessionManager = ({ sourceId }: { sourceId: string }) => {
         {
           event: '*',
           schema: 'public',
-          table: 'bills',
+          table: 'budgetapp_bills',
           filter: `session_id=eq.${activeSession.id}`
         },
         (payload) => {
@@ -112,9 +106,9 @@ export const SessionManager = ({ sourceId }: { sourceId: string }) => {
 
   // Calculate totals from bills
   const totals = sessionBills.reduce((acc, bill) => ({
-    total_cash: acc.total_cash + (bill.payment_method === 'cash' ? bill.total : 0),
-    total_transfer: acc.total_transfer + (bill.payment_method === 'transfer' ? bill.total : 0),
-    total_sales: acc.total_sales + bill.total,
+    total_cash: acc.total_cash + (bill.payment_method === 'cash' ? bill.total || 0 : 0),
+    total_transfer: acc.total_transfer + (bill.payment_method === 'transfer' ? bill.total || 0 : 0),
+    total_sales: acc.total_sales + (bill.total || 0),
     total_expenses: acc.total_expenses
   }), {
     total_cash: 0,
@@ -149,11 +143,11 @@ export const SessionManager = ({ sourceId }: { sourceId: string }) => {
         title: "Success",
         description: "New session started",
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error creating session:', error);
       toast({
         title: "Error",
-        description: error.message || "Failed to create session",
+        description: error instanceof Error ? error.message : "Failed to create session",
         variant: "destructive",
       });
     }
@@ -183,11 +177,11 @@ export const SessionManager = ({ sourceId }: { sourceId: string }) => {
         title: "Session closed",
         description: "The session has been closed successfully.",
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error closing session:', error);
       toast({
         title: "Error",
-        description: error.message || "Failed to close session",
+        description: error instanceof Error ? error.message : "Failed to close session",
         variant: "destructive",
       });
     }
@@ -248,68 +242,67 @@ export const SessionManager = ({ sourceId }: { sourceId: string }) => {
 
   return (
     <Card className="p-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-        <div>
-          <h2 className="text-2xl font-bold">Active Session</h2>
-          <div className="space-y-1">
-            <p className="text-muted-foreground">
-              Started: {formatDate(activeSession.start_time)}
-            </p>
-            <p className="text-xs text-muted-foreground font-mono">
-              ID: {activeSession.id}
-            </p>
+      <div className="space-y-6">
+        <div className="flex flex-col space-y-2">
+          <h2 className="text-xl font-semibold">Active Session</h2>
+          <p className="text-muted-foreground">
+            Started: {formatDate(activeSession.start_time)}
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="p-4 bg-background rounded-lg border">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <BanknoteIcon className="h-5 w-5 text-green-500" />
+                <span>Cash</span>
+              </div>
+              <ArrowUpIcon className="h-4 w-4 text-green-500" />
+            </div>
+            <p className="mt-2 text-2xl font-bold">${totals.total_cash.toFixed(2)}</p>
+          </div>
+
+          <div className="p-4 bg-background rounded-lg border">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <BanknoteIcon className="h-5 w-5 text-blue-500" />
+                <span>Transfer</span>
+              </div>
+              <ArrowUpIcon className="h-4 w-4 text-blue-500" />
+            </div>
+            <p className="mt-2 text-2xl font-bold">${totals.total_transfer.toFixed(2)}</p>
+          </div>
+
+          <div className="p-4 bg-background rounded-lg border">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <BanknoteIcon className="h-5 w-5 text-purple-500" />
+                <span>Total Sales</span>
+              </div>
+              <ArrowUpIcon className="h-4 w-4 text-purple-500" />
+            </div>
+            <p className="mt-2 text-2xl font-bold">${totals.total_sales.toFixed(2)}</p>
+          </div>
+
+          <div className="p-4 bg-background rounded-lg border">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <BanknoteIcon className="h-5 w-5 text-red-500" />
+                <span>Expenses</span>
+              </div>
+              <ArrowDownIcon className="h-4 w-4 text-red-500" />
+            </div>
+            <p className="mt-2 text-2xl font-bold">${totals.total_expenses.toFixed(2)}</p>
           </div>
         </div>
-        <Button
-          variant="destructive"
+
+        <Button 
           onClick={handleCloseSession}
-          className="w-full sm:w-auto flex items-center gap-2"
+          variant="destructive"
+          className="w-full sm:w-auto"
         >
-          <LockIcon className="w-4 h-4" />
           Close Session
         </Button>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="p-4 bg-muted">
-          <div className="flex items-center gap-2">
-            <BanknoteIcon className="w-5 h-5 text-green-500" />
-            <span className="text-sm font-medium">Cash</span>
-          </div>
-          <p className="text-2xl font-bold mt-2">
-            MVR {totals.total_cash.toFixed(2)}
-          </p>
-        </Card>
-
-        <Card className="p-4 bg-muted">
-          <div className="flex items-center gap-2">
-            <ArrowDownIcon className="w-5 h-5 text-blue-500" />
-            <span className="text-sm font-medium">Transfer</span>
-          </div>
-          <p className="text-2xl font-bold mt-2">
-            MVR {totals.total_transfer.toFixed(2)}
-          </p>
-        </Card>
-
-        <Card className="p-4 bg-muted">
-          <div className="flex items-center gap-2">
-            <ArrowUpIcon className="w-5 h-5 text-success" />
-            <span className="text-sm font-medium">Total Sales</span>
-          </div>
-          <p className="text-2xl font-bold mt-2">
-            MVR {totals.total_sales.toFixed(2)}
-          </p>
-        </Card>
-
-        <Card className="p-4 bg-muted">
-          <div className="flex items-center gap-2">
-            <ArrowDownIcon className="w-5 h-5 text-destructive" />
-            <span className="text-sm font-medium">Total Expenses</span>
-          </div>
-          <p className="text-2xl font-bold mt-2">
-            MVR {totals.total_expenses.toFixed(2)}
-          </p>
-        </Card>
       </div>
     </Card>
   );

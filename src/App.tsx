@@ -1,8 +1,7 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useParams } from "react-router-dom";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { ThemeProvider } from "next-themes";
@@ -19,6 +18,8 @@ import { createClient, Database } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
 import { SessionContextProvider } from "@supabase/auth-helpers-react";
 import { useToast } from "./components/ui/use-toast";
+import { SessionManager } from "@/components/session/SessionManager";
+import { BillListContainer } from "@/components/bills/BillListContainer";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -113,6 +114,21 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+const SourceRoute = () => {
+  const { sourceId } = useParams();
+  
+  if (!sourceId) {
+    return <Navigate to="/" replace />;
+  }
+
+  return (
+    <div className="space-y-8">
+      <SessionManager sourceId={sourceId} />
+      <BillListContainer sourceId={sourceId} />
+    </div>
+  );
+};
+
 export default function App() {
   return (
     <SessionContextProvider supabaseClient={supabase}>
@@ -130,12 +146,12 @@ export default function App() {
                       <SidebarProvider>
                         <div className="flex min-h-screen w-full">
                           <AppSidebar />
-                          <main className="flex-1 p-4 md:p-6 w-full md:ml-[200px]">
+                          <main className="flex-1 p-4 md:p-6 w-full lg:ml-[200px]">
                             <Routes>
                               <Route path="/" element={<Index />} />
+                              <Route path="/source/:sourceId" element={<SourceRoute />} />
                               <Route path="/types" element={<Types />} />
                               <Route path="/reports" element={<Reports />} />
-                              <Route path="/source/:sourceId/*" element={<Source />} />
                               <Route path="/stats" element={<Stats />} />
                               <Route path="/settings" element={<AccountSettings />} />
                               <Route path="/services" element={<ServicesPage />} />
