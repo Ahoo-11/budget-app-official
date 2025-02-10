@@ -1,8 +1,11 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "./ui/use-toast";
+import { Database } from "@/types/database.types";
+
+type Tables = Database['public']['Tables'];
+type Category = Tables['budgetapp_categories']['Row'];
 
 interface CategorySelectorProps {
   value: string | undefined;
@@ -13,7 +16,7 @@ interface CategorySelectorProps {
 export function CategorySelector({ value, onValueChange, sourceId }: CategorySelectorProps) {
   const { toast } = useToast();
 
-  const { data: categories = [] } = useQuery({
+  const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ['categories', sourceId],
     queryFn: async () => {
       const { data: categoriesData, error } = await supabase

@@ -9,8 +9,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "./ui/use-toast";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
+import { Database } from "@/types/database.types";
 
 type UserRole = 'controller' | 'admin' | 'viewer';
+type Tables = Database['public']['Tables'];
 
 interface SidebarNavigationProps {
   userRole: UserRole | null;
@@ -48,232 +50,168 @@ export function AppSidebar() {
         return null;
       }
 
-      const userRoleValue = userRole?.role as UserRole ?? null;
-      console.log('Final user role:', userRoleValue);
-      return userRoleValue;
-    }
+      return userRole?.role as UserRole ?? null;
+    },
   });
 
-  const { data: sources } = useQuery({
+  const { data: sources = [] } = useQuery({
     queryKey: ['sources'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [];
+
+      const { data: sources, error } = await supabase
         .from('budgetapp_sources')
         .select('*')
-        .order('name');
+        .eq('user_id', user.id);
 
-      if (error) throw error;
-      return data;
-    }
+      if (error) {
+        console.error('Error fetching sources:', error);
+        return [];
+      }
+
+      return sources;
+    },
   });
 
-  const handleLogout = async () => {
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-      navigate('/auth');
-    } catch (error) {
-      console.error('Error signing out:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to sign out. Please try again.",
-      });
-    }
-  };
-
   const handleAddSource = async () => {
-    if (!newSourceName.trim() || !session?.user?.id || currentUserRole !== 'controller') {
+    if (!newSourceName.trim()) {
       toast({
-        variant: "destructive",
         title: "Error",
-        description: "Only controllers can add new sources.",
+        description: "Source name cannot be empty",
+        variant: "destructive",
       });
       return;
     }
 
-    try {
-      const { data, error } = await supabase
-        .from('budgetapp_sources')
-        .insert({
-          name: newSourceName.trim(),
-          user_id: session.user.id
-        })
-        .select();
-
-      if (error) throw error;
-
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
       toast({
-        title: "Success",
-        description: "Source added successfully.",
-      });
-      setNewSourceName("");
-      setIsAddSourceOpen(false);
-    } catch (error) {
-      console.error('Error adding source:', error);
-      toast({
-        variant: "destructive",
         title: "Error",
-        description: "Failed to add source. Please try again.",
+        description: "You must be logged in to add a source",
+        variant: "destructive",
       });
+      return;
     }
+
+    const { error } = await supabase
+      .from('budgetapp_sources')
+      .insert({
+        name: newSourceName,
+        user_id: user.id,
+      });
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add source",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setNewSourceName("");
+    setIsAddSourceOpen(false);
+    toast({
+      title: "Success",
+      description: "Source added successfully",
+    });
+  };
+
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to sign out",
+        variant: "destructive",
+      });
+      return;
+    }
+    navigate("/login");
   };
 
   return (
     <>
       <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-        <SheetTrigger asChild className="lg:hidden">
-          <Button variant="ghost" size="icon" className="md:hidden">
+        <SheetTrigger asChild>
+          <Button variant="outline" size="icon" className="lg:hidden">
             <Menu className="h-6 w-6" />
           </Button>
         </SheetTrigger>
-        <SheetContent side="left" className="w-[300px] sm:w-[400px]">
-          <nav className="flex flex-col gap-4">
-            <div className="space-y-1">
-              <Link to="/">
-                <Button variant="ghost" className="w-full justify-start">
-                  Dashboard
-                </Button>
-              </Link>
-              
-              <Link to="/transactions">
-                <Button variant="ghost" className="w-full justify-start">
-                  Transactions
-                </Button>
-              </Link>
-
-              {(currentUserRole === 'controller' || currentUserRole === 'admin') && (
-                <Link to="/settings">
-                  <Button variant="ghost" className="w-full justify-start">
-                    Settings
-                  </Button>
-                </Link>
-              )}
-
-              {/* Sources Section */}
-              <div className="mt-6">
-                <h3 className="mb-2 px-4 text-sm font-semibold text-gray-500">
-                  Sources
-                </h3>
-                <div className="space-y-1">
-                  {sources?.map((source) => (
-                    <Link key={source.id} to={`/source/${source.id}`}>
-                      <Button variant="ghost" className="w-full justify-start">
-                        {source.name}
-                      </Button>
-                    </Link>
-                  ))}
-                  
-                  {currentUserRole === 'controller' && (
-                    <Button
-                      variant="ghost"
-                      className="w-full justify-start"
-                      onClick={() => setIsAddSourceOpen(true)}
-                    >
-                      <Plus className="mr-2 h-4 w-4" />
-                      Add Source
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </div>
-          </nav>
+        <SheetContent side="left" className="w-64">
+          <SidebarNavigation
+            userRole={currentUserRole}
+            onLogout={handleLogout}
+            onCloseMobileMenu={() => setIsMobileMenuOpen(false)}
+          />
         </SheetContent>
       </Sheet>
 
-      <aside className="hidden lg:flex h-screen w-[300px] flex-col gap-4 border-r px-4 py-8">
-        <nav className="h-full py-4 flex flex-col bg-white border-r">
-          <div className="px-3 py-2">
-            <h2 className="mb-2 px-4 text-lg font-semibold">
-              Budget App
-            </h2>
-            
-            <div className="space-y-1">
-              <Link to="/">
-                <Button variant="ghost" className="w-full justify-start">
-                  Dashboard
-                </Button>
-              </Link>
-              
-              <Link to="/transactions">
-                <Button variant="ghost" className="w-full justify-start">
-                  Transactions
-                </Button>
-              </Link>
-
-              {(currentUserRole === 'controller' || currentUserRole === 'admin') && (
-                <Link to="/settings">
-                  <Button variant="ghost" className="w-full justify-start">
-                    Settings
-                  </Button>
-                </Link>
-              )}
-
-              {/* Sources Section */}
-              <div className="mt-6">
-                <h3 className="mb-2 px-4 text-sm font-semibold text-gray-500">
-                  Sources
-                </h3>
-                <div className="space-y-1">
-                  {sources?.map((source) => (
-                    <Link key={source.id} to={`/source/${source.id}`}>
-                      <Button variant="ghost" className="w-full justify-start">
-                        {source.name}
-                      </Button>
-                    </Link>
-                  ))}
-                  
-                  {currentUserRole === 'controller' && (
-                    <Button
-                      variant="ghost"
-                      className="w-full justify-start"
-                      onClick={() => setIsAddSourceOpen(true)}
-                    >
-                      <Plus className="mr-2 h-4 w-4" />
-                      Add Source
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-auto px-3 py-2">
-            <Button
-              variant="outline"
-              className="w-full justify-start"
-              onClick={handleLogout}
-            >
-              Sign Out
-            </Button>
-          </div>
-        </nav>
-      </aside>
+      <nav className="hidden lg:block">
+        <SidebarNavigation
+          userRole={currentUserRole}
+          onLogout={handleLogout}
+          onCloseMobileMenu={() => setIsMobileMenuOpen(false)}
+        />
+      </nav>
 
       <Dialog open={isAddSourceOpen} onOpenChange={setIsAddSourceOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Add New Source</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Input
-                placeholder="Enter source name"
-                value={newSourceName}
-                onChange={(e) => setNewSourceName(e.target.value)}
-              />
-            </div>
-            <Button
-              type="submit"
-              className="w-full"
-              onClick={handleAddSource}
-              disabled={!newSourceName.trim()}
-            >
-              Add Source
-            </Button>
+          <div className="space-y-4">
+            <Input
+              placeholder="Source name"
+              value={newSourceName}
+              onChange={(e) => setNewSourceName(e.target.value)}
+            />
+            <Button onClick={handleAddSource}>Add Source</Button>
           </div>
         </DialogContent>
       </Dialog>
     </>
+  );
+}
+
+function SidebarNavigation({ userRole, onLogout, onCloseMobileMenu }: SidebarNavigationProps) {
+  return (
+    <div className="flex h-full flex-col gap-4">
+      <div className="flex-1 space-y-4">
+        <div className="px-3 py-2">
+          <h2 className="mb-2 px-4 text-lg font-semibold">Navigation</h2>
+          <div className="space-y-1">
+            <Button variant="ghost" className="w-full justify-start" asChild>
+              <Link to="/" onClick={onCloseMobileMenu}>
+                Dashboard
+              </Link>
+            </Button>
+            <Button variant="ghost" className="w-full justify-start" asChild>
+              <Link to="/sources" onClick={onCloseMobileMenu}>
+                Sources
+              </Link>
+            </Button>
+            <Button variant="ghost" className="w-full justify-start" asChild>
+              <Link to="/bills" onClick={onCloseMobileMenu}>
+                Bills
+              </Link>
+            </Button>
+            {userRole === 'admin' && (
+              <Button variant="ghost" className="w-full justify-start" asChild>
+                <Link to="/users" onClick={onCloseMobileMenu}>
+                  Users
+                </Link>
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
+      <div className="sticky bottom-0 p-4">
+        <Button variant="outline" className="w-full" onClick={onLogout}>
+          Logout
+        </Button>
+      </div>
+    </div>
   );
 }
