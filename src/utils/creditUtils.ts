@@ -10,7 +10,7 @@ export const getBillStatus = async (
   try {
     // Get payer credit settings
     const { data: settings } = await supabase
-      .from('source_payer_settings')
+      .from('budgetapp_source_payer_settings')
       .select('credit_days')
       .eq('source_id', sourceId)
       .eq('payer_id', payerId)

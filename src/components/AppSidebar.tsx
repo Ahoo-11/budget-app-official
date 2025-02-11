@@ -9,10 +9,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "./ui/use-toast";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useQuery } from "@tanstack/react-query";
-import type { Database } from "@/types/supabase";
 
-type UserRole = Database['public']['Enums']['budgetapp_user_role'];
-type Tables = Database['public']['Tables'];
+type UserRole = 'admin' | 'viewer' | 'controller';
+
+interface Source {
+  id: string;
+  name: string;
+}
 
 interface SidebarNavigationProps {
   userRole: UserRole | null;
@@ -28,11 +31,11 @@ export function AppSidebar() {
   const { toast } = useToast();
   const session = useSession();
 
-  const { data: currentUserRole } = useQuery<UserRole | null>({
+  const { data: currentUserRole } = useQuery<UserRole>({
     queryKey: ['currentUserRole'],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return null;
+      if (!user) return 'viewer';
 
       const { data: userRole, error: roleError } = await supabase
         .from('budgetapp_user_roles')
@@ -42,32 +45,30 @@ export function AppSidebar() {
 
       if (roleError) {
         console.error('Error fetching role:', roleError);
-        return null;
+        return 'viewer';
       }
 
-      return userRole?.role ?? 'viewer';
+      return (userRole?.role as UserRole) ?? 'viewer';
     },
   });
 
-  const { data: sources = [] } = useQuery<Tables['budgetapp_sources']['Row'][]>({
+  const { data: sources = [] } = useQuery<Source[]>({
     queryKey: ['sources'],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return [];
 
-      const { data: sources, error } = await supabase
+      const { data, error } = await supabase
         .from('budgetapp_sources')
-        .select('*');
+        .select('id, name');
 
       if (error) {
         console.error('Error fetching sources:', error);
         return [];
       }
 
-      return sources;
+      return (data || []) as Source[];
     },
-    refetchOnWindowFocus: true,
-    refetchInterval: 5000
   });
 
   const handleAddSource = async () => {
@@ -138,36 +139,44 @@ export function AppSidebar() {
           <Link
             to="/"
             className="flex items-center rounded-lg px-3 py-2 text-gray-900 transition-all hover:bg-gray-100 dark:text-gray-100 dark:hover:bg-gray-800"
+            onClick={() => setIsMobileMenuOpen(false)}
           >
             Dashboard
           </Link>
-          
-          {sources.map((source) => (
-            <Link
-              key={source.id}
-              to={`/source/${source.id}`}
-              className="flex items-center rounded-lg px-3 py-2 text-gray-900 transition-all hover:bg-gray-100 dark:text-gray-100 dark:hover:bg-gray-800"
-            >
-              {source.name}
-            </Link>
-          ))}
-          
-          <Button
-            onClick={() => setIsAddSourceOpen(true)}
-            className="w-full justify-start"
-            variant="ghost"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Add Source
-          </Button>
 
-          <Link
-            to="/settings"
-            className="flex items-center rounded-lg px-3 py-2 text-gray-900 transition-all hover:bg-gray-100 dark:text-gray-100 dark:hover:bg-gray-800"
-          >
-            <Settings className="mr-2 h-4 w-4" />
-            Settings
-          </Link>
+          <div className="mt-4">
+            <h3 className="mb-2 px-4 text-sm font-medium text-gray-500">Sources</h3>
+            {sources.map((source) => (
+              <Link
+                key={source.id}
+                to={`/source/${source.id}`}
+                className="flex items-center rounded-lg px-3 py-2 text-gray-900 transition-all hover:bg-gray-100 dark:text-gray-100 dark:hover:bg-gray-800"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                {source.name}
+              </Link>
+            ))}
+            
+            <Button
+              onClick={() => setIsAddSourceOpen(true)}
+              className="w-full justify-start mt-2"
+              variant="ghost"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Add Source
+            </Button>
+          </div>
+
+          <div className="mt-4">
+            <Link
+              to="/settings"
+              className="flex items-center rounded-lg px-3 py-2 text-gray-900 transition-all hover:bg-gray-100 dark:text-gray-100 dark:hover:bg-gray-800"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              <Settings className="mr-2 h-4 w-4" />
+              Settings
+            </Link>
+          </div>
         </div>
       </div>
     </div>
