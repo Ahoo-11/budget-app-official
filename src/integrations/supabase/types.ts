@@ -15,8 +15,10 @@ export type Database = {
           created_by: string | null
           due_date: string | null
           id: string
+          items: Json | null
           paid_amount: number | null
           payer_id: string | null
+          session_id: string | null
           source_id: string | null
           status: string | null
           title: string | null
@@ -28,8 +30,10 @@ export type Database = {
           created_by?: string | null
           due_date?: string | null
           id?: string
+          items?: Json | null
           paid_amount?: number | null
           payer_id?: string | null
+          session_id?: string | null
           source_id?: string | null
           status?: string | null
           title?: string | null
@@ -41,8 +45,10 @@ export type Database = {
           created_by?: string | null
           due_date?: string | null
           id?: string
+          items?: Json | null
           paid_amount?: number | null
           payer_id?: string | null
+          session_id?: string | null
           source_id?: string | null
           status?: string | null
           title?: string | null
@@ -51,10 +57,10 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "budgetapp_bills_payer_id_fkey"
-            columns: ["payer_id"]
+            foreignKeyName: "budgetapp_bills_session_id_fkey"
+            columns: ["session_id"]
             isOneToOne: false
-            referencedRelation: "budgetapp_payers"
+            referencedRelation: "budgetapp_sessions"
             referencedColumns: ["id"]
           },
           {
@@ -62,13 +68,6 @@ export type Database = {
             columns: ["source_id"]
             isOneToOne: false
             referencedRelation: "budgetapp_sources"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_bills_payer"
-            columns: ["payer_id"]
-            isOneToOne: false
-            referencedRelation: "budgetapp_payers"
             referencedColumns: ["id"]
           },
         ]
@@ -174,13 +173,6 @@ export type Database = {
             referencedRelation: "budgetapp_sources"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "budgetapp_expenses_supplier_id_fkey"
-            columns: ["supplier_id"]
-            isOneToOne: false
-            referencedRelation: "budgetapp_suppliers"
-            referencedColumns: ["id"]
-          },
         ]
       }
       budgetapp_payers: {
@@ -188,32 +180,21 @@ export type Database = {
           created_at: string | null
           id: string
           name: string
-          source_id: string | null
-          updated_at: string | null
+          user_id: string | null
         }
         Insert: {
           created_at?: string | null
           id?: string
           name: string
-          source_id?: string | null
-          updated_at?: string | null
+          user_id?: string | null
         }
         Update: {
           created_at?: string | null
           id?: string
           name?: string
-          source_id?: string | null
-          updated_at?: string | null
+          user_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "budgetapp_payers_source_id_fkey"
-            columns: ["source_id"]
-            isOneToOne: false
-            referencedRelation: "budgetapp_sources"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       budgetapp_products: {
         Row: {
@@ -363,6 +344,7 @@ export type Database = {
           id: string
           name: string
           updated_at: string | null
+          user_id: string | null
         }
         Insert: {
           created_at?: string | null
@@ -370,6 +352,7 @@ export type Database = {
           id?: string
           name: string
           updated_at?: string | null
+          user_id?: string | null
         }
         Update: {
           created_at?: string | null
@@ -377,6 +360,7 @@ export type Database = {
           id?: string
           name?: string
           updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -430,38 +414,48 @@ export type Database = {
       }
       budgetapp_suppliers: {
         Row: {
-          contact: string | null
           created_at: string | null
           id: string
           name: string
-          source_id: string | null
-          updated_at: string | null
+          user_id: string | null
         }
         Insert: {
-          contact?: string | null
           created_at?: string | null
           id?: string
           name: string
-          source_id?: string | null
-          updated_at?: string | null
+          user_id?: string | null
         }
         Update: {
-          contact?: string | null
           created_at?: string | null
           id?: string
           name?: string
-          source_id?: string | null
-          updated_at?: string | null
+          user_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "budgetapp_suppliers_source_id_fkey"
-            columns: ["source_id"]
-            isOneToOne: false
-            referencedRelation: "budgetapp_sources"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
+      }
+      budgetapp_templates: {
+        Row: {
+          content: Json | null
+          created_at: string | null
+          id: string
+          name: string
+          user_id: string | null
+        }
+        Insert: {
+          content?: Json | null
+          created_at?: string | null
+          id?: string
+          name: string
+          user_id?: string | null
+        }
+        Update: {
+          content?: Json | null
+          created_at?: string | null
+          id?: string
+          name?: string
+          user_id?: string | null
+        }
+        Relationships: []
       }
       budgetapp_transactions: {
         Row: {
@@ -530,6 +524,109 @@ export type Database = {
           id?: string
           role?: string | null
           updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      categories: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+          source_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+          source_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+          source_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "categories_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      source_permissions: {
+        Row: {
+          created_at: string | null
+          id: string
+          permission: string
+          source_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          permission: string
+          source_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          permission?: string
+          source_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "source_permissions_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sources: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          role: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          role: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role?: string
           user_id?: string | null
         }
         Relationships: []
