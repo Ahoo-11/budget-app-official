@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS public.budgetapp_suppliers (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     name TEXT NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    created_by UUID REFERENCES auth.users(id)
+    user_id UUID REFERENCES auth.users(id)
 );
 
 -- Create payers table if not exists
@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS public.budgetapp_payers (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     name TEXT NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    created_by UUID REFERENCES auth.users(id)
+    user_id UUID REFERENCES auth.users(id)
 );
 
 -- Create templates table if not exists
@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS public.budgetapp_templates (
     name TEXT NOT NULL,
     content JSONB,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    created_by UUID REFERENCES auth.users(id)
+    user_id UUID REFERENCES auth.users(id)
 );
 
 -- Add RLS policies
@@ -39,16 +39,16 @@ DROP POLICY IF EXISTS "Users can view their own templates" ON public.budgetapp_t
 CREATE POLICY "Users can view their own suppliers"
     ON public.budgetapp_suppliers
     FOR ALL
-    USING (created_by = auth.uid());
+    USING (user_id = auth.uid());
 
 CREATE POLICY "Users can view their own payers"
     ON public.budgetapp_payers
     FOR ALL
-    USING (created_by = auth.uid());
+    USING (user_id = auth.uid());
 
 CREATE POLICY "Users can view their own templates"
     ON public.budgetapp_templates
     FOR ALL
-    USING (created_by = auth.uid());
+    USING (user_id = auth.uid());
 
 COMMIT; 
