@@ -344,6 +344,9 @@ export type Database = {
         Row: {
           created_at: string | null
           created_by: string | null
+          has_consignments: boolean
+          has_products: boolean
+          has_services: boolean
           id: string
           name: string
           updated_at: string | null
@@ -352,6 +355,9 @@ export type Database = {
         Insert: {
           created_at?: string | null
           created_by?: string | null
+          has_consignments?: boolean
+          has_products?: boolean
+          has_services?: boolean
           id?: string
           name: string
           updated_at?: string | null
@@ -360,6 +366,9 @@ export type Database = {
         Update: {
           created_at?: string | null
           created_by?: string | null
+          has_consignments?: boolean
+          has_products?: boolean
+          has_services?: boolean
           id?: string
           name?: string
           updated_at?: string | null
@@ -515,6 +524,7 @@ export type Database = {
           created_at: string | null
           id: string
           is_enabled: boolean | null
+          source_id: string | null
           type_id: string | null
           user_id: string | null
         }
@@ -522,6 +532,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_enabled?: boolean | null
+          source_id?: string | null
           type_id?: string | null
           user_id?: string | null
         }
@@ -529,10 +540,18 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_enabled?: boolean | null
+          source_id?: string | null
           type_id?: string | null
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "budgetapp_type_settings_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "budgetapp_sources"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "budgetapp_type_settings_type_id_fkey"
             columns: ["type_id"]
