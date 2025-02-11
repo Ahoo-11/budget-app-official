@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSession } from "@supabase/auth-helpers-react";
@@ -15,8 +16,7 @@ export function useSources(userStatus: string | null) {
       
       try {
         const { data: userRole, error: roleError } = await supabase
-          .from('user_roles')
-          .schema('budget')
+          .from('budgetapp_user_roles')
           .select('role')
           .eq('user_id', session.user.id)
           .single();
@@ -27,15 +27,13 @@ export function useSources(userStatus: string | null) {
         }
 
         let query = supabase
-          .from('sources')
-          .schema('budget')
+          .from('budgetapp_sources')
           .select('*');
 
-        // Only fetch sources the user has permission to access
-        if (!userRole || !['controller', 'super_admin'].includes(userRole.role)) {
+        // If not controller, only fetch sources the user has permission to access
+        if (!userRole || userRole.role !== 'controller') {
           const { data: permissions, error: permError } = await supabase
-            .from('source_permissions')
-            .schema('budget')
+            .from('budgetapp_source_permissions')
             .select('source_id')
             .eq('user_id', session.user.id);
 
@@ -48,7 +46,8 @@ export function useSources(userStatus: string | null) {
             const sourceIds = permissions.map(p => p.source_id);
             query = query.in('id', sourceIds);
           } else {
-            return [];
+            // If no permissions found, only fetch sources created by the user
+            query = query.eq('created_by', session.user.id);
           }
         }
 
@@ -63,6 +62,7 @@ export function useSources(userStatus: string | null) {
           });
           throw error;
         }
+
         return data as Source[];
       } catch (error) {
         console.error('Error in sources query:', error);
