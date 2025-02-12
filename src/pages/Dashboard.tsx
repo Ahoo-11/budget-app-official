@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,7 +10,8 @@ export default function Dashboard() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('budgetapp_sources')
-        .select('*');
+        .select('*')
+        .order('name');
       
       if (error) throw error;
       return data;
@@ -57,4 +59,4 @@ export default function Dashboard() {
       </div>
     </div>
   );
-} 
+}

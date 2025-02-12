@@ -24,7 +24,7 @@ export const PayerSelector = ({ selectedPayerId, setSelectedPayer }: PayerSelect
     queryKey: ['payers'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('payers')
+        .from('budgetapp_payers')
         .select('*')
         .order('name');
       
@@ -39,7 +39,7 @@ export const PayerSelector = ({ selectedPayerId, setSelectedPayer }: PayerSelect
       if (!session?.user?.id) throw new Error("Must be logged in");
       
       const { data, error } = await supabase
-        .from('payers')
+        .from('budgetapp_payers')
         .insert([{ name, user_id: session.user.id }])
         .select()
         .single();

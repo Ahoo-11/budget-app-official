@@ -21,7 +21,7 @@ export const PayerSelector = ({
     queryKey: ["payers"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("payers")
+        .from("budgetapp_payers")
         .select("*")
         .order("name");
       if (error) throw error;
