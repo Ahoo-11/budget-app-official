@@ -1,3 +1,4 @@
+
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Type, TypeSettings, TypeSubcategory } from "@/types/types";
@@ -16,7 +17,7 @@ export const useTypes = (sourceId?: string) => {
     queryKey: ["types"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("types")
+        .from("budgetapp_types")
         .select("*")
         .order("name");
 
@@ -36,7 +37,7 @@ export const useTypes = (sourceId?: string) => {
       if (!sourceId) return [];
       
       const { data, error } = await supabase
-        .from("type_settings")
+        .from("budgetapp_type_settings")
         .select("*")
         .eq("source_id", sourceId);
 
@@ -55,7 +56,7 @@ export const useTypes = (sourceId?: string) => {
     queryKey: ["type-subcategories"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("type_subcategories")
+        .from("budgetapp_type_subcategories")
         .select("*")
         .order("name");
 
@@ -85,7 +86,7 @@ export const useTypes = (sourceId?: string) => {
     try {
       // First, check if a setting already exists
       const { data: existingSettings, error: checkError } = await supabase
-        .from("type_settings")
+        .from("budgetapp_type_settings")
         .select("*")
         .eq("source_id", sourceId)
         .eq("type_id", typeId);
@@ -95,7 +96,7 @@ export const useTypes = (sourceId?: string) => {
       if (existingSettings && existingSettings.length > 0) {
         // Update existing setting
         const { error: updateError } = await supabase
-          .from("type_settings")
+          .from("budgetapp_type_settings")
           .update({ is_enabled: isEnabled })
           .eq("source_id", sourceId)
           .eq("type_id", typeId);
@@ -104,7 +105,7 @@ export const useTypes = (sourceId?: string) => {
       } else {
         // Insert new setting
         const { error: insertError } = await supabase
-          .from("type_settings")
+          .from("budgetapp_type_settings")
           .insert({
             source_id: sourceId,
             type_id: typeId,
