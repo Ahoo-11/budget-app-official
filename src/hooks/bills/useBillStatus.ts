@@ -12,7 +12,7 @@ export function useBillStatus() {
       setIsSubmitting(true);
 
       const { error } = await supabase
-        .from('bills')
+        .from('budgetapp_bills')
         .update({ status })
         .eq('id', billId);
 

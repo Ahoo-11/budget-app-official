@@ -6,4 +6,7 @@ export interface Source {
   created_at: string;
   created_by: string | null;
   updated_at: string;
+  has_products: boolean;
+  has_services: boolean;
+  has_consignments: boolean;
 }

@@ -57,8 +57,8 @@ export const BillActions = ({
   const handleDeleteSelected = async () => {
     try {
       const { error } = await supabase
-        .from('bills')
-        .delete()
+        .from('budgetapp_bills')
+        .update({ status: 'inactive' })
         .in('id', selectedBills);
 
       if (error) throw error;

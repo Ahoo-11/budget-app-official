@@ -45,7 +45,7 @@ export const BillListItem = ({ bill }: BillListItemProps) => {
       };
 
       const { error } = await supabase
-        .from('bills')
+        .from('budgetapp_bills')
         .update(updateData)
         .eq('id', bill.id)
         .select();
@@ -81,7 +81,7 @@ export const BillListItem = ({ bill }: BillListItemProps) => {
       };
 
       const { error } = await supabase
-        .from('bills')
+        .from('budgetapp_bills')
         .update(updateData)
         .eq('id', bill.id)
         .select();

@@ -17,7 +17,7 @@ export function PayerManager() {
     queryKey: ['payers'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('payers')
+        .from('budgetapp_payers')
         .select('*')
         .order('name');
       
@@ -31,7 +31,7 @@ export function PayerManager() {
       if (!session?.user?.id) throw new Error("Must be logged in");
       
       const { data, error } = await supabase
-        .from('payers')
+        .from('budgetapp_payers')
         .insert([{ name, user_id: session.user.id }])
         .select()
         .single();
@@ -52,7 +52,7 @@ export function PayerManager() {
   const updatePayer = useMutation({
     mutationFn: async ({ id, name }: { id: string; name: string }) => {
       const { data, error } = await supabase
-        .from('payers')
+        .from('budgetapp_payers')
         .update({ name })
         .eq('id', id)
         .select()
@@ -74,7 +74,7 @@ export function PayerManager() {
   const deletePayer = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from('payers')
+        .from('budgetapp_payers')
         .delete()
         .eq('id', id);
       
