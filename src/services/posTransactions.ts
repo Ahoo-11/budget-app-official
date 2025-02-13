@@ -3,7 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 export const createTransaction = async (transactionData: any) => {
   const { data, error } = await supabase
-    .from('transactions')
+    .from('budgetapp_transactions')
     .insert([transactionData]);
 
   if (error) {
@@ -15,7 +15,7 @@ export const createTransaction = async (transactionData: any) => {
 
 export const getTransactionsByBillId = async (billId: string) => {
   const { data, error } = await supabase
-    .from('transactions')
+    .from('budgetapp_transactions')
     .select('*')
     .eq('bill_id', billId);
 
@@ -28,7 +28,7 @@ export const getTransactionsByBillId = async (billId: string) => {
 
 export const updateTransaction = async (transactionId: string, updates: any) => {
   const { data, error } = await supabase
-    .from('transactions')
+    .from('budgetapp_transactions')
     .update(updates)
     .eq('id', transactionId);
 
@@ -41,7 +41,7 @@ export const updateTransaction = async (transactionId: string, updates: any) => 
 
 export const deleteTransaction = async (transactionId: string) => {
   const { data, error } = await supabase
-    .from('transactions')
+    .from('budgetapp_transactions')
     .delete()
     .eq('id', transactionId);
 
@@ -54,7 +54,7 @@ export const deleteTransaction = async (transactionId: string) => {
 
 export const getAllTransactions = async () => {
   const { data, error } = await supabase
-    .from('transactions')
+    .from('budgetapp_transactions')
     .select('*');
 
   if (error) {

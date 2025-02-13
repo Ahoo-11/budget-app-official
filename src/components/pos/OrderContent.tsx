@@ -52,7 +52,6 @@ export const OrderContent = ({ sourceId, onProductSelect }: OrderContentProps) =
     queryKey: ["source_types"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .schema('budget')
         .from("budgetapp_source_types")
         .select("*");
       if (error) throw error;
@@ -65,7 +64,6 @@ export const OrderContent = ({ sourceId, onProductSelect }: OrderContentProps) =
     enabled: !!sourceId,
     queryFn: async () => {
       const { data, error } = await supabase
-        .schema('budget')
         .from("budgetapp_sources")
         .select("id, name")
         .eq("id", sourceId)
@@ -90,7 +88,6 @@ export const OrderContent = ({ sourceId, onProductSelect }: OrderContentProps) =
     enabled: !!sourceId && !!productTypeId && isTypeEnabled(productTypeId),
     queryFn: async () => {
       const { data, error } = await supabase
-        .schema('budget')
         .from("budgetapp_products")
         .select(`
           id,
@@ -128,7 +125,6 @@ export const OrderContent = ({ sourceId, onProductSelect }: OrderContentProps) =
     enabled: !!sourceId && !!serviceTypeId && isTypeEnabled(serviceTypeId),
     queryFn: async () => {
       const { data, error } = await supabase
-        .schema('budget')
         .from("budgetapp_services")
         .select(`
           id,
@@ -151,7 +147,6 @@ export const OrderContent = ({ sourceId, onProductSelect }: OrderContentProps) =
     enabled: !!sourceId && !!consignmentTypeId && isTypeEnabled(consignmentTypeId),
     queryFn: async () => {
       const { data, error } = await supabase
-        .schema('budget')
         .from("budgetapp_consignments")
         .select(`
           id,

@@ -1,82 +1,74 @@
-
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Type, TypeSettings, TypeSubcategory } from "@/types/types";
 import { useToast } from "@/components/ui/use-toast";
+
+interface SourceType {
+  id: string;
+  name: string;
+  description: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
+interface SourcePayerSetting {
+  id: string;
+  source_id: string;
+  payer_id: string;
+  credit_days: number;
+  created_at: string | null;
+  updated_at: string | null;
+}
 
 export const useTypes = (sourceId?: string) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch all types
+  // Fetch all source types
   const { 
     data: types = [], 
     isLoading: isLoadingTypes,
     error: typesError 
   } = useQuery({
-    queryKey: ["types"],
+    queryKey: ["source-types"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("budgetapp_types")
+        .from("budgetapp_source_types")
         .select("*")
         .order("name");
 
       if (error) throw error;
-      return data as Type[];
+      return data as SourceType[];
     },
   });
 
-  // Fetch type settings for a specific source
+  // Fetch source payer settings for a specific source
   const { 
     data: typeSettings = [], 
     isLoading: isLoadingSettings,
     error: settingsError 
   } = useQuery({
-    queryKey: ["type-settings", sourceId],
+    queryKey: ["source-payer-settings", sourceId],
     queryFn: async () => {
       if (!sourceId) return [];
       
       const { data, error } = await supabase
-        .from("budgetapp_type_settings")
+        .from("budgetapp_source_payer_settings")
         .select("*")
         .eq("source_id", sourceId);
 
       if (error) throw error;
-      return data as TypeSettings[];
+      return data as SourcePayerSetting[];
     },
     enabled: !!sourceId,
   });
-
-  // Fetch subcategories for all types
-  const { 
-    data: subcategories = [], 
-    isLoading: isLoadingSubcategories,
-    error: subcategoriesError 
-  } = useQuery({
-    queryKey: ["type-subcategories"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("budgetapp_type_subcategories")
-        .select("*")
-        .order("name");
-
-      if (error) throw error;
-      return data as TypeSubcategory[];
-    },
-  });
-
-  // Get subcategories for a specific type
-  const getSubcategories = (typeId: string) => {
-    return subcategories.filter((sub) => sub.type_id === typeId);
-  };
 
   // Check if a type is enabled for a source
   const isTypeEnabled = (typeId: string) => {
     if (!sourceId) return true;
     const setting = typeSettings.find(
-      (s) => s.type_id === typeId
+      (s) => s.payer_id === typeId
     );
-    return setting ? setting.is_enabled : true;
+    return setting ? setting.credit_days > 0 : false;
   };
 
   // Toggle type enabled/disabled status
@@ -86,36 +78,36 @@ export const useTypes = (sourceId?: string) => {
     try {
       // First, check if a setting already exists
       const { data: existingSettings, error: checkError } = await supabase
-        .from("budgetapp_type_settings")
+        .from("budgetapp_source_payer_settings")
         .select("*")
         .eq("source_id", sourceId)
-        .eq("type_id", typeId);
+        .eq("payer_id", typeId);
 
       if (checkError) throw checkError;
 
       if (existingSettings && existingSettings.length > 0) {
         // Update existing setting
         const { error: updateError } = await supabase
-          .from("budgetapp_type_settings")
-          .update({ is_enabled: isEnabled })
+          .from("budgetapp_source_payer_settings")
+          .update({ credit_days: isEnabled ? 1 : 0 })
           .eq("source_id", sourceId)
-          .eq("type_id", typeId);
+          .eq("payer_id", typeId);
 
         if (updateError) throw updateError;
       } else {
         // Insert new setting
         const { error: insertError } = await supabase
-          .from("budgetapp_type_settings")
+          .from("budgetapp_source_payer_settings")
           .insert({
             source_id: sourceId,
-            type_id: typeId,
-            is_enabled: isEnabled,
+            payer_id: typeId,
+            credit_days: isEnabled ? 1 : 0,
           });
 
         if (insertError) throw insertError;
       }
 
-      await queryClient.invalidateQueries({ queryKey: ["type-settings", sourceId] });
+      await queryClient.invalidateQueries({ queryKey: ["source-payer-settings", sourceId] });
 
       toast({
         title: "Success",
@@ -137,10 +129,7 @@ export const useTypes = (sourceId?: string) => {
     typesError,
     isLoadingSettings,
     settingsError,
-    isLoadingSubcategories,
-    subcategoriesError,
     isTypeEnabled,
-    getSubcategories,
     toggleType,
     // Backward compatibility
     incomeTypes: types,

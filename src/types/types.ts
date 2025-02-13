@@ -1,29 +1,21 @@
 export interface Type {
   id: string;
   name: string;
-  description?: string;
-  is_enabled: boolean;
-  created_at: string;
-  updated_at: string;
+  description?: string | null;
+  created_at: string | null;
+  updated_at: string | null;
 }
 
 export interface TypeSettings {
   id: string;
   source_id: string;
-  type_id: string;
-  is_enabled: boolean;
-  created_at: string;
-  updated_at: string;
+  payer_id: string;
+  credit_days: number;
+  created_at: string | null;
+  updated_at: string | null;
 }
 
-export interface TypeSubcategory {
-  id: string;
-  type_id: string;
-  name: string;
-  description?: string;
-  created_at: string;
-  updated_at: string;
-}
+// Removing TypeSubcategory since it's not in the database schema
 
 // Alias for backward compatibility
 export type IncomeType = Type;
